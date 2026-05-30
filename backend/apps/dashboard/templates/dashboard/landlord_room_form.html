@@ -1,0 +1,28 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <p class="eyebrow">Chu tro</p>
+        <h1>{{ title }}</h1>
+    </div>
+</section>
+
+<form class="form-card" method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <div class="form-grid">
+        {% for field in form %}
+            <label class="{% if field.name == 'description' or field.name == 'amenities' %}span-2{% endif %}">
+                {{ field.label }}
+                {{ field }}
+                {{ field.errors }}
+            </label>
+        {% endfor %}
+    </div>
+    <button type="submit">Luu phong</button>
+</form>
+{% endblock %}
+

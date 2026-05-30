@@ -1,0 +1,39 @@
+{% extends "accounts/auth_base.html" %}
+{% load socialaccount %}
+
+{% block title %}Dang nhap{% endblock %}
+{% block headline %}Dang nhap de tiep tuc tim phong phu hop{% endblock %}
+
+{% block content %}
+<p class="eyebrow">Dang nhap</p>
+<h2>Chao mung tro lai</h2>
+
+<form method="post" novalidate>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for field in form %}
+        <label>
+            {{ field.label }}
+            {{ field }}
+            {{ field.errors }}
+        </label>
+    {% endfor %}
+    <button type="submit">Dang nhap</button>
+</form>
+
+<div class="divider"><span>Hoac dang nhap bang</span></div>
+{% if "google" in social_providers or "facebook" in social_providers %}
+    <div class="social-actions">
+        {% if "google" in social_providers %}
+            <a class="social" href="{% provider_login_url 'google' process='login' %}">Google</a>
+        {% endif %}
+        {% if "facebook" in social_providers %}
+            <a class="social" href="{% provider_login_url 'facebook' process='login' %}">Facebook</a>
+        {% endif %}
+    </div>
+{% else %}
+    <div class="notice">OAuth Google/Facebook chua co client id/secret. Them Social application trong Django admin de bat nut dang nhap.</div>
+{% endif %}
+
+<p class="switch">Chua co tai khoan? <a href="{% url 'web-register' %}">Dang ky</a></p>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Chu tro{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <p class="eyebrow">Dashboard chu tro</p>
+        <h1>Quan ly phong cua ban</h1>
+        <p>{{ profile.business_name|default:"Chu tro ca nhan" }} - {{ profile.get_verification_status_display }}</p>
+    </div>
+    <a class="button" href="{% url 'landlord-room-create' %}">Tao phong moi</a>
+</section>
+
+<section class="grid-list">
+    {% for room in rooms %}
+        <article class="card">
+            <div class="card-head">
+                <h2>{{ room.title }}</h2>
+                <span class="status {{ room.status }}">{{ room.get_status_display }}</span>
+            </div>
+            <p>{{ room.address }}</p>
+            <p><strong>{{ room.price|floatformat:0 }} VND</strong> - {{ room.area }} m2</p>
+            {% if room.rejection_reason %}<p class="danger">Ly do tu choi: {{ room.rejection_reason }}</p>{% endif %}
+            <div class="actions">
+                <a href="{% url 'landlord-room-detail' room.id %}">Chi tiet</a>
+                <a href="{% url 'landlord-room-edit' room.id %}">Sua</a>
+                {% if room.status == "draft" or room.status == "rejected" %}
+                    <form method="post" action="{% url 'landlord-room-submit' room.id %}">{% csrf_token %}<button>Gui duyet</button></form>
+                {% endif %}
+                {% if room.status == "active" %}
+                    <form method="post" action="{% url 'landlord-room-mark-rented' room.id %}">{% csrf_token %}<button>Da cho thue</button></form>
+                {% endif %}
+            </div>
+        </article>
+    {% empty %}
+        <article class="empty">Ban chua co phong nao. Hay tao phong dau tien.</article>
+    {% endfor %}
+</section>
+{% endblock %}
+

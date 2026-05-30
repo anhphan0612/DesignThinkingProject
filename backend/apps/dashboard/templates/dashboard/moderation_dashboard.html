@@ -1,0 +1,52 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Kiem duyet{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <p class="eyebrow">Admin</p>
+        <h1>Kiem duyet noi dung</h1>
+    </div>
+</section>
+
+<section class="card">
+    <h2>Phong cho duyet</h2>
+    <div class="grid-list compact">
+        {% for room in pending_rooms %}
+            <article class="review-card">
+                <h3>{{ room.title }}</h3>
+                <p>{{ room.address }} - {{ room.landlord.user.full_name }}</p>
+                <p><strong>{{ room.price|floatformat:0 }} VND</strong></p>
+                <div class="actions">
+                    <form method="post" action="{% url 'moderation-room-approve' room.id %}">{% csrf_token %}<button>Duyet</button></form>
+                    <a href="{% url 'moderation-room-reject' room.id %}">Tu choi</a>
+                    <a href="{% url 'moderation-room-detail' room.id %}">Xem</a>
+                </div>
+            </article>
+        {% empty %}
+            <p>Khong co phong cho duyet.</p>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="card">
+    <h2>Anh nguoi dung gui cho duyet</h2>
+    <div class="image-grid">
+        {% for image in pending_images %}
+            <figure>
+                <img src="{{ image.image.url }}" alt="{{ image.caption|default:image.room.title }}">
+                <figcaption>
+                    {{ image.room.title }} - {{ image.uploaded_by.email|default:"unknown" }}
+                    <div class="actions">
+                        <form method="post" action="{% url 'moderation-image-approve' image.id %}">{% csrf_token %}<button>Duyet</button></form>
+                        <a href="{% url 'moderation-image-reject' image.id %}">Tu choi</a>
+                    </div>
+                </figcaption>
+            </figure>
+        {% empty %}
+            <p>Khong co anh cho duyet.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

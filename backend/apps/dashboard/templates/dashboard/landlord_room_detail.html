@@ -1,0 +1,56 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}{{ room.title }}{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <p class="eyebrow">Phong cua chu tro</p>
+        <h1>{{ room.title }}</h1>
+        <p>{{ room.address }} - {{ room.get_status_display }}</p>
+    </div>
+    <a class="button" href="{% url 'landlord-room-edit' room.id %}">Sua phong</a>
+</section>
+
+<section class="two-col">
+    <article class="card">
+        <h2>Thong tin</h2>
+        <p><strong>Gia:</strong> {{ room.price|floatformat:0 }} VND / thang</p>
+        <p><strong>Dien tich:</strong> {{ room.area }} m2</p>
+        <p><strong>Dia chi:</strong> {{ room.address }}</p>
+        <p>{{ room.description }}</p>
+        <div class="actions">
+            {% if room.status == "draft" or room.status == "rejected" %}
+                <form method="post" action="{% url 'landlord-room-submit' room.id %}">{% csrf_token %}<button>Gui duyet</button></form>
+            {% endif %}
+            {% if room.status == "active" %}
+                <a href="{% url 'frontend-room-detail' room.id %}" target="_blank">Xem public</a>
+            {% endif %}
+        </div>
+    </article>
+
+    <article class="card">
+        <h2>Them anh phong</h2>
+        <form method="post" action="{% url 'landlord-room-image-upload' room.id %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ image_form.as_p }}
+            <button type="submit">Tai anh len</button>
+        </form>
+    </article>
+</section>
+
+<section class="card">
+    <h2>Anh hien co</h2>
+    <div class="image-grid">
+        {% for image in room.images.all %}
+            <figure>
+                <img src="{{ image.image.url }}" alt="{{ image.caption|default:room.title }}">
+                <figcaption>{{ image.caption|default:"Anh phong" }} - {{ image.get_status_display }}</figcaption>
+            </figure>
+        {% empty %}
+            <p>Chua co anh.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
+
