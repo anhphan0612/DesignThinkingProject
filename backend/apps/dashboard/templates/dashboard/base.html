@@ -1,0 +1,30 @@
+{% load static %}
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Dashboard{% endblock %} - Tro Tot Sinh Vien</title>
+    <link rel="stylesheet" href="{% static 'dashboard/dashboard.css' %}">
+</head>
+<body>
+    <header class="dash-header">
+        <a class="brand" href="/">Tro Tot Sinh Vien</a>
+        <nav>
+            <a href="/">Tim phong</a>
+            {% if request.user.is_staff %}<a href="{% url 'moderation-dashboard' %}">Kiem duyet</a>{% endif %}
+            {% if request.user.role == "landlord" %}<a href="{% url 'landlord-dashboard' %}">Chu tro</a>{% endif %}
+            <a href="{% url 'web-profile' %}">Ho so</a>
+        </nav>
+    </header>
+    <main class="dash-shell">
+        {% if messages %}
+            <section class="messages">
+                {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+            </section>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>
+

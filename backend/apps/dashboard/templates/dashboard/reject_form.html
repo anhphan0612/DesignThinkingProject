@@ -1,0 +1,19 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <p class="eyebrow">Kiem duyet</p>
+        <h1>{{ title }}</h1>
+    </div>
+</section>
+
+<form class="form-card" method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Xac nhan tu choi</button>
+</form>
+{% endblock %}
+

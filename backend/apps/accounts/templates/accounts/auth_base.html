@@ -1,0 +1,31 @@
+{% load static %}
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Tai khoan{% endblock %} - Tro Tot Sinh Vien</title>
+    <link rel="stylesheet" href="{% static 'accounts/auth.css' %}">
+</head>
+<body>
+    <main class="auth-shell">
+        <section class="auth-copy">
+            <a class="brand" href="/">Tro Tot Sinh Vien</a>
+            <h1>{% block headline %}Quan ly tai khoan tim tro{% endblock %}</h1>
+            <p>
+                Increment nay hoan thien dang nhap, dang ky va ho so co ban.
+                Google/Facebook OAuth da duoc cau hinh backend va can them client id/secret de kich hoat.
+            </p>
+        </section>
+        <section class="auth-card">
+            {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+                </div>
+            {% endif %}
+            {% block content %}{% endblock %}
+        </section>
+    </main>
+</body>
+</html>
+

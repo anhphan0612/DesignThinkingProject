@@ -1,0 +1,119 @@
+{% load static %}
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>{{ room.title }} - Tro Tot Sinh Vien</title>
+    <link rel="stylesheet" href="{% static 'frontend/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'frontend/detail.css' %}">
+</head>
+<body>
+    <header class="detail-hero">
+        <nav class="topbar">
+            <a class="brand" href="/"><span class="brand-mark">T</span><span>Tro Tot Sinh Vien</span></a>
+            <div class="nav-actions">
+                {% if request.user.is_authenticated %}
+                    <a href="{% url 'web-profile' %}">{{ request.user.full_name|default:request.user.email }}</a>
+                    <a href="{% url 'web-logout' %}">Dang xuat</a>
+                {% else %}
+                    <a href="{% url 'web-login' %}">Dang nhap</a>
+                    <a href="{% url 'web-register' %}">Dang ky</a>
+                {% endif %}
+            </div>
+        </nav>
+    </header>
+
+    <main class="room-page">
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+            </div>
+        {% endif %}
+
+        <section class="room-summary">
+            <div>
+                <p class="eyebrow">Chi tiet phong</p>
+                <h1>{{ room.title }}</h1>
+                <p class="muted">{{ room.address }} - {{ room.ward.name }}, {{ room.ward.district.name }}</p>
+            </div>
+            <div class="summary-price">{{ room.price|floatformat:0 }} VND / thang</div>
+        </section>
+
+        <section class="detail-grid">
+            <article class="gallery-card">
+                <div class="gallery">
+                    {% for image in approved_images %}
+                        <figure>
+                            <img src="{{ image.image.url }}" alt="{{ image.caption|default:room.title }}">
+                            <figcaption>
+                                {{ image.caption|default:"Anh phong" }}
+                                <span>{{ image.get_source_display }}</span>
+                            </figcaption>
+                        </figure>
+                    {% empty %}
+                        <div class="image-placeholder">
+                            <strong>Chua co anh phong</strong>
+                            <span>Hay them anh de nguoi dung danh gia phong tot hon.</span>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="upload-panel">
+                    <h2>Gui anh phong</h2>
+                    <p class="muted">
+                        Chu tro co the them anh chinh thuc. Sinh vien/nguoi dung gui anh se cho admin duyet truoc khi hien thi cong khai.
+                    </p>
+                    {% if request.user.is_authenticated %}
+                        <form method="post" action="{% url 'room-image-upload' room.id %}" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <label>Chu thich <input name="caption" maxlength="255" placeholder="VD: Khu bep, nha tam, cua so"></label>
+                            <label>Anh <input name="image" type="file" accept="image/*" required></label>
+                            <button type="submit">Gui anh</button>
+                        </form>
+                    {% else %}
+                        <a class="button-link" href="{% url 'web-login' %}?next={{ request.path }}">Dang nhap de gui anh</a>
+                    {% endif %}
+                </div>
+            </article>
+
+            <aside class="room-sidebar">
+                <article class="info-card">
+                    <h2>Thong tin nhanh</h2>
+                    <dl class="facts vertical">
+                        <div><dt>Dien tich</dt><dd>{{ room.area }} m2</dd></div>
+                        <div><dt>So nguoi toi da</dt><dd>{{ room.max_occupants }}</dd></div>
+                        <div><dt>Dien</dt><dd>{{ room.electricity_price|default:"Chua cap nhat" }}</dd></div>
+                        <div><dt>Nuoc</dt><dd>{{ room.water_price|default:"Chua cap nhat" }}</dd></div>
+                    </dl>
+                    <div class="tags">
+                        {% for amenity in room.amenities.all %}
+                            <span class="tag">{{ amenity.name }}</span>
+                        {% endfor %}
+                    </div>
+                </article>
+
+                <article class="info-card">
+                    <h2>Chu tro</h2>
+                    <p><strong>{{ room.landlord.user.full_name }}</strong></p>
+                    <p class="muted">{{ room.landlord.business_name|default:"Chu tro ca nhan" }}</p>
+                    <button id="contactButton" type="button" data-room-id="{{ room.id }}">Hien thong tin lien he</button>
+                    <div id="contactResult" class="contact-result" hidden></div>
+                </article>
+
+                <article class="info-card">
+                    <h2>Ban do</h2>
+                    <iframe
+                        title="Ban do phong"
+                        loading="lazy"
+                        src="https://www.openstreetmap.org/export/embed.html?bbox={{ map_bbox.left }}%2C{{ map_bbox.bottom }}%2C{{ map_bbox.right }}%2C{{ map_bbox.top }}&layer=mapnik&marker={{ room.location.y }}%2C{{ room.location.x }}">
+                    </iframe>
+                </article>
+            </aside>
+        </section>
+    </main>
+
+    <script src="{% static 'frontend/detail.js' %}"></script>
+</body>
+</html>

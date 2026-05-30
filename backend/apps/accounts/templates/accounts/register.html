@@ -1,0 +1,39 @@
+{% extends "accounts/auth_base.html" %}
+{% load socialaccount %}
+
+{% block title %}Dang ky{% endblock %}
+{% block headline %}Tao tai khoan sinh vien hoac chu tro{% endblock %}
+
+{% block content %}
+<p class="eyebrow">Dang ky</p>
+<h2>Bat dau voi Tro Tot Sinh Vien</h2>
+
+<form method="post" novalidate>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for field in form %}
+        <label>
+            {{ field.label }}
+            {{ field }}
+            {{ field.errors }}
+        </label>
+    {% endfor %}
+    <button type="submit">Tao tai khoan</button>
+</form>
+
+<div class="divider"><span>Hoac tao tai khoan sinh vien bang</span></div>
+{% if "google" in social_providers or "facebook" in social_providers %}
+    <div class="social-actions">
+        {% if "google" in social_providers %}
+            <a class="social" href="{% provider_login_url 'google' process='login' %}">Google</a>
+        {% endif %}
+        {% if "facebook" in social_providers %}
+            <a class="social" href="{% provider_login_url 'facebook' process='login' %}">Facebook</a>
+        {% endif %}
+    </div>
+{% else %}
+    <div class="notice">OAuth Google/Facebook chua co client id/secret. Them Social application trong Django admin de bat nut dang ky nhanh.</div>
+{% endif %}
+
+<p class="switch">Da co tai khoan? <a href="{% url 'web-login' %}">Dang nhap</a></p>
+{% endblock %}
