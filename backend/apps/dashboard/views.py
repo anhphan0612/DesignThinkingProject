@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from apps.accounts.models import LandlordProfile
 from apps.listings.models import Room, RoomImage
@@ -60,6 +61,7 @@ def landlord_room_edit(request, pk):
 
 
 @landlord_required
+@require_POST
 def landlord_room_submit(request, pk):
     room = get_object_or_404(Room, pk=pk, landlord=request.user.landlord_profile, deleted_at__isnull=True)
     try:
@@ -71,6 +73,7 @@ def landlord_room_submit(request, pk):
 
 
 @landlord_required
+@require_POST
 def landlord_room_mark_rented(request, pk):
     room = get_object_or_404(Room, pk=pk, landlord=request.user.landlord_profile, deleted_at__isnull=True)
     try:
@@ -82,6 +85,7 @@ def landlord_room_mark_rented(request, pk):
 
 
 @landlord_required
+@require_POST
 def landlord_room_image_upload(request, pk):
     room = get_object_or_404(Room, pk=pk, landlord=request.user.landlord_profile, deleted_at__isnull=True)
     form = LandlordRoomImageForm(request.POST or None, request.FILES or None)
@@ -121,6 +125,7 @@ def moderation_room_detail(request, pk):
 
 
 @staff_required
+@require_POST
 def moderation_room_approve(request, pk):
     room = get_object_or_404(Room, pk=pk)
     approve_room(room=room, admin_user=request.user)
@@ -140,6 +145,7 @@ def moderation_room_reject(request, pk):
 
 
 @staff_required
+@require_POST
 def moderation_image_approve(request, pk):
     image = get_object_or_404(RoomImage, pk=pk)
     image.status = RoomImage.ModerationStatus.APPROVED

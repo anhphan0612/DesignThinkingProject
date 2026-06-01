@@ -2,7 +2,6 @@ const state = {
     amenities: [],
     universities: [],
     rooms: [],
-    selectedRoomId: null,
     isAuthenticated: document.querySelector("meta[name='is-authenticated']").content === "true",
 };
 
@@ -19,29 +18,11 @@ const els = {
     roomList: document.querySelector("#roomList"),
     resultCount: document.querySelector("#resultCount"),
     status: document.querySelector("#status"),
-    detailEmpty: document.querySelector("#detailEmpty"),
-    roomDetail: document.querySelector("#roomDetail"),
-    detailTitle: document.querySelector("#detailTitle"),
-    detailAddress: document.querySelector("#detailAddress"),
-    detailPrice: document.querySelector("#detailPrice"),
-    detailArea: document.querySelector("#detailArea"),
-    detailOccupants: document.querySelector("#detailOccupants"),
-    detailDistance: document.querySelector("#detailDistance"),
-    detailAmenities: document.querySelector("#detailAmenities"),
-    mapFrame: document.querySelector("#mapFrame"),
-    favoriteButton: document.querySelector("#favoriteButton"),
-    contactButton: document.querySelector("#contactButton"),
-    contactResult: document.querySelector("#contactResult"),
-    detailPageLink: document.querySelector("#detailPageLink"),
     recommendationBox: document.querySelector("#recommendationBox"),
     recommendationList: document.querySelector("#recommendationList"),
     recommendationCount: document.querySelector("#recommendationCount"),
     heroRoomCount: document.querySelector("#heroRoomCount"),
 };
-
-function csrfToken() {
-    return document.querySelector("meta[name='csrf-token']").content;
-}
 
 function formatCurrency(value) {
     return new Intl.NumberFormat("vi-VN", {
@@ -71,19 +52,17 @@ async function fetchJson(path, params) {
     return response.json();
 }
 
-async function postJson(path, body = {}) {
-    const response = await fetch(path, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": csrfToken(),
-        },
-        body: JSON.stringify(body),
-    });
-    if (!response.ok) {
-        throw new Error(`Request failed with status ${response.status}`);
+function textElement(tagName, text, className) {
+    const element = document.createElement(tagName);
+    if (className) {
+        element.className = className;
     }
-    return response.json();
+    element.textContent = text;
+    return element;
+}
+
+function tagElement(text) {
+    return textElement("span", text, "tag");
 }
 
 function checkedAmenityIds() {
@@ -120,29 +99,41 @@ function renderUniversities() {
 }
 
 function renderAmenities() {
-    els.amenities.innerHTML = "";
+    els.amenities.replaceChildren();
     state.amenities.forEach((amenity) => {
         const label = document.createElement("label");
         label.className = "check";
-        label.innerHTML = `<input type="checkbox" name="amenity" value="${amenity.id}"><span>${amenity.name}</span>`;
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.name = "amenity";
+        input.value = amenity.id;
+        label.append(input, textElement("span", amenity.name));
         els.amenities.append(label);
     });
 }
 
+function renderEmptyRooms() {
+    const empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.append(
+        textElement("p", "Không có kết quả", "eyebrow"),
+        textElement("h2", "Thử giảm điều kiện lọc"),
+        textElement("p", "Bộ dữ liệu hiện tại vẫn là dữ liệu demo nên số lượng phòng chưa nhiều.", "muted"),
+    );
+    els.roomList.replaceChildren(empty);
+}
+
 function renderRooms() {
-    els.roomList.innerHTML = "";
+    els.roomList.replaceChildren();
     els.resultCount.textContent = `${state.rooms.length} phòng`;
     if (els.heroRoomCount) {
         els.heroRoomCount.textContent = state.rooms.length;
     }
     if (!state.rooms.length) {
-        els.roomList.innerHTML = '<div class="empty-state"><p class="eyebrow">Không có kết quả</p><h2>Thử giảm điều kiện lọc</h2><p class="muted">Bộ dữ liệu hiện tại vẫn là dữ liệu demo nên số lượng phòng chưa nhiều.</p></div>';
-        els.detailEmpty.hidden = false;
-        els.roomDetail.hidden = true;
+        renderEmptyRooms();
         return;
     }
     state.rooms.forEach((room) => els.roomList.append(roomCard(room)));
-    selectRoom(state.rooms[0].id);
 }
 
 function renderRecommendations(items) {
@@ -152,17 +143,16 @@ function renderRecommendations(items) {
     }
     els.recommendationBox.hidden = false;
     els.recommendationCount.textContent = `${items.length} phòng`;
-    els.recommendationList.innerHTML = "";
+    els.recommendationList.replaceChildren();
     items.slice(0, 3).forEach((item) => {
         const element = document.createElement("div");
         element.className = "recommendation-item";
-        element.innerHTML = `
-            <div>
-                <strong>${item.room.title}</strong>
-                <span>${item.score_detail.reasons.join(" · ")}</span>
-            </div>
-            <span>${Math.round(item.score * 100)}%</span>
-        `;
+        const copy = document.createElement("div");
+        copy.append(
+            textElement("strong", item.room.title),
+            textElement("span", item.score_detail.reasons.join(" · ")),
+        );
+        element.append(copy, textElement("span", `${Math.round(item.score * 100)}%`));
         element.addEventListener("click", () => {
             window.location.href = `/rooms/${item.room.id}/`;
         });
@@ -175,23 +165,44 @@ function roomCard(room) {
     card.className = "room-card";
     card.tabIndex = 0;
     card.dataset.roomId = room.id;
-    const amenities = room.amenities.slice(0, 4).map((amenity) => `<span class="tag">${amenity.name}</span>`).join("");
-    const distance = room.distance_km ? `Cách trường ${room.distance_km} km` : "Chưa lọc theo trường";
+
     const cover = room.images.find((image) => image.is_cover) || room.images[0];
-    const thumbnail = cover
-        ? `<img src="${cover.image}" alt="${cover.caption || room.title}">`
-        : "<span>ẢNH</span>";
-    card.innerHTML = `
-        <div class="thumb">${thumbnail}</div>
-        <div>
-            <h3>${room.title}</h3>
-            <div class="price">${formatCurrency(room.price)} / tháng</div>
-            <div class="meta"><span>${room.area} m²</span><span>${room.max_occupants} người</span><span>${distance}</span></div>
-            <p class="muted">${room.address}</p>
-            <div class="tags">${amenities}</div>
-            <span class="card-link">Xem chi tiết</span>
-        </div>
-    `;
+    const thumb = document.createElement("div");
+    thumb.className = "thumb";
+    if (cover) {
+        const image = document.createElement("img");
+        image.src = cover.image;
+        image.alt = cover.caption || room.title;
+        thumb.append(image);
+    } else {
+        thumb.append(textElement("span", "ẢNH"));
+    }
+
+    const content = document.createElement("div");
+    const distance = room.distance_km ? `Cách trường ${room.distance_km} km` : "Chưa lọc theo trường";
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    meta.append(
+        textElement("span", `${room.area} m²`),
+        textElement("span", `${room.max_occupants} người`),
+        textElement("span", distance),
+    );
+
+    const tags = document.createElement("div");
+    tags.className = "tags";
+    room.amenities.slice(0, 4).forEach((amenity) => tags.append(tagElement(amenity.name)));
+
+    const detailLink = textElement("span", "Xem chi tiết", "card-link");
+    content.append(
+        textElement("h3", room.title),
+        textElement("div", `${formatCurrency(room.price)} / tháng`, "price"),
+        meta,
+        textElement("p", room.address, "muted"),
+        tags,
+        detailLink,
+    );
+    card.append(thumb, content);
+
     card.addEventListener("click", () => {
         window.location.href = `/rooms/${room.id}/`;
     });
@@ -201,36 +212,6 @@ function roomCard(room) {
         }
     });
     return card;
-}
-
-function selectRoom(roomId) {
-    const room = state.rooms.find((item) => item.id === roomId);
-    if (!room) {
-        return;
-    }
-    state.selectedRoomId = roomId;
-    document.querySelectorAll(".room-card").forEach((card) => {
-        card.classList.toggle("active", Number(card.dataset.roomId) === roomId);
-    });
-    els.detailEmpty.hidden = true;
-    els.roomDetail.hidden = false;
-    els.detailTitle.textContent = room.title;
-    els.detailAddress.textContent = `${room.address} - ${room.ward_name}, ${room.district_name}`;
-    els.detailPrice.textContent = `${formatCurrency(room.price)} / tháng`;
-    els.detailArea.textContent = `${room.area} m²`;
-    els.detailOccupants.textContent = `${room.max_occupants} người`;
-    els.detailDistance.textContent = room.distance_km ? `${room.distance_km} km` : "Chưa lọc theo trường";
-    els.detailAmenities.innerHTML = room.amenities.map((amenity) => `<span class="tag">${amenity.name}</span>`).join("");
-    els.favoriteButton.disabled = !state.isAuthenticated;
-    els.favoriteButton.textContent = state.isAuthenticated ? "Lưu yêu thích" : "Đăng nhập để lưu";
-    els.contactResult.hidden = true;
-    els.detailPageLink.href = `/rooms/${room.id}/`;
-
-    const lat = Number(room.latitude);
-    const lng = Number(room.longitude);
-    const delta = 0.006;
-    els.mapFrame.src = `https://www.openstreetmap.org/export/embed.html?bbox=${lng - delta}%2C${lat - delta}%2C${lng + delta}%2C${lat + delta}&layer=mapnik&marker=${lat}%2C${lng}`;
-    postJson("/api/events/", { type: "view_room", room: room.id, metadata: { source: "frontend" } }).catch(() => {});
 }
 
 async function loadRooms() {
@@ -283,32 +264,6 @@ els.reset.addEventListener("click", () => {
 els.query.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
         loadRooms();
-    }
-});
-
-els.favoriteButton.addEventListener("click", async () => {
-    if (!state.selectedRoomId || !state.isAuthenticated) {
-        window.location.href = "/auth/login/";
-        return;
-    }
-    try {
-        const data = await postJson(`/api/rooms/${state.selectedRoomId}/favorite/`);
-        els.favoriteButton.textContent = data.created ? "Đã lưu yêu thích" : "Đã nằm trong yêu thích";
-    } catch (error) {
-        showStatus("Không lưu được phòng yêu thích. Hãy thử đăng nhập lại.", true);
-    }
-});
-
-els.contactButton.addEventListener("click", async () => {
-    if (!state.selectedRoomId) {
-        return;
-    }
-    try {
-        const data = await postJson(`/api/rooms/${state.selectedRoomId}/contact/`);
-        els.contactResult.hidden = false;
-        els.contactResult.textContent = `${data.landlord_name}: ${data.phone || "Chưa có số điện thoại"}`;
-    } catch (error) {
-        showStatus("Không lấy được thông tin liên hệ.", true);
     }
 });
 

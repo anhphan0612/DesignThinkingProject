@@ -170,28 +170,28 @@ a { color: inherit; }
 
 .layout {
     display: grid;
-    grid-template-columns: 320px minmax(0, 1fr) 390px;
+    grid-template-columns: 320px minmax(0, 1fr);
     gap: 22px;
     padding: 28px 24px;
 }
 
-.filters, .results, .detail, .roadmap article {
+.filters, .results, .roadmap article {
     background: var(--card);
     border: 1px solid var(--line);
     border-radius: 28px;
     box-shadow: var(--shadow);
 }
 
-.filters, .results, .detail { padding: 22px; }
+.filters, .results { padding: 22px; }
 
-.filters, .detail {
+.filters {
     position: sticky;
     top: 18px;
     align-self: start;
 }
 
 h2, h3 { letter-spacing: -.04em; }
-.panel-heading h2, .results-bar h2, .detail h2 { margin: 4px 0 0; }
+.panel-heading h2, .results-bar h2 { margin: 4px 0 0; }
 
 .eyebrow {
     margin: 0;
@@ -377,7 +377,7 @@ button:disabled { cursor: not-allowed; background: #d9e3f0; color: #718096; }
 .room-card h3 { margin: 0 0 8px; line-height: 1.25; }
 .meta, .muted { color: var(--muted); }
 .meta { flex-wrap: wrap; margin: 8px 0; font-size: 14px; }
-.price, .detail-price { color: var(--success); font-weight: 900; }
+.price { color: var(--success); font-weight: 900; }
 
 .card-link {
     display: inline-flex;
@@ -398,18 +398,12 @@ button:disabled { cursor: not-allowed; background: #d9e3f0; color: #718096; }
     padding: 6px 9px;
 }
 
-.empty-state, .detail-card { min-height: 420px; }
+.empty-state { min-height: 320px; }
 
 .empty-state {
     display: grid;
     align-content: center;
     text-align: center;
-}
-
-.detail-price {
-    margin: 18px 0;
-    font-size: 28px;
-    letter-spacing: -.04em;
 }
 
 .facts {
@@ -432,15 +426,6 @@ iframe {
     background: #e2e8f0;
 }
 
-.placeholder-actions { display: grid; gap: 10px; margin-top: 16px; }
-.contact-result {
-    margin-top: 12px;
-    border-radius: 16px;
-    background: #ecfdf5;
-    color: #047857;
-    font-weight: 800;
-    padding: 12px;
-}
 .trust-section {
     max-width: 1380px;
     margin: 0 auto;
@@ -469,14 +454,13 @@ iframe {
 
 @media (max-width: 1180px) {
     .layout { grid-template-columns: 300px minmax(0, 1fr); }
-    .detail { grid-column: 1 / -1; position: static; }
 }
 
 @media (max-width: 820px) {
     .hero { padding: 18px 18px 32px; }
     .topbar, .hero-content, .layout, .roadmap-grid { display: grid; grid-template-columns: 1fr; }
     .layout { padding: 18px; }
-    .filters, .detail { position: static; }
+    .filters { position: static; }
     .room-card { grid-template-columns: 1fr; }
     .hero-stats { grid-template-columns: 1fr; }
 }

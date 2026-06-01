@@ -23,8 +23,11 @@
             <p><strong>{{ room.price|floatformat:0 }} VND</strong> - {{ room.area }} m²</p>
             {% if room.rejection_reason %}<p class="danger">Lý do từ chối: {{ room.rejection_reason }}</p>{% endif %}
             <div class="actions">
-                <a href="{% url 'landlord-room-detail' room.id %}">Chi tiết</a>
+                <a href="{% url 'landlord-room-detail' room.id %}">Quản lý</a>
                 <a href="{% url 'landlord-room-edit' room.id %}">Sửa</a>
+                {% if room.status == "active" %}
+                    <a href="{% url 'frontend-room-detail' room.id %}" target="_blank" rel="noopener">Xem trang công khai</a>
+                {% endif %}
                 {% if room.status == "draft" or room.status == "rejected" %}
                     <form method="post" action="{% url 'landlord-room-submit' room.id %}">{% csrf_token %}<button>Gửi duyệt</button></form>
                 {% endif %}

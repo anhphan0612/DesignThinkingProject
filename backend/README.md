@@ -2,6 +2,15 @@
 
 Backend Django cho ung dung tim va goi y phong tro cho sinh vien.
 
+## Cau truc
+
+```text
+backend/   Django API, auth, dashboard, database models va server-side views
+frontend/  Template va static asset cua giao dien public tim phong
+```
+
+Backend van render cac template public qua `apps.frontend.views`, nhung file HTML/CSS/JS cua giao dien public duoc dat ngoai thu muc `backend` de de quan ly rieng.
+
 ## Pham vi hien tai
 
 - Custom user dang nhap bang email, vai tro `student`, `landlord`, `admin`.
@@ -37,6 +46,18 @@ python manage.py runserver
 ```
 
 Bien moi truong trong `.env` can duoc nap vao terminal hoac cau hinh bang cong cu chay ung dung. Du an doc truc tiep cac bien `DJANGO_*` va `POSTGRES_*`.
+
+## Kiem tra va test
+
+Chay bang virtualenv Python 3.12 cua du an:
+
+```powershell
+.\.venv\Scripts\python.exe manage.py check
+.\.venv\Scripts\python.exe manage.py test
+```
+
+Django can tao database test PostGIS, mac dinh la `test_student_housing` hoac gia tri `POSTGRES_TEST_DB`.
+User PostgreSQL trong `POSTGRES_USER` can co quyen `CREATEDB`, hoac database test can duoc tao san va chay test voi `--keepdb`.
 
 ## API ban dau
 

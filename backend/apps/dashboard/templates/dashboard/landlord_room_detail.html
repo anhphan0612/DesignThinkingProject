@@ -5,11 +5,16 @@
 {% block content %}
 <section class="page-title">
     <div>
-        <p class="eyebrow">Phòng của chủ trọ</p>
+        <p class="eyebrow">Trang quản lý phòng</p>
         <h1>{{ room.title }}</h1>
         <p>{{ room.address }} - {{ room.get_status_display }}</p>
     </div>
-    <a class="button" href="{% url 'landlord-room-edit' room.id %}">Sửa phòng</a>
+    <div class="actions">
+        <a class="button" href="{% url 'landlord-room-edit' room.id %}">Sửa phòng</a>
+        {% if room.status == "active" %}
+            <a class="button secondary" href="{% url 'frontend-room-detail' room.id %}" target="_blank" rel="noopener">Xem trang công khai</a>
+        {% endif %}
+    </div>
 </section>
 
 <section class="two-col">
@@ -24,7 +29,7 @@
                 <form method="post" action="{% url 'landlord-room-submit' room.id %}">{% csrf_token %}<button>Gửi duyệt</button></form>
             {% endif %}
             {% if room.status == "active" %}
-                <a href="{% url 'frontend-room-detail' room.id %}" target="_blank">Xem trang công khai</a>
+                <a href="{% url 'frontend-room-detail' room.id %}" target="_blank" rel="noopener">Xem trang công khai</a>
             {% endif %}
         </div>
     </article>
