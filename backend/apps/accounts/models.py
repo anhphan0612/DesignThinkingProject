@@ -7,8 +7,8 @@ from .managers import UserManager
 
 class User(AbstractUser):
     class Role(models.TextChoices):
-        STUDENT = "student", "Student"
-        LANDLORD = "landlord", "Landlord"
+        STUDENT = "student", "Sinh viên"
+        LANDLORD = "landlord", "Chủ trọ"
         ADMIN = "admin", "Admin"
 
     username = None
@@ -76,10 +76,10 @@ class StudentProfile(models.Model):
 
 class LandlordProfile(models.Model):
     class VerificationStatus(models.TextChoices):
-        UNVERIFIED = "unverified", "Unverified"
-        PENDING = "pending", "Pending"
-        APPROVED = "approved", "Approved"
-        REJECTED = "rejected", "Rejected"
+        UNVERIFIED = "unverified", "Chưa xác thực"
+        PENDING = "pending", "Chờ duyệt"
+        APPROVED = "approved", "Đã xác thực"
+        REJECTED = "rejected", "Bị từ chối"
 
     user = models.OneToOneField(
         User,

@@ -49,7 +49,7 @@ def upload_room_image(request, pk):
         return redirect("frontend-room-detail", pk=room.pk)
     image = request.FILES.get("image")
     if not image:
-        messages.error(request, "Hay chon anh truoc khi gui.")
+        messages.error(request, "Hãy chọn ảnh trước khi gửi.")
         return redirect("frontend-room-detail", pk=room.pk)
 
     user = request.user
@@ -74,7 +74,7 @@ def upload_room_image(request, pk):
         is_cover=False,
     )
     if status == RoomImage.ModerationStatus.PENDING:
-        messages.success(request, "Anh da duoc gui va dang cho admin duyet.")
+        messages.success(request, "Ảnh đã được gửi và đang chờ admin duyệt.")
     else:
-        messages.success(request, "Anh da duoc them vao phong.")
+        messages.success(request, "Ảnh đã được thêm vào phòng.")
     return redirect("frontend-room-detail", pk=room.pk)

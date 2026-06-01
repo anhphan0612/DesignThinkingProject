@@ -16,17 +16,17 @@ class Amenity(models.Model):
 
 class Room(models.Model):
     class Status(models.TextChoices):
-        DRAFT = "draft", "Draft"
-        PENDING = "pending", "Pending approval"
-        ACTIVE = "active", "Active"
-        REJECTED = "rejected", "Rejected"
-        INACTIVE = "inactive", "Inactive"
-        RENTED = "rented", "Rented"
+        DRAFT = "draft", "Bản nháp"
+        PENDING = "pending", "Chờ duyệt"
+        ACTIVE = "active", "Đang hiển thị"
+        REJECTED = "rejected", "Bị từ chối"
+        INACTIVE = "inactive", "Đã ẩn"
+        RENTED = "rented", "Đã cho thuê"
 
     class GenderPolicy(models.TextChoices):
-        ANY = "any", "Any"
-        MALE = "male", "Male"
-        FEMALE = "female", "Female"
+        ANY = "any", "Tất cả"
+        MALE = "male", "Nam"
+        FEMALE = "female", "Nữ"
 
     landlord = models.ForeignKey(
         "accounts.LandlordProfile",
@@ -93,14 +93,14 @@ class Room(models.Model):
 
 class RoomImage(models.Model):
     class Source(models.TextChoices):
-        LANDLORD = "landlord", "Landlord"
-        STUDENT = "student", "Student"
+        LANDLORD = "landlord", "Chủ trọ"
+        STUDENT = "student", "Sinh viên"
         ADMIN = "admin", "Admin"
 
     class ModerationStatus(models.TextChoices):
-        PENDING = "pending", "Pending"
-        APPROVED = "approved", "Approved"
-        REJECTED = "rejected", "Rejected"
+        PENDING = "pending", "Chờ duyệt"
+        APPROVED = "approved", "Đã duyệt"
+        REJECTED = "rejected", "Bị từ chối"
 
     room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="images")
     image = models.ImageField(upload_to="rooms/")

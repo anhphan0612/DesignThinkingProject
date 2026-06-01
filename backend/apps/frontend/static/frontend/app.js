@@ -32,9 +32,11 @@ const els = {
     favoriteButton: document.querySelector("#favoriteButton"),
     contactButton: document.querySelector("#contactButton"),
     contactResult: document.querySelector("#contactResult"),
+    detailPageLink: document.querySelector("#detailPageLink"),
     recommendationBox: document.querySelector("#recommendationBox"),
     recommendationList: document.querySelector("#recommendationList"),
     recommendationCount: document.querySelector("#recommendationCount"),
+    heroRoomCount: document.querySelector("#heroRoomCount"),
 };
 
 function csrfToken() {
@@ -129,9 +131,12 @@ function renderAmenities() {
 
 function renderRooms() {
     els.roomList.innerHTML = "";
-    els.resultCount.textContent = `${state.rooms.length} phong`;
+    els.resultCount.textContent = `${state.rooms.length} phòng`;
+    if (els.heroRoomCount) {
+        els.heroRoomCount.textContent = state.rooms.length;
+    }
     if (!state.rooms.length) {
-        els.roomList.innerHTML = '<div class="empty-state"><p class="eyebrow">Khong co ket qua</p><h2>Thu giam dieu kien loc</h2><p class="muted">Backend hien chi co bo du lieu demo nho cho prototype.</p></div>';
+        els.roomList.innerHTML = '<div class="empty-state"><p class="eyebrow">Không có kết quả</p><h2>Thử giảm điều kiện lọc</h2><p class="muted">Bộ dữ liệu hiện tại vẫn là dữ liệu demo nên số lượng phòng chưa nhiều.</p></div>';
         els.detailEmpty.hidden = false;
         els.roomDetail.hidden = true;
         return;
@@ -146,7 +151,7 @@ function renderRecommendations(items) {
         return;
     }
     els.recommendationBox.hidden = false;
-    els.recommendationCount.textContent = `${items.length} phong`;
+    els.recommendationCount.textContent = `${items.length} phòng`;
     els.recommendationList.innerHTML = "";
     items.slice(0, 3).forEach((item) => {
         const element = document.createElement("div");
@@ -171,15 +176,20 @@ function roomCard(room) {
     card.tabIndex = 0;
     card.dataset.roomId = room.id;
     const amenities = room.amenities.slice(0, 4).map((amenity) => `<span class="tag">${amenity.name}</span>`).join("");
-    const distance = room.distance_km ? `Cach truong ${room.distance_km} km` : "Chua loc theo truong";
+    const distance = room.distance_km ? `Cách trường ${room.distance_km} km` : "Chưa lọc theo trường";
+    const cover = room.images.find((image) => image.is_cover) || room.images[0];
+    const thumbnail = cover
+        ? `<img src="${cover.image}" alt="${cover.caption || room.title}">`
+        : "<span>ẢNH</span>";
     card.innerHTML = `
-        <div class="thumb">ROOM</div>
+        <div class="thumb">${thumbnail}</div>
         <div>
             <h3>${room.title}</h3>
-            <div class="price">${formatCurrency(room.price)} / thang</div>
-            <div class="meta"><span>${room.area} m2</span><span>${room.max_occupants} nguoi</span><span>${distance}</span></div>
+            <div class="price">${formatCurrency(room.price)} / tháng</div>
+            <div class="meta"><span>${room.area} m²</span><span>${room.max_occupants} người</span><span>${distance}</span></div>
             <p class="muted">${room.address}</p>
             <div class="tags">${amenities}</div>
+            <span class="card-link">Xem chi tiết</span>
         </div>
     `;
     card.addEventListener("click", () => {
@@ -206,31 +216,32 @@ function selectRoom(roomId) {
     els.roomDetail.hidden = false;
     els.detailTitle.textContent = room.title;
     els.detailAddress.textContent = `${room.address} - ${room.ward_name}, ${room.district_name}`;
-    els.detailPrice.textContent = `${formatCurrency(room.price)} / thang`;
-    els.detailArea.textContent = `${room.area} m2`;
-    els.detailOccupants.textContent = `${room.max_occupants} nguoi`;
-    els.detailDistance.textContent = room.distance_km ? `${room.distance_km} km` : "Chua loc theo truong";
+    els.detailPrice.textContent = `${formatCurrency(room.price)} / tháng`;
+    els.detailArea.textContent = `${room.area} m²`;
+    els.detailOccupants.textContent = `${room.max_occupants} người`;
+    els.detailDistance.textContent = room.distance_km ? `${room.distance_km} km` : "Chưa lọc theo trường";
     els.detailAmenities.innerHTML = room.amenities.map((amenity) => `<span class="tag">${amenity.name}</span>`).join("");
     els.favoriteButton.disabled = !state.isAuthenticated;
-    els.favoriteButton.textContent = state.isAuthenticated ? "Luu yeu thich" : "Dang nhap de luu yeu thich";
+    els.favoriteButton.textContent = state.isAuthenticated ? "Lưu yêu thích" : "Đăng nhập để lưu";
     els.contactResult.hidden = true;
+    els.detailPageLink.href = `/rooms/${room.id}/`;
 
     const lat = Number(room.latitude);
     const lng = Number(room.longitude);
     const delta = 0.006;
     els.mapFrame.src = `https://www.openstreetmap.org/export/embed.html?bbox=${lng - delta}%2C${lat - delta}%2C${lng + delta}%2C${lat + delta}&layer=mapnik&marker=${lat}%2C${lng}`;
-    postJson("/api/events/", { type: "view_room", room: room.id, metadata: { source: "prototype" } }).catch(() => {});
+    postJson("/api/events/", { type: "view_room", room: room.id, metadata: { source: "frontend" } }).catch(() => {});
 }
 
 async function loadRooms() {
-    showStatus("Dang tai phong phu hop...");
+    showStatus("Đang tải phòng phù hợp...");
     try {
         const data = await fetchJson("/api/rooms/", currentFilters());
         state.rooms = data.results || [];
         showStatus("");
         renderRooms();
     } catch (error) {
-        showStatus("Khong tai duoc danh sach phong. Kiem tra server Django va API.", true);
+        showStatus("Không tải được danh sách phòng. Hãy kiểm tra server Django và API.", true);
         console.error(error);
     }
 }
@@ -251,7 +262,7 @@ async function bootstrap() {
             renderRecommendations(recommendations);
         }
     } catch (error) {
-        showStatus("Khong tai duoc du lieu tham chieu. Hay chay migrate va seed demo data.", true);
+        showStatus("Không tải được dữ liệu tham chiếu. Hãy chạy migrate và seed demo data.", true);
         console.error(error);
     }
 }
@@ -282,9 +293,9 @@ els.favoriteButton.addEventListener("click", async () => {
     }
     try {
         const data = await postJson(`/api/rooms/${state.selectedRoomId}/favorite/`);
-        els.favoriteButton.textContent = data.created ? "Da luu yeu thich" : "Da nam trong yeu thich";
+        els.favoriteButton.textContent = data.created ? "Đã lưu yêu thích" : "Đã nằm trong yêu thích";
     } catch (error) {
-        showStatus("Khong luu duoc phong yeu thich. Hay thu dang nhap lai.", true);
+        showStatus("Không lưu được phòng yêu thích. Hãy thử đăng nhập lại.", true);
     }
 });
 
@@ -295,9 +306,9 @@ els.contactButton.addEventListener("click", async () => {
     try {
         const data = await postJson(`/api/rooms/${state.selectedRoomId}/contact/`);
         els.contactResult.hidden = false;
-        els.contactResult.textContent = `${data.landlord_name}: ${data.phone || "Chua co so dien thoai"}`;
+        els.contactResult.textContent = `${data.landlord_name}: ${data.phone || "Chưa có số điện thoại"}`;
     } catch (error) {
-        showStatus("Khong lay duoc thong tin lien he.", true);
+        showStatus("Không lấy được thông tin liên hệ.", true);
     }
 });
 

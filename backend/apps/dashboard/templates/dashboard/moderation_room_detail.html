@@ -1,35 +1,35 @@
 {% extends "dashboard/base.html" %}
 
-{% block title %}Kiem duyet phong{% endblock %}
+{% block title %}Kiểm duyệt phòng{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <p class="eyebrow">Kiem duyet phong</p>
+        <p class="eyebrow">Kiểm duyệt phòng</p>
         <h1>{{ room.title }}</h1>
         <p>{{ room.address }} - {{ room.landlord.user.full_name }}</p>
     </div>
     <div class="actions">
         {% if room.status == "pending" %}
-            <form method="post" action="{% url 'moderation-room-approve' room.id %}">{% csrf_token %}<button>Duyet phong</button></form>
-            <a class="button" href="{% url 'moderation-room-reject' room.id %}">Tu choi</a>
+            <form method="post" action="{% url 'moderation-room-approve' room.id %}">{% csrf_token %}<button>Duyệt phòng</button></form>
+            <a class="button" href="{% url 'moderation-room-reject' room.id %}">Từ chối</a>
         {% endif %}
     </div>
 </section>
 
 <section class="two-col">
     <article class="card">
-        <h2>Thong tin phong</h2>
-        <p><strong>Gia:</strong> {{ room.price|floatformat:0 }} VND / thang</p>
-        <p><strong>Dien tich:</strong> {{ room.area }} m2</p>
-        <p><strong>So nguoi:</strong> {{ room.max_occupants }}</p>
+        <h2>Thông tin phòng</h2>
+        <p><strong>Giá:</strong> {{ room.price|floatformat:0 }} VND / tháng</p>
+        <p><strong>Diện tích:</strong> {{ room.area }} m²</p>
+        <p><strong>Số người:</strong> {{ room.max_occupants }}</p>
         <p>{{ room.description }}</p>
         <div class="actions">
             {% for amenity in room.amenities.all %}<span class="status">{{ amenity.name }}</span>{% endfor %}
         </div>
     </article>
     <article class="card">
-        <h2>Chu tro</h2>
+        <h2>Chủ trọ</h2>
         <p>{{ room.landlord.user.full_name }}</p>
         <p>{{ room.landlord.user.email }}</p>
         <p>{{ room.landlord.user.phone }}</p>
@@ -38,15 +38,15 @@
 </section>
 
 <section class="card">
-    <h2>Anh phong</h2>
+    <h2>Ảnh phòng</h2>
     <div class="image-grid">
         {% for image in room.images.all %}
             <figure>
                 <img src="{{ image.image.url }}" alt="{{ image.caption|default:room.title }}">
-                <figcaption>{{ image.caption|default:"Anh phong" }} - {{ image.get_status_display }}</figcaption>
+                <figcaption>{{ image.caption|default:"Ảnh phòng" }} - {{ image.get_status_display }}</figcaption>
             </figure>
         {% empty %}
-            <p>Phong chua co anh.</p>
+            <p>Phòng chưa có ảnh.</p>
         {% endfor %}
     </div>
 </section>

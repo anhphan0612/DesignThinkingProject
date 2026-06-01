@@ -30,9 +30,9 @@ def landlord_room_create(request):
         room.status = Room.Status.DRAFT
         room.save()
         form.save_m2m()
-        messages.success(request, "Da tao phong nhap. Hay them anh va gui duyet.")
+        messages.success(request, "Đã tạo phòng nháp. Hãy thêm ảnh và gửi duyệt.")
         return redirect("landlord-room-detail", pk=room.pk)
-    return render(request, "dashboard/landlord_room_form.html", {"form": form, "title": "Tao phong moi"})
+    return render(request, "dashboard/landlord_room_form.html", {"form": form, "title": "Tạo phòng mới"})
 
 
 @landlord_required
@@ -54,9 +54,9 @@ def landlord_room_edit(request, pk):
             room.approved_by = None
             room.approved_at = None
             room.save(update_fields=("status", "approved_by", "approved_at", "updated_at"))
-        messages.success(request, "Da cap nhat phong.")
+        messages.success(request, "Đã cập nhật phòng.")
         return redirect("landlord-room-detail", pk=room.pk)
-    return render(request, "dashboard/landlord_room_form.html", {"form": form, "room": room, "title": "Sua phong"})
+    return render(request, "dashboard/landlord_room_form.html", {"form": form, "room": room, "title": "Sửa phòng"})
 
 
 @landlord_required
@@ -64,7 +64,7 @@ def landlord_room_submit(request, pk):
     room = get_object_or_404(Room, pk=pk, landlord=request.user.landlord_profile, deleted_at__isnull=True)
     try:
         submit_room_for_review(room=room)
-        messages.success(request, "Da gui phong cho admin duyet.")
+        messages.success(request, "Đã gửi phòng cho admin duyệt.")
     except Exception as exc:
         messages.error(request, str(exc))
     return redirect("landlord-room-detail", pk=room.pk)
@@ -75,7 +75,7 @@ def landlord_room_mark_rented(request, pk):
     room = get_object_or_404(Room, pk=pk, landlord=request.user.landlord_profile, deleted_at__isnull=True)
     try:
         mark_room_rented(room=room)
-        messages.success(request, "Da danh dau phong la da cho thue.")
+        messages.success(request, "Đã đánh dấu phòng là đã cho thuê.")
     except Exception as exc:
         messages.error(request, str(exc))
     return redirect("landlord-room-detail", pk=room.pk)
@@ -92,9 +92,9 @@ def landlord_room_image_upload(request, pk):
         image.source = RoomImage.Source.LANDLORD
         image.status = RoomImage.ModerationStatus.APPROVED
         image.save()
-        messages.success(request, "Da them anh phong.")
+        messages.success(request, "Đã thêm ảnh phòng.")
     else:
-        messages.error(request, "Khong them duoc anh phong.")
+        messages.error(request, "Không thêm được ảnh phòng.")
     return redirect("landlord-room-detail", pk=room.pk)
 
 
@@ -124,7 +124,7 @@ def moderation_room_detail(request, pk):
 def moderation_room_approve(request, pk):
     room = get_object_or_404(Room, pk=pk)
     approve_room(room=room, admin_user=request.user)
-    messages.success(request, "Da duyet phong.")
+    messages.success(request, "Đã duyệt phòng.")
     return redirect("moderation-dashboard")
 
 
@@ -134,9 +134,9 @@ def moderation_room_reject(request, pk):
     form = RejectRoomForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         reject_room(room=room, reason=form.cleaned_data["reason"])
-        messages.success(request, "Da tu choi phong.")
+        messages.success(request, "Đã từ chối phòng.")
         return redirect("moderation-dashboard")
-    return render(request, "dashboard/reject_form.html", {"form": form, "title": "Tu choi phong"})
+    return render(request, "dashboard/reject_form.html", {"form": form, "title": "Từ chối phòng"})
 
 
 @staff_required
@@ -147,7 +147,7 @@ def moderation_image_approve(request, pk):
     image.reviewed_at = timezone.now()
     image.moderation_note = ""
     image.save(update_fields=("status", "reviewed_by", "reviewed_at", "moderation_note"))
-    messages.success(request, "Da duyet anh.")
+    messages.success(request, "Đã duyệt ảnh.")
     return redirect("moderation-dashboard")
 
 
@@ -161,6 +161,6 @@ def moderation_image_reject(request, pk):
         image.reviewed_at = timezone.now()
         image.moderation_note = form.cleaned_data["moderation_note"]
         image.save(update_fields=("status", "reviewed_by", "reviewed_at", "moderation_note"))
-        messages.success(request, "Da tu choi anh.")
+        messages.success(request, "Đã từ chối ảnh.")
         return redirect("moderation-dashboard")
-    return render(request, "dashboard/reject_form.html", {"form": form, "title": "Tu choi anh"})
+    return render(request, "dashboard/reject_form.html", {"form": form, "title": "Từ chối ảnh"})

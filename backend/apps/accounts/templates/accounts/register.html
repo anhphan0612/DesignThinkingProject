@@ -1,12 +1,12 @@
 {% extends "accounts/auth_base.html" %}
 {% load socialaccount %}
 
-{% block title %}Dang ky{% endblock %}
-{% block headline %}Tao tai khoan sinh vien hoac chu tro{% endblock %}
+{% block title %}Đăng ký{% endblock %}
+{% block headline %}Tạo tài khoản sinh viên hoặc chủ trọ{% endblock %}
 
 {% block content %}
-<p class="eyebrow">Dang ky</p>
-<h2>Bat dau voi Tro Tot Sinh Vien</h2>
+<p class="eyebrow">Đăng ký</p>
+<h2>Bắt đầu với Trọ Tốt Sinh Viên</h2>
 
 <form method="post" novalidate>
     {% csrf_token %}
@@ -18,10 +18,10 @@
             {{ field.errors }}
         </label>
     {% endfor %}
-    <button type="submit">Tao tai khoan</button>
+    <button type="submit">Tạo tài khoản</button>
 </form>
 
-<div class="divider"><span>Hoac tao tai khoan sinh vien bang</span></div>
+<div class="divider"><span>Hoặc tạo tài khoản sinh viên bằng</span></div>
 {% if "google" in social_providers or "facebook" in social_providers %}
     <div class="social-actions">
         {% if "google" in social_providers %}
@@ -32,8 +32,8 @@
         {% endif %}
     </div>
 {% else %}
-    <div class="notice">OAuth Google/Facebook chua co client id/secret. Them Social application trong Django admin de bat nut dang ky nhanh.</div>
+    <div class="notice">OAuth Google/Facebook chưa có client id/secret. Thêm Social application trong Django admin để bật đăng ký nhanh.</div>
 {% endif %}
 
-<p class="switch">Da co tai khoan? <a href="{% url 'web-login' %}">Dang nhap</a></p>
+<p class="switch">Đã có tài khoản? <a href="{% url 'web-login' %}">Đăng nhập</a></p>
 {% endblock %}

@@ -5,10 +5,10 @@ from apps.listings.models import Amenity, Room, RoomImage
 
 
 class RoomForm(forms.ModelForm):
-    latitude = forms.DecimalField(label="Vi do", max_digits=9, decimal_places=6)
-    longitude = forms.DecimalField(label="Kinh do", max_digits=9, decimal_places=6)
+    latitude = forms.DecimalField(label="Vĩ độ", max_digits=9, decimal_places=6)
+    longitude = forms.DecimalField(label="Kinh độ", max_digits=9, decimal_places=6)
     amenities = forms.ModelMultipleChoiceField(
-        label="Tien ich",
+        label="Tiện ích",
         queryset=Amenity.objects.all(),
         required=False,
         widget=forms.CheckboxSelectMultiple,
@@ -33,17 +33,17 @@ class RoomForm(forms.ModelForm):
             "amenities",
         )
         labels = {
-            "ward": "Phuong",
-            "title": "Tieu de",
-            "description": "Mo ta",
-            "address": "Dia chi",
-            "price": "Gia thue",
-            "deposit": "Tien coc",
-            "area": "Dien tich",
-            "max_occupants": "So nguoi toi da",
-            "gender_policy": "Gioi tinh",
-            "electricity_price": "Gia dien",
-            "water_price": "Gia nuoc",
+            "ward": "Phường",
+            "title": "Tiêu đề",
+            "description": "Mô tả",
+            "address": "Địa chỉ",
+            "price": "Giá thuê",
+            "deposit": "Tiền cọc",
+            "area": "Diện tích",
+            "max_occupants": "Số người tối đa",
+            "gender_policy": "Giới tính",
+            "electricity_price": "Giá điện",
+            "water_price": "Giá nước",
         }
 
     def __init__(self, *args, **kwargs):
@@ -70,17 +70,17 @@ class LandlordRoomImageForm(forms.ModelForm):
         model = RoomImage
         fields = ("image", "caption", "is_cover", "sort_order")
         labels = {
-            "image": "Anh",
-            "caption": "Chu thich",
-            "is_cover": "Dat lam anh bia",
-            "sort_order": "Thu tu hien thi",
+            "image": "Ảnh",
+            "caption": "Chú thích",
+            "is_cover": "Đặt làm ảnh bìa",
+            "sort_order": "Thứ tự hiển thị",
         }
 
 
 class RejectRoomForm(forms.Form):
-    reason = forms.CharField(label="Ly do tu choi", widget=forms.Textarea)
+    reason = forms.CharField(label="Lý do từ chối", widget=forms.Textarea)
 
 
 class RejectImageForm(forms.Form):
-    moderation_note = forms.CharField(label="Ly do tu choi", widget=forms.Textarea)
+    moderation_note = forms.CharField(label="Lý do từ chối", widget=forms.Textarea)
 

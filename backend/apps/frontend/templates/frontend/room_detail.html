@@ -5,21 +5,23 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token }}">
-    <title>{{ room.title }} - Tro Tot Sinh Vien</title>
+    <title>{{ room.title }} - Trọ Tốt Sinh Viên</title>
     <link rel="stylesheet" href="{% static 'frontend/styles.css' %}">
     <link rel="stylesheet" href="{% static 'frontend/detail.css' %}">
 </head>
 <body>
     <header class="detail-hero">
         <nav class="topbar">
-            <a class="brand" href="/"><span class="brand-mark">T</span><span>Tro Tot Sinh Vien</span></a>
+            <a class="brand" href="/"><span class="brand-mark">T</span><span>Trọ Tốt Sinh Viên</span></a>
             <div class="nav-actions">
+                <a href="/">Tìm phòng</a>
                 {% if request.user.is_authenticated %}
                     <a href="{% url 'web-profile' %}">{{ request.user.full_name|default:request.user.email }}</a>
-                    <a href="{% url 'web-logout' %}">Dang xuat</a>
+                    {% if request.user.role == "landlord" %}<a href="{% url 'landlord-dashboard' %}">Kênh chủ trọ</a>{% endif %}
+                    <a href="{% url 'web-logout' %}">Đăng xuất</a>
                 {% else %}
-                    <a href="{% url 'web-login' %}">Dang nhap</a>
-                    <a href="{% url 'web-register' %}">Dang ky</a>
+                    <a href="{% url 'web-login' %}?next={{ request.path }}">Đăng nhập</a>
+                    <a class="nav-primary" href="{% url 'web-register' %}">Đăng ký</a>
                 {% endif %}
             </div>
         </nav>
@@ -34,11 +36,11 @@
 
         <section class="room-summary">
             <div>
-                <p class="eyebrow">Chi tiet phong</p>
+                <p class="eyebrow">Chi tiết phòng</p>
                 <h1>{{ room.title }}</h1>
                 <p class="muted">{{ room.address }} - {{ room.ward.name }}, {{ room.ward.district.name }}</p>
             </div>
-            <div class="summary-price">{{ room.price|floatformat:0 }} VND / thang</div>
+            <div class="summary-price">{{ room.price|floatformat:0 }} VND / tháng</div>
         </section>
 
         <section class="detail-grid">
@@ -48,67 +50,81 @@
                         <figure>
                             <img src="{{ image.image.url }}" alt="{{ image.caption|default:room.title }}">
                             <figcaption>
-                                {{ image.caption|default:"Anh phong" }}
-                                <span>{{ image.get_source_display }}</span>
+                                <span>{{ image.caption|default:"Ảnh phòng" }}</span>
+                                <small>{{ image.get_source_display }}</small>
                             </figcaption>
                         </figure>
                     {% empty %}
                         <div class="image-placeholder">
-                            <strong>Chua co anh phong</strong>
-                            <span>Hay them anh de nguoi dung danh gia phong tot hon.</span>
+                            <strong>Chưa có ảnh phòng</strong>
+                            <span>Ảnh do chủ trọ hoặc người dùng gửi sẽ xuất hiện tại đây sau khi được duyệt.</span>
                         </div>
                     {% endfor %}
                 </div>
 
+                <section class="description-card">
+                    <p class="eyebrow">Mô tả</p>
+                    <h2>Thông tin từ chủ trọ</h2>
+                    <p>{{ room.description|linebreaksbr }}</p>
+                </section>
+
                 <div class="upload-panel">
-                    <h2>Gui anh phong</h2>
+                    <h2>Gửi ảnh thực tế của phòng</h2>
                     <p class="muted">
-                        Chu tro co the them anh chinh thuc. Sinh vien/nguoi dung gui anh se cho admin duyet truoc khi hien thi cong khai.
+                        Chủ trọ có thể thêm ảnh chính thức. Sinh viên hoặc người đã từng ở có thể gửi ảnh thực tế;
+                        ảnh sẽ chờ admin duyệt trước khi hiển thị công khai.
                     </p>
                     {% if request.user.is_authenticated %}
                         <form method="post" action="{% url 'room-image-upload' room.id %}" enctype="multipart/form-data">
                             {% csrf_token %}
-                            <label>Chu thich <input name="caption" maxlength="255" placeholder="VD: Khu bep, nha tam, cua so"></label>
-                            <label>Anh <input name="image" type="file" accept="image/*" required></label>
-                            <button type="submit">Gui anh</button>
+                            <label>Chú thích <input name="caption" maxlength="255" placeholder="VD: Khu bếp, nhà tắm, cửa sổ"></label>
+                            <label>Ảnh <input name="image" type="file" accept="image/*" required></label>
+                            <button type="submit">Gửi ảnh</button>
                         </form>
                     {% else %}
-                        <a class="button-link" href="{% url 'web-login' %}?next={{ request.path }}">Dang nhap de gui anh</a>
+                        <a class="button-link" href="{% url 'web-login' %}?next={{ request.path }}">Đăng nhập để gửi ảnh</a>
                     {% endif %}
                 </div>
             </article>
 
             <aside class="room-sidebar">
                 <article class="info-card">
-                    <h2>Thong tin nhanh</h2>
+                    <p class="eyebrow">Tổng quan</p>
+                    <h2>Thông tin nhanh</h2>
                     <dl class="facts vertical">
-                        <div><dt>Dien tich</dt><dd>{{ room.area }} m2</dd></div>
-                        <div><dt>So nguoi toi da</dt><dd>{{ room.max_occupants }}</dd></div>
-                        <div><dt>Dien</dt><dd>{{ room.electricity_price|default:"Chua cap nhat" }}</dd></div>
-                        <div><dt>Nuoc</dt><dd>{{ room.water_price|default:"Chua cap nhat" }}</dd></div>
+                        <div><dt>Diện tích</dt><dd>{{ room.area }} m²</dd></div>
+                        <div><dt>Số người tối đa</dt><dd>{{ room.max_occupants }}</dd></div>
+                        <div><dt>Tiền cọc</dt><dd>{{ room.deposit|floatformat:0|default:"Chưa cập nhật" }} VND</dd></div>
+                        <div><dt>Điện</dt><dd>{{ room.electricity_price|default:"Chưa cập nhật" }}</dd></div>
+                        <div><dt>Nước</dt><dd>{{ room.water_price|default:"Chưa cập nhật" }}</dd></div>
                     </dl>
                     <div class="tags">
                         {% for amenity in room.amenities.all %}
                             <span class="tag">{{ amenity.name }}</span>
+                        {% empty %}
+                            <span class="tag">Chưa cập nhật tiện ích</span>
                         {% endfor %}
                     </div>
                 </article>
 
                 <article class="info-card">
-                    <h2>Chu tro</h2>
+                    <p class="eyebrow">Liên hệ</p>
+                    <h2>Chủ trọ</h2>
                     <p><strong>{{ room.landlord.user.full_name }}</strong></p>
-                    <p class="muted">{{ room.landlord.business_name|default:"Chu tro ca nhan" }}</p>
-                    <button id="contactButton" type="button" data-room-id="{{ room.id }}">Hien thong tin lien he</button>
+                    <p class="muted">{{ room.landlord.business_name|default:"Chủ trọ cá nhân" }}</p>
+                    <button id="contactButton" type="button" data-room-id="{{ room.id }}">Hiện thông tin liên hệ</button>
                     <div id="contactResult" class="contact-result" hidden></div>
                 </article>
 
                 <article class="info-card">
-                    <h2>Ban do</h2>
+                    <p class="eyebrow">Vị trí</p>
+                    <h2>Bản đồ</h2>
                     <iframe
-                        title="Ban do phong"
+                        title="Bản đồ phòng"
                         loading="lazy"
                         src="https://www.openstreetmap.org/export/embed.html?bbox={{ map_bbox.left }}%2C{{ map_bbox.bottom }}%2C{{ map_bbox.right }}%2C{{ map_bbox.top }}&layer=mapnik&marker={{ room.location.y }}%2C{{ room.location.x }}">
                     </iframe>
+                    <p class="map-note">Vị trí dùng cho tham khảo khi xem phòng. Hãy xác nhận lại địa chỉ với chủ trọ trước khi đặt cọc.</p>
                 </article>
             </aside>
         </section>

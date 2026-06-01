@@ -4,17 +4,17 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Dashboard{% endblock %} - Tro Tot Sinh Vien</title>
+    <title>{% block title %}Dashboard{% endblock %} - Trọ Tốt Sinh Viên</title>
     <link rel="stylesheet" href="{% static 'dashboard/dashboard.css' %}">
 </head>
 <body>
     <header class="dash-header">
-        <a class="brand" href="/">Tro Tot Sinh Vien</a>
+        <a class="brand" href="/">Trọ Tốt Sinh Viên</a>
         <nav>
-            <a href="/">Tim phong</a>
-            {% if request.user.is_staff %}<a href="{% url 'moderation-dashboard' %}">Kiem duyet</a>{% endif %}
-            {% if request.user.role == "landlord" %}<a href="{% url 'landlord-dashboard' %}">Chu tro</a>{% endif %}
-            <a href="{% url 'web-profile' %}">Ho so</a>
+            <a href="/">Tìm phòng</a>
+            {% if request.user.is_staff %}<a href="{% url 'moderation-dashboard' %}">Kiểm duyệt</a>{% endif %}
+            {% if request.user.role == "landlord" %}<a href="{% url 'landlord-dashboard' %}">Chủ trọ</a>{% endif %}
+            <a href="{% url 'web-profile' %}">Hồ sơ</a>
         </nav>
     </header>
     <main class="dash-shell">

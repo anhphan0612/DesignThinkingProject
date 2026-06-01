@@ -5,7 +5,7 @@
 {% block content %}
 <section class="page-title">
     <div>
-        <p class="eyebrow">Kiem duyet</p>
+        <p class="eyebrow">Kiểm duyệt</p>
         <h1>{{ title }}</h1>
     </div>
 </section>
@@ -13,7 +13,7 @@
 <form class="form-card" method="post">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit">Xac nhan tu choi</button>
+    <button type="submit">Xác nhận từ chối</button>
 </form>
 {% endblock %}
 

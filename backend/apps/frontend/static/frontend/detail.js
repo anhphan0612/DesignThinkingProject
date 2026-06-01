@@ -26,10 +26,10 @@ if (contactButton) {
             const roomId = contactButton.dataset.roomId;
             const data = await postJson(`/api/rooms/${roomId}/contact/`);
             contactResult.hidden = false;
-            contactResult.textContent = `${data.landlord_name}: ${data.phone || "Chua co so dien thoai"}`;
+            contactResult.textContent = `${data.landlord_name}: ${data.phone || "Chưa có số điện thoại"}`;
         } catch (error) {
             contactResult.hidden = false;
-            contactResult.textContent = "Khong lay duoc thong tin lien he.";
+            contactResult.textContent = "Không lấy được thông tin liên hệ.";
         }
     });
 }

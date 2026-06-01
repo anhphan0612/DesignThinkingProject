@@ -6,81 +6,102 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token }}">
     <meta name="is-authenticated" content="{% if request.user.is_authenticated %}true{% else %}false{% endif %}">
-    <title>Tro Tot Sinh Vien - Prototype</title>
+    <title>Trọ Tốt Sinh Viên - Tìm phòng trọ gần trường</title>
     <link rel="stylesheet" href="{% static 'frontend/styles.css' %}">
 </head>
 <body>
     <header class="hero">
         <nav class="topbar">
-            <div class="brand"><span class="brand-mark">T</span><span>Tro Tot Sinh Vien</span></div>
+            <a class="brand" href="/">
+                <span class="brand-mark">T</span>
+                <span>Trọ Tốt Sinh Viên</span>
+            </a>
             <div class="nav-actions">
                 {% if request.user.is_authenticated %}
                     <a href="{% url 'web-profile' %}">{{ request.user.full_name|default:request.user.email }}</a>
-                    {% if request.user.role == "landlord" %}<a href="{% url 'landlord-dashboard' %}">Chu tro</a>{% endif %}
-                    {% if request.user.is_staff %}<a href="{% url 'moderation-dashboard' %}">Kiem duyet</a>{% endif %}
-                    <a href="{% url 'web-logout' %}">Dang xuat</a>
+                    {% if request.user.role == "landlord" %}<a href="{% url 'landlord-dashboard' %}">Kênh chủ trọ</a>{% endif %}
+                    {% if request.user.is_staff %}<a href="{% url 'moderation-dashboard' %}">Kiểm duyệt</a>{% endif %}
+                    <a href="{% url 'web-logout' %}">Đăng xuất</a>
                 {% else %}
-                    <a href="{% url 'web-login' %}">Dang nhap</a>
-                    <a href="{% url 'web-register' %}">Dang ky</a>
+                    <a href="{% url 'web-login' %}">Đăng nhập</a>
+                    <a class="nav-primary" href="{% url 'web-register' %}">Đăng ký</a>
                 {% endif %}
-                <a href="/api/rooms/" target="_blank" rel="noreferrer">API rooms</a>
-                <a href="/admin/" target="_blank" rel="noreferrer">Admin</a>
             </div>
         </nav>
+
         <section class="hero-content">
             <div>
-                <p class="eyebrow">Prototype increment 1</p>
-                <h1>Tim phong tro gan truong, hop ngan sach sinh vien.</h1>
-                <p class="hero-copy">Nguyen mau dung API backend hien co: truong dai hoc, tien ich, phong active va loc khoang cach bang PostGIS.</p>
+                <p class="eyebrow">Nền tảng gợi ý phòng trọ cho sinh viên</p>
+                <h1>Tìm phòng trọ phù hợp với trường, ngân sách và nhu cầu sống.</h1>
+                <p class="hero-copy">
+                    Lọc phòng theo trường đại học, khoảng cách, mức giá, diện tích và tiện ích.
+                    Sinh viên có thể lưu phòng yêu thích, xem chi tiết và gửi ảnh thực tế sau khi trải nghiệm.
+                </p>
+                <div class="hero-actions">
+                    <a class="button-link light" href="#search">Bắt đầu tìm phòng</a>
+                    <a class="button-link ghost" href="{% url 'landlord-dashboard' %}">Đăng phòng cho thuê</a>
+                </div>
             </div>
             <div class="hero-card">
-                <strong>Da co backend</strong>
-                <span>Loc gia, truong, khoang cach, tien ich, chi tiet phong.</span>
+                <strong>Đã kết nối backend Django</strong>
+                <span>Tìm kiếm, gợi ý cá nhân, yêu thích, liên hệ chủ trọ, ảnh phòng và dashboard kiểm duyệt.</span>
+                <div class="hero-stats">
+                    <div><b id="heroRoomCount">--</b><span>phòng</span></div>
+                    <div><b>5</b><span>trường demo</span></div>
+                    <div><b>6</b><span>tiện ích</span></div>
+                </div>
             </div>
         </section>
     </header>
 
-    <main class="layout">
-        <aside class="filters" aria-label="Bo loc tim phong">
+    <main id="search" class="layout">
+        <aside class="filters" aria-label="Bộ lọc tìm phòng">
             <div class="panel-heading">
-                <p class="eyebrow">Bo loc</p>
-                <h2>Nhu cau cua ban</h2>
+                <p class="eyebrow">Bộ lọc</p>
+                <h2>Nhu cầu của bạn</h2>
+                <p class="muted">Chọn trường trước nếu muốn lọc theo khoảng cách.</p>
             </div>
-            <label>Tim tu khoa <input id="query" type="search" placeholder="VD: Bach khoa, khep kin"></label>
-            <label>Truong dai hoc <select id="university"><option value="">Tat ca</option></select></label>
-            <label>Ban kinh toi da
+            <label>Tìm từ khóa <input id="query" type="search" placeholder="VD: Bách khoa, khép kín, ban công"></label>
+            <label>Trường đại học <select id="university"><option value="">Tất cả trường</option></select></label>
+            <label>Bán kính tối đa
                 <select id="distance">
-                    <option value="">Khong loc</option>
-                    <option value="1">Duoi 1 km</option>
-                    <option value="2" selected>Duoi 2 km</option>
-                    <option value="3">Duoi 3 km</option>
-                    <option value="5">Duoi 5 km</option>
+                    <option value="">Không lọc</option>
+                    <option value="1">Dưới 1 km</option>
+                    <option value="2" selected>Dưới 2 km</option>
+                    <option value="3">Dưới 3 km</option>
+                    <option value="5">Dưới 5 km</option>
                 </select>
             </label>
             <div class="field-row">
-                <label>Gia tu <input id="minPrice" type="number" min="0" step="100000" placeholder="1500000"></label>
-                <label>Den <input id="maxPrice" type="number" min="0" step="100000" placeholder="4000000"></label>
+                <label>Giá từ <input id="minPrice" type="number" min="0" step="100000" placeholder="1500000"></label>
+                <label>Đến <input id="maxPrice" type="number" min="0" step="100000" placeholder="4000000"></label>
             </div>
-            <label>Dien tich toi thieu <input id="minArea" type="number" min="0" step="1" placeholder="18"></label>
+            <label>Diện tích tối thiểu <input id="minArea" type="number" min="0" step="1" placeholder="18"></label>
             <fieldset>
-                <legend>Tien ich</legend>
+                <legend>Tiện ích mong muốn</legend>
                 <div id="amenities" class="checks"></div>
             </fieldset>
             <div class="filter-actions">
-                <button id="applyFilters" type="button">Tim phong</button>
-                <button id="resetFilters" type="button" class="secondary">Dat lai</button>
+                <button id="applyFilters" type="button">Tìm phòng</button>
+                <button id="resetFilters" type="button" class="secondary">Đặt lại</button>
             </div>
         </aside>
 
         <section class="results">
             <div class="results-bar">
-                <div><p class="eyebrow">Ket qua</p><h2>Phong dang phu hop</h2></div>
-                <span id="resultCount" class="pill">Dang tai...</span>
+                <div>
+                    <p class="eyebrow">Kết quả</p>
+                    <h2>Phòng đang phù hợp</h2>
+                </div>
+                <span id="resultCount" class="pill">Đang tải...</span>
             </div>
             <section id="recommendationBox" class="recommendations" hidden>
                 <div class="mini-heading">
-                    <p class="eyebrow">Goi y ca nhan</p>
-                    <span id="recommendationCount" class="pill">0 phong</span>
+                    <div>
+                        <p class="eyebrow">Gợi ý cá nhân</p>
+                        <h3>Dựa trên hồ sơ sinh viên</h3>
+                    </div>
+                    <span id="recommendationCount" class="pill">0 phòng</span>
                 </div>
                 <div id="recommendationList" class="recommendation-list"></div>
             </section>
@@ -88,39 +109,43 @@
             <div id="roomList" class="room-list"></div>
         </section>
 
-        <aside class="detail" aria-label="Chi tiet phong">
+        <aside class="detail" aria-label="Chi tiết nhanh">
             <div id="detailEmpty" class="empty-state">
-                <p class="eyebrow">Chi tiet</p>
-                <h2>Chon mot phong de xem them</h2>
-                <p>Ban se thay gia, tien ich, dia chi va ban do vi tri phong.</p>
+                <p class="eyebrow">Chi tiết nhanh</p>
+                <h2>Chọn một phòng để xem thông tin chính</h2>
+                <p>Nhấn vào thẻ phòng để mở trang chi tiết đầy đủ, bao gồm ảnh, bản đồ và liên hệ chủ trọ.</p>
             </div>
             <article id="roomDetail" class="detail-card" hidden>
-                <p class="eyebrow">Chi tiet phong</p>
+                <p class="eyebrow">Chi tiết nhanh</p>
                 <h2 id="detailTitle"></h2>
                 <p id="detailAddress" class="muted"></p>
                 <div class="detail-price" id="detailPrice"></div>
                 <dl class="facts">
-                    <div><dt>Dien tich</dt><dd id="detailArea"></dd></div>
-                    <div><dt>So nguoi</dt><dd id="detailOccupants"></dd></div>
-                    <div><dt>Khoang cach</dt><dd id="detailDistance"></dd></div>
+                    <div><dt>Diện tích</dt><dd id="detailArea"></dd></div>
+                    <div><dt>Số người</dt><dd id="detailOccupants"></dd></div>
+                    <div><dt>Khoảng cách</dt><dd id="detailDistance"></dd></div>
                 </dl>
                 <div id="detailAmenities" class="tags"></div>
-                <iframe id="mapFrame" title="Ban do vi tri phong" loading="lazy"></iframe>
+                <iframe id="mapFrame" title="Bản đồ vị trí phòng" loading="lazy"></iframe>
                 <div class="placeholder-actions">
-                    <button id="favoriteButton" type="button">Luu yeu thich</button>
-                    <button id="contactButton" type="button" class="secondary-action">Lien he chu tro</button>
+                    <a id="detailPageLink" class="button-link" href="#">Xem trang chi tiết</a>
+                    <button id="favoriteButton" type="button" class="secondary-action">Lưu yêu thích</button>
+                    <button id="contactButton" type="button" class="secondary-action">Liên hệ chủ trọ</button>
                 </div>
                 <div id="contactResult" class="contact-result" hidden></div>
             </article>
         </aside>
     </main>
 
-    <section class="roadmap">
-        <p class="eyebrow">Increment tiep theo</p>
+    <section class="trust-section">
+        <div class="trust-copy">
+            <p class="eyebrow">Quy trình sử dụng</p>
+            <h2>Từ tìm phòng đến đánh giá thực tế</h2>
+        </div>
         <div class="roadmap-grid">
-            <article><h3>Tuong tac</h3><p>Favorite, ghi log view/contact va lich su tim kiem.</p></article>
-            <article><h3>Goi y ca nhan</h3><p>Xep hang theo truong, ngan sach, khoang cach va tien ich uu tien.</p></article>
-            <article><h3>Chu tro</h3><p>Dashboard dang phong, upload anh va theo doi trang thai duyet.</p></article>
+            <article><h3>1. Tìm theo nhu cầu</h3><p>Lọc theo trường, giá, diện tích, tiện ích và khoảng cách để có danh sách ban đầu.</p></article>
+            <article><h3>2. Xem chi tiết</h3><p>Mỗi phòng có ảnh, thông tin chủ trọ, bản đồ và các chi phí quan trọng.</p></article>
+            <article><h3>3. Bổ sung dữ liệu thực tế</h3><p>Người dùng có thể gửi ảnh phòng; admin duyệt trước khi hiển thị công khai.</p></article>
         </div>
     </section>
 

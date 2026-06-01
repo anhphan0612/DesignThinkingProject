@@ -1,17 +1,17 @@
 {% extends "dashboard/base.html" %}
 
-{% block title %}Kiem duyet{% endblock %}
+{% block title %}Kiểm duyệt{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
         <p class="eyebrow">Admin</p>
-        <h1>Kiem duyet noi dung</h1>
+        <h1>Kiểm duyệt nội dung</h1>
     </div>
 </section>
 
 <section class="card">
-    <h2>Phong cho duyet</h2>
+    <h2>Phòng chờ duyệt</h2>
     <div class="grid-list compact">
         {% for room in pending_rooms %}
             <article class="review-card">
@@ -19,19 +19,19 @@
                 <p>{{ room.address }} - {{ room.landlord.user.full_name }}</p>
                 <p><strong>{{ room.price|floatformat:0 }} VND</strong></p>
                 <div class="actions">
-                    <form method="post" action="{% url 'moderation-room-approve' room.id %}">{% csrf_token %}<button>Duyet</button></form>
-                    <a href="{% url 'moderation-room-reject' room.id %}">Tu choi</a>
+                    <form method="post" action="{% url 'moderation-room-approve' room.id %}">{% csrf_token %}<button>Duyệt</button></form>
+                    <a href="{% url 'moderation-room-reject' room.id %}">Từ chối</a>
                     <a href="{% url 'moderation-room-detail' room.id %}">Xem</a>
                 </div>
             </article>
         {% empty %}
-            <p>Khong co phong cho duyet.</p>
+            <p>Không có phòng chờ duyệt.</p>
         {% endfor %}
     </div>
 </section>
 
 <section class="card">
-    <h2>Anh nguoi dung gui cho duyet</h2>
+    <h2>Ảnh người dùng gửi chờ duyệt</h2>
     <div class="image-grid">
         {% for image in pending_images %}
             <figure>
@@ -39,13 +39,13 @@
                 <figcaption>
                     {{ image.room.title }} - {{ image.uploaded_by.email|default:"unknown" }}
                     <div class="actions">
-                        <form method="post" action="{% url 'moderation-image-approve' image.id %}">{% csrf_token %}<button>Duyet</button></form>
-                        <a href="{% url 'moderation-image-reject' image.id %}">Tu choi</a>
+                        <form method="post" action="{% url 'moderation-image-approve' image.id %}">{% csrf_token %}<button>Duyệt</button></form>
+                        <a href="{% url 'moderation-image-reject' image.id %}">Từ chối</a>
                     </div>
                 </figcaption>
             </figure>
         {% empty %}
-            <p>Khong co anh cho duyet.</p>
+            <p>Không có ảnh chờ duyệt.</p>
         {% endfor %}
     </div>
 </section>

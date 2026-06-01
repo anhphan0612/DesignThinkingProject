@@ -81,7 +81,7 @@ def web_login(request):
     form = WebLoginForm(request.POST or None, request=request)
     if request.method == "POST" and form.is_valid():
         login(request, form.user)
-        messages.success(request, "Dang nhap thanh cong.")
+        messages.success(request, "Đăng nhập thành công.")
         return redirect(request.GET.get("next") or "home")
     return render(
         request,
@@ -97,7 +97,7 @@ def web_register(request):
     if request.method == "POST" and form.is_valid():
         user = form.save()
         login(request, user, backend="django.contrib.auth.backends.ModelBackend")
-        messages.success(request, "Tao tai khoan thanh cong.")
+        messages.success(request, "Tạo tài khoản thành công.")
         return redirect("home")
     return render(
         request,
@@ -109,7 +109,7 @@ def web_register(request):
 @login_required
 def web_logout(request):
     logout(request)
-    messages.success(request, "Da dang xuat.")
+    messages.success(request, "Đã đăng xuất.")
     return redirect("home")
 
 
@@ -128,7 +128,7 @@ def web_profile(request):
             profile_form.save()
             if preference_form is not None:
                 preference_form.save()
-            messages.success(request, "Da cap nhat ho so.")
+            messages.success(request, "Đã cập nhật hồ sơ.")
             return redirect("web-profile")
 
     return render(

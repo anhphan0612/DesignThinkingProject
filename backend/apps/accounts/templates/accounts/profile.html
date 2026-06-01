@@ -1,16 +1,16 @@
 {% extends "accounts/auth_base.html" %}
 
-{% block title %}Ho so{% endblock %}
-{% block headline %}Cap nhat ho so va nhu cau tim phong{% endblock %}
+{% block title %}Hồ sơ{% endblock %}
+{% block headline %}Cập nhật hồ sơ và nhu cầu tìm phòng{% endblock %}
 
 {% block content %}
-<p class="eyebrow">Ho so</p>
+<p class="eyebrow">Hồ sơ</p>
 <h2>{{ request.user.full_name }}</h2>
 <p class="muted">{{ request.user.email }} - {{ request.user.get_role_display }}</p>
 
 <form method="post" novalidate>
     {% csrf_token %}
-    <h3>Thong tin co ban</h3>
+    <h3>Thông tin cơ bản</h3>
     {{ profile_form.non_field_errors }}
     {% for field in profile_form %}
         <label>
@@ -21,7 +21,7 @@
     {% endfor %}
 
     {% if preference_form %}
-        <h3>Nhu cau sinh vien</h3>
+        <h3>Nhu cầu sinh viên</h3>
         {{ preference_form.non_field_errors }}
         {% for field in preference_form %}
             <label>
@@ -31,15 +31,15 @@
             </label>
         {% endfor %}
     {% else %}
-        <div class="notice">Ho so chu tro se duoc mo rong o increment dashboard dang phong.</div>
+        <div class="notice">Hồ sơ chủ trọ sẽ tiếp tục được mở rộng ở increment dashboard đăng phòng.</div>
     {% endif %}
 
-    <button type="submit">Luu thay doi</button>
+    <button type="submit">Lưu thay đổi</button>
 </form>
 
 <div class="profile-actions">
-    <a href="/">Ve trang tim phong</a>
-    <a href="{% url 'web-logout' %}">Dang xuat</a>
+    <a href="/">Về trang tìm phòng</a>
+    <a href="{% url 'web-logout' %}">Đăng xuất</a>
 </div>
 {% endblock %}
 
