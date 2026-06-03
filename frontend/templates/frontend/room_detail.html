@@ -5,14 +5,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token }}">
-    <title>{{ room.title }} - Trọ Tốt Sinh Viên</title>
+    <title>{{ room.title }} - Rentify</title>
     <link rel="stylesheet" href="{% static 'frontend/styles.css' %}">
     <link rel="stylesheet" href="{% static 'frontend/detail.css' %}">
 </head>
 <body>
     <header class="detail-hero">
         <nav class="topbar">
-            <a class="brand" href="/"><span class="brand-mark">T</span><span>Trọ Tốt Sinh Viên</span></a>
+            <a class="brand" href="/"><span class="brand-mark">R</span><span>Rentify</span></a>
             <div class="nav-actions">
                 <a href="/">Tìm phòng</a>
                 {% if request.user.is_authenticated %}

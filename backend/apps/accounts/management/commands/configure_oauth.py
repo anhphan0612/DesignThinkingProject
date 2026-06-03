@@ -18,7 +18,7 @@ class Command(BaseCommand):
         domain = os.environ.get("DJANGO_SITE_DOMAIN", "127.0.0.1:8000")
         site, _ = Site.objects.update_or_create(
             id=1,
-            defaults={"domain": domain, "name": os.environ.get("DJANGO_SITE_NAME", "Tro Tot Sinh Vien")},
+            defaults={"domain": domain, "name": os.environ.get("DJANGO_SITE_NAME", "Rentify")},
         )
 
         configured = []
