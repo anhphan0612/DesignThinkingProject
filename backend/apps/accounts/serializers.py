@@ -3,7 +3,8 @@ from django.db import transaction
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 
-from apps.locations.models import University
+from apps.locations.models import District, University
+from apps.roommates.models import LifestyleTag
 
 from .models import LandlordProfile, StudentProfile, User
 
@@ -45,16 +46,42 @@ class StudentProfileSerializer(serializers.ModelSerializer):
         allow_null=True,
         required=False,
     )
+    preferred_districts = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=District.objects.all(),
+        required=False,
+    )
+    lifestyle_tags = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=LifestyleTag.objects.all(),
+        required=False,
+    )
+    university_name = serializers.CharField(source="university.name", read_only=True)
+    preferred_district_names = serializers.SerializerMethodField()
+    lifestyle_tag_names = serializers.SerializerMethodField()
 
     class Meta:
         model = StudentProfile
         fields = (
             "university",
+            "university_name",
             "student_code",
             "budget_min",
             "budget_max",
             "max_distance_km",
+            "gender",
+            "move_in_date",
+            "preferred_districts",
+            "preferred_district_names",
+            "lifestyle_tags",
+            "lifestyle_tag_names",
         )
+
+    def get_preferred_district_names(self, obj):
+        return [district.name for district in obj.preferred_districts.all()]
+
+    def get_lifestyle_tag_names(self, obj):
+        return [tag.name for tag in obj.lifestyle_tags.all()]
 
 
 class LandlordProfileSerializer(serializers.ModelSerializer):

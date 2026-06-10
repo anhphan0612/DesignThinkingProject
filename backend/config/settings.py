@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     "apps.dashboard",
     "apps.interactions",
     "apps.recommendations",
+    "apps.roommates",
 ]
 
 MIDDLEWARE = [

@@ -140,6 +140,15 @@ a { color: inherit; }
 .hero-card strong { margin-bottom: 10px; font-size: 20px; }
 .hero-card span { color: rgba(255,255,255,.82); line-height: 1.5; }
 
+.compact-hero .hero-content {
+    padding-top: 42px;
+}
+
+.compact-hero h1 {
+    max-width: 840px;
+    font-size: clamp(34px, 5vw, 56px);
+}
+
 .hero-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -452,6 +461,48 @@ iframe {
 .roadmap-grid h3 { margin: 0 0 8px; }
 .roadmap-grid p { margin: 0; color: var(--muted); line-height: 1.6; }
 
+.create-panel {
+    margin-top: 22px;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    background: #f8fafc;
+    padding: 18px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.form-grid label,
+.form-grid fieldset {
+    margin-top: 0;
+}
+
+.form-grid textarea {
+    width: 100%;
+    resize: vertical;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: #fff;
+    color: var(--ink);
+    font: inherit;
+    padding: 12px 13px;
+}
+
+.form-grid button,
+.form-grid .full-span,
+.form-grid fieldset {
+    grid-column: 1 / -1;
+}
+
+.roommate-badge {
+    text-align: center;
+    font-size: 13px;
+    letter-spacing: .08em;
+}
+
 @media (max-width: 1180px) {
     .layout { grid-template-columns: 300px minmax(0, 1fr); }
 }
@@ -463,4 +514,5 @@ iframe {
     .filters { position: static; }
     .room-card { grid-template-columns: 1fr; }
     .hero-stats { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
 }

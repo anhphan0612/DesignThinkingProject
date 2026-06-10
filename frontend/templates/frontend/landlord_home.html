@@ -1,0 +1,131 @@
+{% load static %}
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Rentify - Kênh chủ trọ</title>
+    <link rel="stylesheet" href="{% static 'frontend/landlord.css' %}">
+</head>
+<body>
+    <header class="landlord-hero">
+        <nav class="topbar">
+            <a class="brand" href="{% url 'landlord-home' %}">
+                <span class="brand-mark">R</span>
+                <span>Rentify Chủ trọ</span>
+            </a>
+            <div class="nav-actions">
+                <a href="{% url 'home' %}">Trang tìm phòng</a>
+                {% if request.user.is_authenticated %}
+                    <a href="{% url 'web-profile' %}">{{ request.user.full_name|default:request.user.email }}</a>
+                    {% if request.user.role == "landlord" %}
+                        <a class="nav-primary" href="{% url 'landlord-dashboard' %}">Dashboard</a>
+                    {% endif %}
+                    <a href="{% url 'web-logout' %}">Đăng xuất</a>
+                {% else %}
+                    <a href="{% url 'web-login' %}?next={% url 'landlord-home' %}">Đăng nhập</a>
+                    <a class="nav-primary" href="{% url 'web-register' %}?role=landlord">Tạo tài khoản chủ trọ</a>
+                {% endif %}
+            </div>
+        </nav>
+
+        <section class="hero-grid">
+            <div class="hero-copy">
+                <p class="eyebrow">Kênh vận hành cho người cho thuê</p>
+                <h1>Đăng phòng, theo dõi trạng thái duyệt và quản lý tin cho thuê ở một nơi.</h1>
+                <p>
+                    Khu vực này dành riêng cho chủ trọ. Sinh viên vẫn dùng trang tìm phòng công khai,
+                    còn bạn dùng kênh này để tạo phòng, cập nhật ảnh, gửi duyệt và xem tin đang hiển thị.
+                </p>
+                <div class="hero-actions">
+                    {% if is_landlord %}
+                        <a class="button light" href="{% url 'landlord-room-create' %}">Đăng phòng mới</a>
+                        <a class="button ghost" href="{% url 'landlord-dashboard' %}">Quản lý phòng</a>
+                    {% elif request.user.is_authenticated %}
+                        <a class="button light" href="{% url 'web-profile' %}">Xem hồ sơ hiện tại</a>
+                        <span class="note">Tài khoản hiện tại không phải vai trò chủ trọ.</span>
+                    {% else %}
+                        <a class="button light" href="{% url 'web-register' %}?role=landlord">Bắt đầu cho thuê</a>
+                        <a class="button ghost" href="{% url 'web-login' %}?next={% url 'landlord-home' %}">Tôi đã có tài khoản</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <aside class="hero-panel">
+                {% if is_landlord %}
+                    <p class="eyebrow">Tổng quan của bạn</p>
+                    <h2>{{ profile.business_name|default:"Chủ trọ cá nhân" }}</h2>
+                    <span class="verification">{{ profile.get_verification_status_display }}</span>
+                    <div class="stat-grid">
+                        <div><strong>{{ total_rooms }}</strong><span>Tổng phòng</span></div>
+                        <div><strong>{{ active_rooms }}</strong><span>Đang hiển thị</span></div>
+                        <div><strong>{{ pending_rooms }}</strong><span>Chờ duyệt</span></div>
+                        <div><strong>{{ draft_rooms }}</strong><span>Bản nháp</span></div>
+                    </div>
+                {% else %}
+                    <p class="eyebrow">Quy trình đăng phòng</p>
+                    <ol class="steps">
+                        <li>Tạo tài khoản chủ trọ.</li>
+                        <li>Điền thông tin phòng và vị trí.</li>
+                        <li>Thêm ảnh, gửi admin duyệt.</li>
+                        <li>Tin được hiển thị trên trang sinh viên.</li>
+                    </ol>
+                {% endif %}
+            </aside>
+        </section>
+    </header>
+
+    <main class="landlord-shell">
+        {% if is_landlord %}
+            <section class="section-heading">
+                <div>
+                    <p class="eyebrow">Phòng gần đây</p>
+                    <h2>Tiếp tục quản lý tin cho thuê</h2>
+                </div>
+                <a class="button" href="{% url 'landlord-room-create' %}">Tạo phòng mới</a>
+            </section>
+
+            <section class="room-management-list">
+                {% for room in recent_rooms %}
+                    <article class="management-card">
+                        <div>
+                            <span class="status {{ room.status }}">{{ room.get_status_display }}</span>
+                            <h3>{{ room.title }}</h3>
+                            <p>{{ room.address }}</p>
+                            <strong>{{ room.price|floatformat:0 }} VND / tháng</strong>
+                        </div>
+                        <div class="card-actions">
+                            <a href="{% url 'landlord-room-detail' room.id %}">Quản lý</a>
+                            <a href="{% url 'landlord-room-edit' room.id %}">Sửa</a>
+                            {% if room.status == "active" %}
+                                <a href="{% url 'frontend-room-detail' room.id %}" target="_blank" rel="noopener">Xem công khai</a>
+                            {% endif %}
+                        </div>
+                    </article>
+                {% empty %}
+                    <article class="empty-card">
+                        <h3>Bạn chưa có phòng nào.</h3>
+                        <p>Tạo tin đầu tiên để gửi admin duyệt và hiển thị cho sinh viên.</p>
+                        <a class="button" href="{% url 'landlord-room-create' %}">Tạo phòng đầu tiên</a>
+                    </article>
+                {% endfor %}
+            </section>
+        {% else %}
+            <section class="feature-grid">
+                <article>
+                    <h2>Không dùng chung giao diện sinh viên</h2>
+                    <p>Người thuê tập trung vào tìm kiếm; chủ trọ tập trung vào tạo, sửa và theo dõi trạng thái phòng.</p>
+                </article>
+                <article>
+                    <h2>Kiểm duyệt rõ ràng</h2>
+                    <p>Mỗi phòng có trạng thái bản nháp, chờ duyệt, đang hiển thị hoặc bị từ chối kèm lý do.</p>
+                </article>
+                <article>
+                    <h2>Quản lý ảnh phòng</h2>
+                    <p>Chủ trọ có khu vực riêng để thêm ảnh chính thức và cập nhật thông tin phòng.</p>
+                </article>
+            </section>
+        {% endif %}
+    </main>
+</body>
+</html>

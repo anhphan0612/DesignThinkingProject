@@ -93,11 +93,16 @@ def web_login(request):
 def web_register(request):
     if request.user.is_authenticated:
         return redirect("home")
-    form = WebRegisterForm(request.POST or None)
+    initial = {}
+    if request.GET.get("role") == User.Role.LANDLORD:
+        initial["role"] = User.Role.LANDLORD
+    form = WebRegisterForm(request.POST or None, initial=initial)
     if request.method == "POST" and form.is_valid():
         user = form.save()
         login(request, user, backend="django.contrib.auth.backends.ModelBackend")
         messages.success(request, "Tạo tài khoản thành công.")
+        if user.role == User.Role.LANDLORD:
+            return redirect("landlord-home")
         return redirect("home")
     return render(
         request,

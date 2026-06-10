@@ -1,0 +1,164 @@
+{% load static %}
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <meta name="is-authenticated" content="{% if request.user.is_authenticated %}true{% else %}false{% endif %}">
+    <meta name="is-student" content="{% if is_student %}true{% else %}false{% endif %}">
+    <title>Rentify - Tìm người ở ghép</title>
+    <link rel="stylesheet" href="{% static 'frontend/styles.css' %}">
+</head>
+<body>
+    <header class="hero compact-hero">
+        <nav class="topbar">
+            <a class="brand" href="/">
+                <span class="brand-mark">R</span>
+                <span>Rentify</span>
+            </a>
+            <div class="nav-actions">
+                <a href="/">Tìm phòng</a>
+                {% if request.user.is_authenticated %}
+                    <a href="{% url 'web-profile' %}">{{ request.user.full_name|default:request.user.email }}</a>
+                    <a href="{% url 'web-logout' %}">Đăng xuất</a>
+                {% else %}
+                    <a href="{% url 'web-login' %}?next={% url 'roommate-home' %}">Đăng nhập</a>
+                    <a class="nav-primary" href="{% url 'web-register' %}">Đăng ký</a>
+                {% endif %}
+            </div>
+        </nav>
+        <section class="hero-content">
+            <div>
+                <p class="eyebrow">Ghép trọ sinh viên</p>
+                <h1>Tìm bạn ở ghép theo ngân sách, khu vực và thói quen sống.</h1>
+                <p class="hero-copy">
+                    Đăng nhu cầu đã có phòng cần thêm người hoặc chưa có phòng muốn tìm bạn cùng thuê.
+                    Rentify chỉ xử lý ghép trọ, không xử lý pass phòng hay chuyển nhượng hợp đồng.
+                </p>
+                <div class="hero-actions">
+                    <a class="button-link light" href="#roommateSearch">Xem bài ghép trọ</a>
+                    {% if is_student %}
+                        <a class="button-link ghost" href="#createRoommatePost">Đăng nhu cầu</a>
+                    {% else %}
+                        <a class="button-link ghost" href="{% url 'web-login' %}?next={% url 'roommate-home' %}">Đăng nhập để đăng bài</a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="hero-card">
+                <strong>Luồng ghép trọ riêng</strong>
+                <span>Bài ghép trọ nằm trên trang riêng, tách khỏi dashboard chủ trọ và danh sách phòng cho thuê.</span>
+                <div class="hero-stats">
+                    <div><b id="heroPostCount">--</b><span>bài đăng</span></div>
+                    <div><b id="heroMatchCount">--</b><span>gợi ý</span></div>
+                    <div><b>2</b><span>kiểu nhu cầu</span></div>
+                </div>
+            </div>
+        </section>
+    </header>
+
+    <main id="roommateSearch" class="layout">
+        <aside class="filters" aria-label="Bộ lọc ghép trọ">
+            <div class="panel-heading">
+                <p class="eyebrow">Bộ lọc</p>
+                <h2>Nhu cầu ghép trọ</h2>
+                <p class="muted">Từ khóa là tìm kiếm mở; bộ lọc là điều kiện cứng; hồ sơ dùng cho gợi ý cá nhân.</p>
+            </div>
+            <label>Từ khóa <input id="roommateQuery" type="search" placeholder="VD: Bách khoa, yên tĩnh, ở ghép nữ"></label>
+            <label>Kiểu nhu cầu
+                <select id="roommateType">
+                    <option value="">Tất cả</option>
+                    <option value="has_room">Đã có phòng</option>
+                    <option value="looking_together">Tìm bạn cùng thuê</option>
+                </select>
+            </label>
+            <label>Trường đại học <select id="roommateUniversity"><option value="">Tất cả trường</option></select></label>
+            <label>Khu vực <select id="roommateDistrict"><option value="">Tất cả khu vực</option></select></label>
+            <div class="field-row">
+                <label>Ngân sách từ <input id="roommateMinBudget" type="number" min="0" step="100000" placeholder="1500000"></label>
+                <label>Đến <input id="roommateMaxBudget" type="number" min="0" step="100000" placeholder="3500000"></label>
+            </div>
+            <fieldset>
+                <legend>Thói quen sống</legend>
+                <div id="roommateTags" class="checks"></div>
+            </fieldset>
+            <div class="filter-actions">
+                <button id="applyRoommateFilters" type="button">Tìm người</button>
+                <button id="resetRoommateFilters" type="button" class="secondary">Đặt lại</button>
+            </div>
+        </aside>
+
+        <section class="results">
+            <div class="results-bar">
+                <div>
+                    <p class="eyebrow">Kết quả</p>
+                    <h2>Bài ghép trọ đang mở</h2>
+                </div>
+                <span id="roommateResultCount" class="pill">Đang tải...</span>
+            </div>
+
+            <section id="roommateMatchBox" class="recommendations" hidden>
+                <div class="mini-heading">
+                    <div>
+                        <p class="eyebrow">Gợi ý cá nhân</p>
+                        <h3>Dựa trên hồ sơ sinh viên</h3>
+                    </div>
+                    <span id="roommateMatchCount" class="pill">0 gợi ý</span>
+                </div>
+                <div id="roommateMatchList" class="recommendation-list"></div>
+            </section>
+
+            <div id="roommateStatus" class="status" hidden></div>
+            <div id="roommateList" class="room-list"></div>
+
+            {% if is_student %}
+                <section id="createRoommatePost" class="create-panel">
+                    <div class="mini-heading">
+                        <div>
+                            <p class="eyebrow">Đăng nhu cầu</p>
+                            <h3>Tạo bài ghép trọ</h3>
+                        </div>
+                    </div>
+                    <form id="roommateForm" class="form-grid">
+                        <label>Tiêu đề <input name="title" required maxlength="255" placeholder="VD: Tìm 1 bạn nữ ở ghép gần HUST"></label>
+                        <label>Kiểu nhu cầu
+                            <select name="type" required>
+                                <option value="looking_together">Tìm bạn cùng thuê</option>
+                                <option value="has_room">Đã có phòng</option>
+                            </select>
+                        </label>
+                        <label>Trường <select name="university"><option value="">Chưa chọn</option></select></label>
+                        <label>Phường/khu vực cụ thể <select name="ward"><option value="">Chưa chọn</option></select></label>
+                        <label>Địa chỉ nếu đã có phòng <input name="address" placeholder="VD: Ngõ 30 Tạ Quang Bửu"></label>
+                        <div class="field-row">
+                            <label>Ngân sách từ <input name="budget_min" type="number" min="0" step="100000"></label>
+                            <label>Đến <input name="budget_max" type="number" min="0" step="100000"></label>
+                        </div>
+                        <label>Ngày chuyển vào <input name="move_in_date" type="date"></label>
+                        <label>Số chỗ còn trống <input name="available_slots" type="number" min="1" value="1"></label>
+                        <label>Số người tối đa <input name="max_roommates" type="number" min="1" value="2"></label>
+                        <label>Số người hiện tại <input name="current_occupants" type="number" min="0" value="0"></label>
+                        <label>Giới tính mong muốn
+                            <select name="gender_preference">
+                                <option value="any">Không yêu cầu</option>
+                                <option value="male">Nam</option>
+                                <option value="female">Nữ</option>
+                                <option value="same">Cùng giới</option>
+                            </select>
+                        </label>
+                        <label>Số điện thoại liên hệ <input name="contact_phone" placeholder="Nếu bỏ trống sẽ trao đổi sau"></label>
+                        <fieldset>
+                            <legend>Thói quen sống</legend>
+                            <div id="roommateFormTags" class="checks"></div>
+                        </fieldset>
+                        <label class="full-span">Mô tả <textarea name="description" rows="4" placeholder="Lịch sinh hoạt, yêu cầu chia tiền, mong muốn về bạn ở cùng..."></textarea></label>
+                        <button type="submit">Đăng bài</button>
+                    </form>
+                </section>
+            {% endif %}
+        </section>
+    </main>
+
+    <script src="{% static 'frontend/roommates.js' %}"></script>
+</body>
+</html>

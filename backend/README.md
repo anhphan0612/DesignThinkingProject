@@ -1,15 +1,24 @@
-# Student Housing Backend
+# Rentify
 
-Backend Django cho ung dung tim va goi y phong tro cho sinh vien.
+Backend Django cho Rentify: ung dung giup sinh vien tim phong tro va tim nguoi o ghep phu hop quanh truong.
 
 ## Cau truc
 
 ```text
 backend/   Django API, auth, dashboard, database models va server-side views
-frontend/  Template va static asset cua giao dien public tim phong
+frontend/  Template va static asset cua giao dien public
 ```
 
 Backend van render cac template public qua `apps.frontend.views`, nhung file HTML/CSS/JS cua giao dien public duoc dat ngoai thu muc `backend` de de quan ly rieng.
+
+## Dinh huong san pham
+
+Rentify tap trung vao 2 bai toan:
+
+- Tim phong tro do chu tro dang va duoc kiem duyet.
+- Tim nguoi o ghep phu hop theo truong, ngan sach, khu vuc, gioi tinh va thoi quen song.
+
+Rentify khong xu ly bai toan pass phong/chuyen nhuong coc/hop dong thue trong pham vi hien tai. Pass phong co lien quan den thoa thuan 3 ben giua nguoi dang thue, nguoi nhan phong va chu tro, nen se khong dua vao MVP nay.
 
 ## Pham vi hien tai
 
@@ -20,6 +29,7 @@ Backend van render cac template public qua `apps.frontend.views`, nhung file HTM
 - API tim kiem cong khai theo gia, dien tich, tien ich, dia ban, van ban va khoang cach den truong.
 - Token authentication cho API.
 - Favorite, event tracking, search log va recommendation MVP cho sinh vien da dang nhap.
+- Domain model, API, trang public va seed demo cho bai dang ghep tro trong app `roommates`.
 
 ## Yeu cau
 
@@ -65,6 +75,7 @@ Prototype frontend co san tai:
 
 ```text
 http://127.0.0.1:8000/
+http://127.0.0.1:8000/roommates/
 ```
 
 Dashboard web:
@@ -96,6 +107,12 @@ http://127.0.0.1:8000/dashboard/moderation/
 | `POST /api/events/` | Ghi event hanh vi |
 | `POST /api/search-logs/` | Ghi log tim kiem |
 | `GET /api/recommendations/` | Goi y phong MVP cho sinh vien da dang nhap |
+| `GET /api/lifestyle-tags/` | Danh sach thoi quen song dung cho ho so va ghep tro |
+| `GET /api/roommate-posts/` | Danh sach bai ghep tro active va bo loc |
+| `POST /api/roommate-posts/` | Sinh vien tao bai ghep tro active |
+| `GET /api/roommate-posts/mine/` | Sinh vien xem bai ghep tro cua minh |
+| `GET /api/roommate-posts/matches/` | Goi y bai ghep tro theo ho so sinh vien |
+| `POST /api/roommate-posts/{id}/close/` | Dong bai ghep tro cua minh |
 | `POST /api/rooms/` | Chu tro da xac minh tao phong nhap |
 | `GET /api/rooms/mine/` | Chu tro xem cac phong cua minh |
 | `POST /api/rooms/{id}/submit/` | Gui phong cho admin duyet |
@@ -112,9 +129,10 @@ Phong dang cong khai se quay lai trang thai cho duyet khi chu tro sua noi dung, 
 
 ## Buoc tiep theo
 
-- Mo dashboard chu tro de dang phong bang giao dien web.
-- Bo sung upload anh va workflow admin duyet phong tren giao dien.
-- Nang cap recommendation bang so thich tien ich va du lieu hanh vi that.
+- Hoan thien moderation cho bai ghep tro neu can dua vao quy trinh duyet nhu phong tro.
+- Bo sung trang quan ly bai ghep tro cua sinh vien thay vi chi dung API `mine`.
+- Them luong nhan tin/bao cao bai dang khong phu hop giua sinh vien.
+- Tang test coverage cho dashboard, frontend view va cac bo loc nang cao.
 
 ## OAuth Google/Facebook
 

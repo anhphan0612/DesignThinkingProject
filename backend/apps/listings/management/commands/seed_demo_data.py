@@ -4,9 +4,10 @@ from django.contrib.gis.geos import Point
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from apps.accounts.models import LandlordProfile, User
+from apps.accounts.models import LandlordProfile, StudentProfile, User
 from apps.listings.models import Amenity, Room
 from apps.locations.models import District, University, Ward
+from apps.roommates.models import LifestyleTag, RoommatePost
 
 
 DISTRICTS = (
@@ -42,6 +43,15 @@ AMENITIES = (
     ("Cho de xe", "parking"),
     ("Nha tam rieng", "private-bathroom"),
     ("Bep", "kitchen"),
+)
+
+LIFESTYLE_TAGS = (
+    ("Yen tinh", "quiet"),
+    ("Ngu som", "early-sleeper"),
+    ("Sach se", "clean"),
+    ("Nau an", "cooking"),
+    ("Khong hut thuoc", "non-smoking"),
+    ("Than thien thu cung", "pet-friendly"),
 )
 
 ROOMS = (
@@ -102,6 +112,61 @@ ROOMS = (
     },
 )
 
+STUDENTS = (
+    ("student.hust@example.com", "Nguyen Minh Anh", "0911000001", "HUST", ("DD", "HBT"), ("quiet", "clean", "non-smoking")),
+    ("student.neu@example.com", "Tran Hoang Nam", "0911000002", "NEU", ("HBT",), ("cooking", "clean")),
+    ("student.vnu@example.com", "Le Phuong Linh", "0911000003", "VNU", ("CG",), ("quiet", "early-sleeper")),
+)
+
+ROOMMATE_POSTS = (
+    {
+        "email": "student.hust@example.com",
+        "type": RoommatePost.Type.LOOKING_TOGETHER,
+        "title": "Tim 1 ban nu ghep tro gan Bach khoa",
+        "description": "Uu tien ban sach se, gio giac on dinh, ngan sach moi nguoi khoang 2-3 trieu.",
+        "university": "HUST",
+        "districts": ("HBT", "DD"),
+        "budget_min": "1800000",
+        "budget_max": "3200000",
+        "available_slots": 1,
+        "max_roommates": 2,
+        "current_occupants": 1,
+        "gender_preference": RoommatePost.GenderPreference.FEMALE,
+        "tags": ("quiet", "clean", "non-smoking"),
+    },
+    {
+        "email": "student.neu@example.com",
+        "type": RoommatePost.Type.HAS_ROOM,
+        "title": "Da co phong gan NEU can them 1 ban o cung",
+        "description": "Phong khep kin, chia tien ro rang, uu tien ban ton trong khong gian chung.",
+        "university": "NEU",
+        "ward": "HBT-DT",
+        "address": "Ngo 121 Le Thanh Nghi, Hai Ba Trung",
+        "budget_min": "1400000",
+        "budget_max": "1800000",
+        "available_slots": 1,
+        "max_roommates": 2,
+        "current_occupants": 1,
+        "gender_preference": RoommatePost.GenderPreference.ANY,
+        "tags": ("cooking", "clean"),
+    },
+    {
+        "email": "student.vnu@example.com",
+        "type": RoommatePost.Type.LOOKING_TOGETHER,
+        "title": "Tim ban cung thue phong khu Cau Giay",
+        "description": "Muon tim phong quanh Xuan Thuy, uu tien yen tinh de hoc bai.",
+        "university": "VNU",
+        "districts": ("CG",),
+        "budget_min": "2000000",
+        "budget_max": "3500000",
+        "available_slots": 2,
+        "max_roommates": 3,
+        "current_occupants": 1,
+        "gender_preference": RoommatePost.GenderPreference.ANY,
+        "tags": ("quiet", "early-sleeper"),
+    },
+)
+
 
 class Command(BaseCommand):
     help = "Seed demo data for the first room-search prototype."
@@ -136,6 +201,11 @@ class Command(BaseCommand):
         for name, code in AMENITIES:
             amenity, _ = Amenity.objects.update_or_create(code=code, defaults={"name": name})
             amenity_map[code] = amenity
+
+        lifestyle_tag_map = {}
+        for name, code in LIFESTYLE_TAGS:
+            tag, _ = LifestyleTag.objects.update_or_create(code=code, defaults={"name": name})
+            lifestyle_tag_map[code] = tag
 
         landlord_user, _ = User.objects.update_or_create(
             email="landlord.demo@example.com",
@@ -176,6 +246,56 @@ class Command(BaseCommand):
             )
             room.amenities.set(amenity_map[code] for code in item["amenities"])
 
+        university_map = {university.short_name: university for university in University.objects.all()}
+        student_map = {}
+        for email, full_name, phone, university_short_name, district_codes, tag_codes in STUDENTS:
+            user, _ = User.objects.update_or_create(
+                email=email,
+                defaults={
+                    "full_name": full_name,
+                    "phone": phone,
+                    "role": User.Role.STUDENT,
+                    "is_active": True,
+                },
+            )
+            user.set_password("demo-password")
+            user.save(update_fields=("password",))
+            profile, _ = StudentProfile.objects.update_or_create(
+                user=user,
+                defaults={
+                    "university": university_map[university_short_name],
+                    "budget_min": Decimal("1500000"),
+                    "budget_max": Decimal("3500000"),
+                    "max_distance_km": Decimal("5"),
+                },
+            )
+            profile.preferred_districts.set(district_map[code] for code in district_codes)
+            profile.lifestyle_tags.set(lifestyle_tag_map[code] for code in tag_codes)
+            student_map[email] = user
+
+        for item in ROOMMATE_POSTS:
+            post, _ = RoommatePost.objects.update_or_create(
+                posted_by=student_map[item["email"]],
+                title=item["title"],
+                defaults={
+                    "type": item["type"],
+                    "status": RoommatePost.Status.ACTIVE,
+                    "description": item["description"],
+                    "university": university_map[item["university"]],
+                    "ward": ward_map.get(item.get("ward")),
+                    "address": item.get("address", ""),
+                    "budget_min": Decimal(item["budget_min"]),
+                    "budget_max": Decimal(item["budget_max"]),
+                    "available_slots": item["available_slots"],
+                    "max_roommates": item["max_roommates"],
+                    "current_occupants": item["current_occupants"],
+                    "gender_preference": item["gender_preference"],
+                    "contact_phone": student_map[item["email"]].phone,
+                },
+            )
+            post.preferred_districts.set(district_map[code] for code in item.get("districts", ()))
+            post.lifestyle_tags.set(lifestyle_tag_map[code] for code in item["tags"])
+
         self.stdout.write(
             self.style.SUCCESS(
                 "Seeded demo data: "
@@ -183,7 +303,9 @@ class Command(BaseCommand):
                 f"{Ward.objects.count()} wards, "
                 f"{University.objects.count()} universities, "
                 f"{Amenity.objects.count()} amenities, "
-                f"{Room.objects.count()} rooms."
+                f"{Room.objects.count()} rooms, "
+                f"{LifestyleTag.objects.count()} lifestyle tags, "
+                f"{RoommatePost.objects.count()} roommate posts."
             )
         )
 

@@ -59,6 +59,9 @@ jobs:
       - name: Install Python dependencies
         run: python -m pip install -r requirements.txt
 
+      - name: Check text encoding
+        run: python scripts/check_mojibake.py
+
       - name: Run Django checks
         run: python manage.py check --deploy
         env:

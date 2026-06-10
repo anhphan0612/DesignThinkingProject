@@ -81,12 +81,31 @@ class WebProfileForm(forms.ModelForm):
 class StudentPreferenceForm(forms.ModelForm):
     class Meta:
         model = StudentProfile
-        fields = ("university", "student_code", "budget_min", "budget_max", "max_distance_km")
+        fields = (
+            "university",
+            "student_code",
+            "budget_min",
+            "budget_max",
+            "max_distance_km",
+            "gender",
+            "move_in_date",
+            "preferred_districts",
+            "lifestyle_tags",
+        )
         labels = {
             "university": "Trường đại học",
             "student_code": "Mã sinh viên",
             "budget_min": "Ngân sách từ",
             "budget_max": "Ngân sách đến",
             "max_distance_km": "Khoảng cách tối đa",
+            "gender": "Giới tính",
+            "move_in_date": "Ngày muốn chuyển vào",
+            "preferred_districts": "Khu vực ưu tiên",
+            "lifestyle_tags": "Thói quen sống",
+        }
+        widgets = {
+            "move_in_date": forms.DateInput(attrs={"type": "date"}),
+            "preferred_districts": forms.CheckboxSelectMultiple,
+            "lifestyle_tags": forms.CheckboxSelectMultiple,
         }
 

@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token }}">
     <meta name="is-authenticated" content="{% if request.user.is_authenticated %}true{% else %}false{% endif %}">
-    <title>Rentify - Tìm phòng trọ gần trường</title>
+    <title>Rentify - Tìm phòng và tìm người ở ghép</title>
     <link rel="stylesheet" href="{% static 'frontend/styles.css' %}">
 </head>
 <body>
@@ -17,9 +17,10 @@
                 <span>Rentify</span>
             </a>
             <div class="nav-actions">
+                <a href="{% url 'roommate-home' %}">Ghép trọ</a>
                 {% if request.user.is_authenticated %}
                     <a href="{% url 'web-profile' %}">{{ request.user.full_name|default:request.user.email }}</a>
-                    {% if request.user.role == "landlord" %}<a href="{% url 'landlord-dashboard' %}">Kênh chủ trọ</a>{% endif %}
+                    {% if request.user.role == "landlord" %}<a href="{% url 'landlord-home' %}">Kênh chủ trọ</a>{% endif %}
                     {% if request.user.is_staff %}<a href="{% url 'moderation-dashboard' %}">Kiểm duyệt</a>{% endif %}
                     <a href="{% url 'web-logout' %}">Đăng xuất</a>
                 {% else %}
@@ -31,20 +32,21 @@
 
         <section class="hero-content">
             <div>
-                <p class="eyebrow">Nền tảng gợi ý phòng trọ cho sinh viên</p>
-                <h1>Tìm phòng trọ phù hợp với trường, ngân sách và nhu cầu sống.</h1>
+                <p class="eyebrow">Nền tảng tìm chỗ ở cho sinh viên</p>
+                <h1>Tìm phòng trọ và tìm người ở ghép phù hợp quanh trường.</h1>
                 <p class="hero-copy">
                     Lọc phòng theo trường đại học, khoảng cách, mức giá, diện tích và tiện ích.
-                    Sinh viên có thể lưu phòng yêu thích, xem chi tiết và gửi ảnh thực tế sau khi trải nghiệm.
+                    Rentify cũng sẽ hỗ trợ ghép trọ theo ngân sách, khu vực, thời gian chuyển vào và thói quen sống.
                 </p>
                 <div class="hero-actions">
                     <a class="button-link light" href="#search">Bắt đầu tìm phòng</a>
-                    <a class="button-link ghost" href="{% url 'landlord-dashboard' %}">Đăng phòng cho thuê</a>
+                    <a class="button-link ghost" href="{% url 'roommate-home' %}">Tìm người ở ghép</a>
+                    <a class="button-link ghost" href="{% url 'landlord-home' %}">Đăng phòng cho thuê</a>
                 </div>
             </div>
             <div class="hero-card">
-                <strong>Đã kết nối backend Django</strong>
-                <span>Tìm kiếm, gợi ý cá nhân, yêu thích, liên hệ chủ trọ, ảnh phòng và dashboard kiểm duyệt.</span>
+                <strong>MVP tìm phòng đã kết nối backend</strong>
+                <span>Tiếp theo Rentify sẽ bổ sung module ghép trọ riêng, tách khỏi luồng chủ trọ đăng phòng.</span>
                 <div class="hero-stats">
                     <div><b id="heroRoomCount">--</b><span>phòng</span></div>
                     <div><b>5</b><span>trường demo</span></div>
@@ -111,15 +113,15 @@
 
     </main>
 
-    <section class="trust-section">
+    <section id="roommate-scope" class="trust-section">
         <div class="trust-copy">
-            <p class="eyebrow">Quy trình sử dụng</p>
-            <h2>Từ tìm phòng đến đánh giá thực tế</h2>
+            <p class="eyebrow">Định hướng Rentify</p>
+            <h2>Từ tìm phòng đến tìm người ở ghép phù hợp</h2>
         </div>
         <div class="roadmap-grid">
-            <article><h3>1. Tìm theo nhu cầu</h3><p>Lọc theo trường, giá, diện tích, tiện ích và khoảng cách để có danh sách ban đầu.</p></article>
-            <article><h3>2. Xem chi tiết</h3><p>Mỗi phòng có ảnh, thông tin chủ trọ, bản đồ và các chi phí quan trọng.</p></article>
-            <article><h3>3. Bổ sung dữ liệu thực tế</h3><p>Người dùng có thể gửi ảnh phòng; admin duyệt trước khi hiển thị công khai.</p></article>
+            <article><h3>1. Tìm phòng phù hợp</h3><p>Lọc theo trường, giá, diện tích, tiện ích và khoảng cách để có danh sách phòng ban đầu.</p></article>
+            <article><h3>2. Tìm người ở ghép</h3><p>Sinh viên có thể đăng nhu cầu có phòng cần người ở cùng hoặc chưa có phòng muốn tìm bạn cùng thuê.</p></article>
+            <article><h3>3. Gợi ý có giải thích</h3><p>Matching sẽ dựa trên ngân sách, trường, khu vực, ngày chuyển vào và thói quen sống.</p></article>
         </div>
     </section>
 

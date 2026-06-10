@@ -28,6 +28,12 @@ class User(AbstractUser):
 
 
 class StudentProfile(models.Model):
+    class Gender(models.TextChoices):
+        UNKNOWN = "unknown", "Chưa cập nhật"
+        MALE = "male", "Nam"
+        FEMALE = "female", "Nữ"
+        OTHER = "other", "Khác"
+
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
@@ -45,6 +51,18 @@ class StudentProfile(models.Model):
     budget_min = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     budget_max = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     max_distance_km = models.DecimalField(max_digits=5, decimal_places=2, default=5)
+    gender = models.CharField(max_length=20, choices=Gender.choices, default=Gender.UNKNOWN)
+    move_in_date = models.DateField(null=True, blank=True)
+    preferred_districts = models.ManyToManyField(
+        "locations.District",
+        blank=True,
+        related_name="student_preferences",
+    )
+    lifestyle_tags = models.ManyToManyField(
+        "roommates.LifestyleTag",
+        blank=True,
+        related_name="student_preferences",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

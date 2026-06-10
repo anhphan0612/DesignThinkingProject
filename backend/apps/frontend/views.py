@@ -5,12 +5,47 @@ from django.shortcuts import get_object_or_404, redirect
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.generic import DetailView, TemplateView
 
+from apps.accounts.models import User
 from apps.listings.models import Room, RoomImage
 
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")
 class HomeView(TemplateView):
     template_name = "frontend/home.html"
+
+
+@method_decorator(ensure_csrf_cookie, name="dispatch")
+class LandlordHomeView(TemplateView):
+    template_name = "frontend/landlord_home.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        context["is_landlord"] = user.is_authenticated and user.role == User.Role.LANDLORD
+        if context["is_landlord"] and hasattr(user, "landlord_profile"):
+            rooms = Room.objects.filter(landlord=user.landlord_profile, deleted_at__isnull=True)
+            context.update(
+                {
+                    "profile": user.landlord_profile,
+                    "total_rooms": rooms.count(),
+                    "active_rooms": rooms.filter(status=Room.Status.ACTIVE).count(),
+                    "pending_rooms": rooms.filter(status=Room.Status.PENDING).count(),
+                    "draft_rooms": rooms.filter(status=Room.Status.DRAFT).count(),
+                    "recent_rooms": rooms.prefetch_related("images", "amenities")[:4],
+                }
+            )
+        return context
+
+
+@method_decorator(ensure_csrf_cookie, name="dispatch")
+class RoommateHomeView(TemplateView):
+    template_name = "frontend/roommate_home.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        context["is_student"] = user.is_authenticated and user.role == User.Role.STUDENT
+        return context
 
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")
