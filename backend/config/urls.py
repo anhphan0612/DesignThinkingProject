@@ -4,7 +4,14 @@ from django.contrib import admin
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from apps.frontend.views import HomeView, LandlordHomeView, RoomDetailView, RoommateHomeView, upload_room_image
+from apps.frontend.views import (
+    HomeView,
+    LandlordHomeView,
+    RoomDetailView,
+    RoomSearchView,
+    RoommateHomeView,
+    upload_room_image,
+)
 from apps.interactions.views import FavoriteViewSet, SearchLogViewSet, UserEventViewSet
 from apps.listings.views import AmenityViewSet, RoomImageViewSet, RoomViewSet
 from apps.locations.views import DistrictViewSet, UniversityViewSet, WardViewSet
@@ -26,6 +33,7 @@ router.register("search-logs", SearchLogViewSet, basename="search-log")
 
 urlpatterns = [
     path("", HomeView.as_view(), name="home"),
+    path("rooms/", RoomSearchView.as_view(), name="room-search"),
     path("landlord/", LandlordHomeView.as_view(), name="landlord-home"),
     path("roommates/", RoommateHomeView.as_view(), name="roommate-home"),
     path("rooms/<int:pk>/", RoomDetailView.as_view(), name="frontend-room-detail"),

@@ -136,6 +136,30 @@ button:hover, .social:hover { background: var(--primary-dark); }
     gap: 10px;
 }
 
+.role-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+    border-radius: 16px;
+    background: #f1f5f9;
+    padding: 6px;
+}
+
+.role-tabs a {
+    display: inline-flex;
+    justify-content: center;
+    border-radius: 12px;
+    color: var(--muted);
+    padding: 10px 12px;
+}
+
+.role-tabs a.active {
+    background: #fff;
+    color: var(--primary-dark);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, .08);
+}
+
 .divider {
     display: grid;
     place-items: center;

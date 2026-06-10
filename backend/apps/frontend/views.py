@@ -15,6 +15,11 @@ class HomeView(TemplateView):
 
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")
+class RoomSearchView(TemplateView):
+    template_name = "frontend/rooms_home.html"
+
+
+@method_decorator(ensure_csrf_cookie, name="dispatch")
 class LandlordHomeView(TemplateView):
     template_name = "frontend/landlord_home.html"
 

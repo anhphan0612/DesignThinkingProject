@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
+from django.urls import reverse
 from allauth.socialaccount.models import SocialApp
 from rest_framework import generics, permissions
 from rest_framework.response import Response
@@ -75,39 +76,63 @@ def configured_social_providers():
     return set(SocialApp.objects.values_list("provider", flat=True))
 
 
+def role_destination(user):
+    if user.is_staff or user.role == User.Role.ADMIN:
+        return "moderation-dashboard"
+    if user.role == User.Role.LANDLORD:
+        return "landlord-home"
+    return "room-search"
+
+
+def requested_role(request):
+    role = request.GET.get("role") or request.POST.get("role") or User.Role.STUDENT
+    if role not in {User.Role.STUDENT, User.Role.LANDLORD}:
+        return User.Role.STUDENT
+    return role
+
+
+def auth_context(request, form):
+    active_role = requested_role(request)
+    return {
+        "form": form,
+        "active_role": active_role,
+        "student_login_url": f"{reverse('web-login')}?role=student",
+        "landlord_login_url": f"{reverse('web-login')}?role=landlord",
+        "student_register_url": f"{reverse('web-register')}?role=student",
+        "landlord_register_url": f"{reverse('web-register')}?role=landlord",
+        "social_providers": configured_social_providers(),
+    }
+
+
 def web_login(request):
     if request.user.is_authenticated:
-        return redirect("home")
+        return redirect(role_destination(request.user))
     form = WebLoginForm(request.POST or None, request=request)
     if request.method == "POST" and form.is_valid():
         login(request, form.user)
         messages.success(request, "Đăng nhập thành công.")
-        return redirect(request.GET.get("next") or "home")
+        return redirect(request.GET.get("next") or role_destination(form.user))
     return render(
         request,
         "accounts/login.html",
-        {"form": form, "social_providers": configured_social_providers()},
+        auth_context(request, form),
     )
 
 
 def web_register(request):
     if request.user.is_authenticated:
-        return redirect("home")
-    initial = {}
-    if request.GET.get("role") == User.Role.LANDLORD:
-        initial["role"] = User.Role.LANDLORD
+        return redirect(role_destination(request.user))
+    initial = {"role": requested_role(request)}
     form = WebRegisterForm(request.POST or None, initial=initial)
     if request.method == "POST" and form.is_valid():
         user = form.save()
         login(request, user, backend="django.contrib.auth.backends.ModelBackend")
         messages.success(request, "Tạo tài khoản thành công.")
-        if user.role == User.Role.LANDLORD:
-            return redirect("landlord-home")
-        return redirect("home")
+        return redirect(role_destination(user))
     return render(
         request,
         "accounts/register.html",
-        {"form": form, "social_providers": configured_social_providers()},
+        auth_context(request, form),
     )
 
 

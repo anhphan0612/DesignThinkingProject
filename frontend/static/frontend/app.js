@@ -118,7 +118,7 @@ function renderEmptyRooms() {
     empty.append(
         textElement("p", "Không có kết quả", "eyebrow"),
         textElement("h2", "Thử giảm điều kiện lọc"),
-        textElement("p", "Bộ dữ liệu hiện tại vẫn là dữ liệu demo nên số lượng phòng chưa nhiều.", "muted"),
+        textElement("p", "Hiện chưa có phòng phù hợp với điều kiện bạn chọn.", "muted"),
     );
     els.roomList.replaceChildren(empty);
 }
@@ -243,7 +243,7 @@ async function bootstrap() {
             renderRecommendations(recommendations);
         }
     } catch (error) {
-        showStatus("Không tải được dữ liệu tham chiếu. Hãy chạy migrate và seed demo data.", true);
+        showStatus("Không tải được dữ liệu cần thiết. Hãy thử tải lại trang sau ít phút.", true);
         console.error(error);
     }
 }

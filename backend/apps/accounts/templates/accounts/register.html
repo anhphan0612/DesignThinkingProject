@@ -2,27 +2,41 @@
 {% load socialaccount %}
 
 {% block title %}Đăng ký{% endblock %}
-{% block headline %}Tạo tài khoản sinh viên hoặc chủ trọ{% endblock %}
+{% block headline %}Tạo tài khoản theo nhu cầu sử dụng{% endblock %}
 
 {% block content %}
 <p class="eyebrow">Đăng ký</p>
 <h2>Bắt đầu với Rentify</h2>
 
+<div class="role-tabs" aria-label="Chọn vai trò đăng ký">
+    <a class="{% if active_role == 'student' %}active{% endif %}" href="{{ student_register_url }}">Người thuê trọ</a>
+    <a class="{% if active_role == 'landlord' %}active{% endif %}" href="{{ landlord_register_url }}">Người cho thuê</a>
+</div>
+
+{% if active_role == "landlord" %}
+    <p class="muted">Tạo tài khoản chủ trọ để đăng phòng và quản lý tin cho thuê.</p>
+{% else %}
+    <p class="muted">Tạo tài khoản sinh viên để lưu phòng, cập nhật nhu cầu và tìm người ở ghép.</p>
+{% endif %}
+
 <form method="post" novalidate>
     {% csrf_token %}
     {{ form.non_field_errors }}
+    {{ form.role.as_hidden }}
     {% for field in form %}
-        <label>
-            {{ field.label }}
-            {{ field }}
-            {{ field.errors }}
-        </label>
+        {% if field.name != "role" %}
+            <label>
+                {{ field.label }}
+                {{ field }}
+                {{ field.errors }}
+            </label>
+        {% endif %}
     {% endfor %}
     <button type="submit">Tạo tài khoản</button>
 </form>
 
-<div class="divider"><span>Hoặc tạo tài khoản sinh viên bằng</span></div>
 {% if "google" in social_providers or "facebook" in social_providers %}
+    <div class="divider"><span>Hoặc tạo tài khoản nhanh bằng</span></div>
     <div class="social-actions">
         {% if "google" in social_providers %}
             <a class="social" href="{% provider_login_url 'google' process='login' %}">Google</a>
@@ -31,9 +45,14 @@
             <a class="social" href="{% provider_login_url 'facebook' process='login' %}">Facebook</a>
         {% endif %}
     </div>
-{% else %}
-    <div class="notice">OAuth Google/Facebook chưa có client id/secret. Thêm Social application trong Django admin để bật đăng ký nhanh.</div>
 {% endif %}
 
-<p class="switch">Đã có tài khoản? <a href="{% url 'web-login' %}">Đăng nhập</a></p>
+<p class="switch">
+    Đã có tài khoản?
+    {% if active_role == "landlord" %}
+        <a href="{{ landlord_login_url }}">Đăng nhập kênh chủ trọ</a>
+    {% else %}
+        <a href="{{ student_login_url }}">Đăng nhập tài khoản sinh viên</a>
+    {% endif %}
+</p>
 {% endblock %}

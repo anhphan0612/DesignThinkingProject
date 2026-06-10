@@ -11,9 +11,15 @@
     <header class="dash-header">
         <a class="brand" href="/">Rentify</a>
         <nav>
-            <a href="/">Tìm phòng</a>
-            {% if request.user.is_staff %}<a href="{% url 'moderation-dashboard' %}">Kiểm duyệt</a>{% endif %}
-            {% if request.user.role == "landlord" %}<a href="{% url 'landlord-dashboard' %}">Chủ trọ</a>{% endif %}
+            {% if request.user.is_staff %}
+                <a href="{% url 'moderation-dashboard' %}">Kiểm duyệt</a>
+            {% elif request.user.role == "landlord" %}
+                <a href="{% url 'landlord-home' %}">Kênh chủ trọ</a>
+                <a href="{% url 'landlord-dashboard' %}">Phòng của tôi</a>
+            {% else %}
+                <a href="{% url 'room-search' %}">Tìm phòng</a>
+                <a href="{% url 'roommate-home' %}">Ghép trọ</a>
+            {% endif %}
             <a href="{% url 'web-profile' %}">Hồ sơ</a>
         </nav>
     </header>
@@ -27,4 +33,3 @@
     </main>
 </body>
 </html>
-

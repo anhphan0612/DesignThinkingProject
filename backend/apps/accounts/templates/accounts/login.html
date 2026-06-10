@@ -2,11 +2,22 @@
 {% load socialaccount %}
 
 {% block title %}Đăng nhập{% endblock %}
-{% block headline %}Đăng nhập để tiếp tục tìm phòng phù hợp{% endblock %}
+{% block headline %}Đăng nhập theo đúng vai trò của bạn{% endblock %}
 
 {% block content %}
 <p class="eyebrow">Đăng nhập</p>
 <h2>Chào mừng trở lại</h2>
+
+<div class="role-tabs" aria-label="Chọn vai trò đăng nhập">
+    <a class="{% if active_role == 'student' %}active{% endif %}" href="{{ student_login_url }}">Người thuê trọ</a>
+    <a class="{% if active_role == 'landlord' %}active{% endif %}" href="{{ landlord_login_url }}">Người cho thuê</a>
+</div>
+
+{% if active_role == "landlord" %}
+    <p class="muted">Đăng nhập để đăng phòng, theo dõi trạng thái duyệt và quản lý tin cho thuê.</p>
+{% else %}
+    <p class="muted">Đăng nhập để lưu phòng, nhận gợi ý và tìm người ở ghép phù hợp.</p>
+{% endif %}
 
 <form method="post" novalidate>
     {% csrf_token %}
@@ -21,8 +32,8 @@
     <button type="submit">Đăng nhập</button>
 </form>
 
-<div class="divider"><span>Hoặc đăng nhập bằng</span></div>
 {% if "google" in social_providers or "facebook" in social_providers %}
+    <div class="divider"><span>Hoặc đăng nhập bằng</span></div>
     <div class="social-actions">
         {% if "google" in social_providers %}
             <a class="social" href="{% provider_login_url 'google' process='login' %}">Google</a>
@@ -31,9 +42,14 @@
             <a class="social" href="{% provider_login_url 'facebook' process='login' %}">Facebook</a>
         {% endif %}
     </div>
-{% else %}
-    <div class="notice">OAuth Google/Facebook chưa có client id/secret. Thêm Social application trong Django admin để bật nút đăng nhập.</div>
 {% endif %}
 
-<p class="switch">Chưa có tài khoản? <a href="{% url 'web-register' %}">Đăng ký</a></p>
+<p class="switch">
+    Chưa có tài khoản?
+    {% if active_role == "landlord" %}
+        <a href="{{ landlord_register_url }}">Tạo tài khoản chủ trọ</a>
+    {% else %}
+        <a href="{{ student_register_url }}">Tạo tài khoản sinh viên</a>
+    {% endif %}
+</p>
 {% endblock %}

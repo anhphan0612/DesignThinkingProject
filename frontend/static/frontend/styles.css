@@ -28,7 +28,7 @@ a { color: inherit; }
     padding: 22px 40px 44px;
 }
 
-.topbar, .hero-content, .layout, .roadmap {
+.topbar, .hero-content, .layout {
     max-width: 1380px;
     margin: 0 auto;
 }
@@ -80,6 +80,51 @@ a { color: inherit; }
     gap: 40px;
     align-items: end;
     padding-top: 58px;
+}
+
+.landing-hero {
+    min-height: 100vh;
+}
+
+.landing-content {
+    width: min(1180px, calc(100% - 36px));
+    margin: 0 auto;
+    padding: 84px 0 48px;
+}
+
+.landing-content h1 {
+    max-width: 900px;
+    margin: 8px 0 18px;
+    font-size: clamp(42px, 7vw, 76px);
+    line-height: .98;
+    letter-spacing: -.07em;
+}
+
+.role-cards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin-top: 34px;
+}
+
+.role-card {
+    border: 1px solid rgba(255,255,255,.22);
+    border-radius: 24px;
+    background: rgba(255,255,255,.14);
+    box-shadow: var(--shadow);
+    padding: 24px;
+}
+
+.role-card h2 {
+    margin: 8px 0 10px;
+    color: #fff;
+    font-size: clamp(24px, 3vw, 34px);
+}
+
+.role-card p {
+    margin: 0;
+    color: rgba(255,255,255,.82);
+    line-height: 1.6;
 }
 
 .hero h1 {
@@ -184,7 +229,7 @@ a { color: inherit; }
     padding: 28px 24px;
 }
 
-.filters, .results, .roadmap article {
+.filters, .results {
     background: var(--card);
     border: 1px solid var(--line);
     border-radius: 28px;
@@ -450,16 +495,16 @@ iframe {
     font-size: clamp(28px, 4vw, 44px);
 }
 
-.roadmap-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 14px; }
-.roadmap-grid article {
+.student-feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 14px; }
+.student-feature-grid article {
     border: 1px solid var(--line);
     border-radius: 28px;
     background: var(--card);
     box-shadow: var(--shadow);
     padding: 20px;
 }
-.roadmap-grid h3 { margin: 0 0 8px; }
-.roadmap-grid p { margin: 0; color: var(--muted); line-height: 1.6; }
+.student-feature-grid h3 { margin: 0 0 8px; }
+.student-feature-grid p { margin: 0; color: var(--muted); line-height: 1.6; }
 
 .create-panel {
     margin-top: 22px;
@@ -509,7 +554,7 @@ iframe {
 
 @media (max-width: 820px) {
     .hero { padding: 18px 18px 32px; }
-    .topbar, .hero-content, .layout, .roadmap-grid { display: grid; grid-template-columns: 1fr; }
+    .topbar, .hero-content, .layout, .student-feature-grid, .role-cards { display: grid; grid-template-columns: 1fr; }
     .layout { padding: 18px; }
     .filters { position: static; }
     .room-card { grid-template-columns: 1fr; }

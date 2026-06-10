@@ -4,127 +4,64 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token }}">
-    <meta name="is-authenticated" content="{% if request.user.is_authenticated %}true{% else %}false{% endif %}">
-    <title>Rentify - Tìm phòng và tìm người ở ghép</title>
+    <title>Rentify - Tìm phòng và quản lý cho thuê</title>
     <link rel="stylesheet" href="{% static 'frontend/styles.css' %}">
 </head>
 <body>
-    <header class="hero">
+    <header class="hero landing-hero">
         <nav class="topbar">
             <a class="brand" href="/">
                 <span class="brand-mark">R</span>
                 <span>Rentify</span>
             </a>
             <div class="nav-actions">
-                <a href="{% url 'roommate-home' %}">Ghép trọ</a>
                 {% if request.user.is_authenticated %}
+                    {% if request.user.role == "landlord" %}
+                        <a href="{% url 'landlord-home' %}">Kênh chủ trọ</a>
+                        <a class="nav-primary" href="{% url 'landlord-dashboard' %}">Dashboard</a>
+                    {% elif request.user.is_staff %}
+                        <a href="{% url 'moderation-dashboard' %}">Kiểm duyệt</a>
+                    {% else %}
+                        <a href="{% url 'room-search' %}">Tìm phòng</a>
+                        <a href="{% url 'roommate-home' %}">Ghép trọ</a>
+                    {% endif %}
                     <a href="{% url 'web-profile' %}">{{ request.user.full_name|default:request.user.email }}</a>
-                    {% if request.user.role == "landlord" %}<a href="{% url 'landlord-home' %}">Kênh chủ trọ</a>{% endif %}
-                    {% if request.user.is_staff %}<a href="{% url 'moderation-dashboard' %}">Kiểm duyệt</a>{% endif %}
                     <a href="{% url 'web-logout' %}">Đăng xuất</a>
                 {% else %}
-                    <a href="{% url 'web-login' %}">Đăng nhập</a>
-                    <a class="nav-primary" href="{% url 'web-register' %}">Đăng ký</a>
+                    <a href="{% url 'web-login' %}?role=student">Đăng nhập</a>
+                    <a class="nav-primary" href="{% url 'web-register' %}?role=student">Đăng ký</a>
                 {% endif %}
             </div>
         </nav>
 
-        <section class="hero-content">
-            <div>
-                <p class="eyebrow">Nền tảng tìm chỗ ở cho sinh viên</p>
-                <h1>Tìm phòng trọ và tìm người ở ghép phù hợp quanh trường.</h1>
-                <p class="hero-copy">
-                    Lọc phòng theo trường đại học, khoảng cách, mức giá, diện tích và tiện ích.
-                    Rentify cũng sẽ hỗ trợ ghép trọ theo ngân sách, khu vực, thời gian chuyển vào và thói quen sống.
-                </p>
-                <div class="hero-actions">
-                    <a class="button-link light" href="#search">Bắt đầu tìm phòng</a>
-                    <a class="button-link ghost" href="{% url 'roommate-home' %}">Tìm người ở ghép</a>
-                    <a class="button-link ghost" href="{% url 'landlord-home' %}">Đăng phòng cho thuê</a>
-                </div>
-            </div>
-            <div class="hero-card">
-                <strong>MVP tìm phòng đã kết nối backend</strong>
-                <span>Tiếp theo Rentify sẽ bổ sung module ghép trọ riêng, tách khỏi luồng chủ trọ đăng phòng.</span>
-                <div class="hero-stats">
-                    <div><b id="heroRoomCount">--</b><span>phòng</span></div>
-                    <div><b>5</b><span>trường demo</span></div>
-                    <div><b>6</b><span>tiện ích</span></div>
-                </div>
+        <section class="landing-content">
+            <p class="eyebrow">Nền tảng thuê trọ sinh viên</p>
+            <h1>Chọn đúng nhu cầu của bạn để bắt đầu với Rentify.</h1>
+            <p class="hero-copy">
+                Sinh viên có thể tìm phòng, lưu lựa chọn và tìm người ở ghép. Người cho thuê có khu vực riêng để đăng phòng,
+                theo dõi trạng thái duyệt và quản lý tin cho thuê.
+            </p>
+            <div class="role-cards">
+                <article class="role-card">
+                    <p class="eyebrow">Người cần thuê trọ</p>
+                    <h2>Tìm phòng hoặc tìm bạn ở ghép</h2>
+                    <p>Lọc phòng theo trường, ngân sách, khu vực và tiện ích. Tạo hồ sơ để nhận gợi ý phù hợp hơn.</p>
+                    <div class="hero-actions">
+                        <a class="button-link light" href="{% url 'room-search' %}">Tìm phòng</a>
+                        <a class="button-link ghost" href="{% url 'roommate-home' %}">Tìm người ở ghép</a>
+                    </div>
+                </article>
+                <article class="role-card">
+                    <p class="eyebrow">Người cho thuê phòng</p>
+                    <h2>Đăng và quản lý phòng cho thuê</h2>
+                    <p>Tạo tin cho thuê, cập nhật thông tin phòng, gửi duyệt và theo dõi các phòng đang hiển thị.</p>
+                    <div class="hero-actions">
+                        <a class="button-link light" href="{% url 'landlord-home' %}">Vào kênh chủ trọ</a>
+                        <a class="button-link ghost" href="{% url 'web-register' %}?role=landlord">Tạo tài khoản chủ trọ</a>
+                    </div>
+                </article>
             </div>
         </section>
     </header>
-
-    <main id="search" class="layout">
-        <aside class="filters" aria-label="Bộ lọc tìm phòng">
-            <div class="panel-heading">
-                <p class="eyebrow">Bộ lọc</p>
-                <h2>Nhu cầu của bạn</h2>
-                <p class="muted">Chọn trường trước nếu muốn lọc theo khoảng cách.</p>
-            </div>
-            <label>Tìm từ khóa <input id="query" type="search" placeholder="VD: Bách khoa, khép kín, ban công"></label>
-            <label>Trường đại học <select id="university"><option value="">Tất cả trường</option></select></label>
-            <label>Bán kính tối đa
-                <select id="distance">
-                    <option value="">Không lọc</option>
-                    <option value="1">Dưới 1 km</option>
-                    <option value="2" selected>Dưới 2 km</option>
-                    <option value="3">Dưới 3 km</option>
-                    <option value="5">Dưới 5 km</option>
-                </select>
-            </label>
-            <div class="field-row">
-                <label>Giá từ <input id="minPrice" type="number" min="0" step="100000" placeholder="1500000"></label>
-                <label>Đến <input id="maxPrice" type="number" min="0" step="100000" placeholder="4000000"></label>
-            </div>
-            <label>Diện tích tối thiểu <input id="minArea" type="number" min="0" step="1" placeholder="18"></label>
-            <fieldset>
-                <legend>Tiện ích mong muốn</legend>
-                <div id="amenities" class="checks"></div>
-            </fieldset>
-            <div class="filter-actions">
-                <button id="applyFilters" type="button">Tìm phòng</button>
-                <button id="resetFilters" type="button" class="secondary">Đặt lại</button>
-            </div>
-        </aside>
-
-        <section class="results">
-            <div class="results-bar">
-                <div>
-                    <p class="eyebrow">Kết quả</p>
-                    <h2>Phòng đang phù hợp</h2>
-                </div>
-                <span id="resultCount" class="pill">Đang tải...</span>
-            </div>
-            <section id="recommendationBox" class="recommendations" hidden>
-                <div class="mini-heading">
-                    <div>
-                        <p class="eyebrow">Gợi ý cá nhân</p>
-                        <h3>Dựa trên hồ sơ sinh viên</h3>
-                    </div>
-                    <span id="recommendationCount" class="pill">0 phòng</span>
-                </div>
-                <div id="recommendationList" class="recommendation-list"></div>
-            </section>
-            <div id="status" class="status" hidden></div>
-            <div id="roomList" class="room-list"></div>
-        </section>
-
-    </main>
-
-    <section id="roommate-scope" class="trust-section">
-        <div class="trust-copy">
-            <p class="eyebrow">Định hướng Rentify</p>
-            <h2>Từ tìm phòng đến tìm người ở ghép phù hợp</h2>
-        </div>
-        <div class="roadmap-grid">
-            <article><h3>1. Tìm phòng phù hợp</h3><p>Lọc theo trường, giá, diện tích, tiện ích và khoảng cách để có danh sách phòng ban đầu.</p></article>
-            <article><h3>2. Tìm người ở ghép</h3><p>Sinh viên có thể đăng nhu cầu có phòng cần người ở cùng hoặc chưa có phòng muốn tìm bạn cùng thuê.</p></article>
-            <article><h3>3. Gợi ý có giải thích</h3><p>Matching sẽ dựa trên ngân sách, trường, khu vực, ngày chuyển vào và thói quen sống.</p></article>
-        </div>
-    </section>
-
-    <script src="{% static 'frontend/app.js' %}"></script>
 </body>
 </html>

@@ -15,7 +15,7 @@
                 <span>Rentify Chủ trọ</span>
             </a>
             <div class="nav-actions">
-                <a href="{% url 'home' %}">Trang tìm phòng</a>
+                <a href="{% url 'home' %}">Trang chủ</a>
                 {% if request.user.is_authenticated %}
                     <a href="{% url 'web-profile' %}">{{ request.user.full_name|default:request.user.email }}</a>
                     {% if request.user.role == "landlord" %}
@@ -34,8 +34,7 @@
                 <p class="eyebrow">Kênh vận hành cho người cho thuê</p>
                 <h1>Đăng phòng, theo dõi trạng thái duyệt và quản lý tin cho thuê ở một nơi.</h1>
                 <p>
-                    Khu vực này dành riêng cho chủ trọ. Sinh viên vẫn dùng trang tìm phòng công khai,
-                    còn bạn dùng kênh này để tạo phòng, cập nhật ảnh, gửi duyệt và xem tin đang hiển thị.
+                    Tạo tin cho thuê, cập nhật ảnh, gửi duyệt và theo dõi các phòng đang hiển thị cho sinh viên.
                 </p>
                 <div class="hero-actions">
                     {% if is_landlord %}
@@ -113,8 +112,8 @@
         {% else %}
             <section class="feature-grid">
                 <article>
-                    <h2>Không dùng chung giao diện sinh viên</h2>
-                    <p>Người thuê tập trung vào tìm kiếm; chủ trọ tập trung vào tạo, sửa và theo dõi trạng thái phòng.</p>
+                    <h2>Đăng phòng nhanh</h2>
+                    <p>Nhập thông tin phòng, giá, diện tích, vị trí và tiện ích để tạo tin cho thuê rõ ràng.</p>
                 </article>
                 <article>
                     <h2>Kiểm duyệt rõ ràng</h2>

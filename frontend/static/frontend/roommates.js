@@ -304,7 +304,7 @@ async function bootstrapRoommates() {
         await loadRoommates();
         await loadMatches();
     } catch (error) {
-        showRoommateStatus("Không tải được dữ liệu tham chiếu. Hãy chạy migrate và seed demo data.", true);
+        showRoommateStatus("Không tải được dữ liệu cần thiết. Hãy thử tải lại trang sau ít phút.", true);
         console.error(error);
     }
 }
