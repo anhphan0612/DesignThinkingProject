@@ -1,7 +1,9 @@
 from django import forms
 from django.contrib.gis.geos import Point
 
+from apps.accounts.models import LandlordProfile
 from apps.listings.models import Amenity, Room, RoomImage
+from apps.listings.validators import validate_room_image_upload
 
 
 class RoomForm(forms.ModelForm):
@@ -77,10 +79,31 @@ class LandlordRoomImageForm(forms.ModelForm):
         }
 
 
+    def clean_image(self):
+        image = self.cleaned_data.get("image")
+        validate_room_image_upload(image)
+        return image
+
+
+class LandlordVerificationForm(forms.ModelForm):
+    class Meta:
+        model = LandlordProfile
+        fields = ("business_name", "identity_number", "identity_document")
+        labels = {
+            "business_name": "Tên chủ trọ hoặc đơn vị cho thuê",
+            "identity_number": "Số CCCD/mã số định danh",
+            "identity_document": "Giấy tờ xác minh",
+        }
+
+
 class RejectRoomForm(forms.Form):
     reason = forms.CharField(label="Lý do từ chối", widget=forms.Textarea)
 
 
 class RejectImageForm(forms.Form):
     moderation_note = forms.CharField(label="Lý do từ chối", widget=forms.Textarea)
+
+
+class RejectLandlordForm(forms.Form):
+    verification_note = forms.CharField(label="Lý do từ chối", widget=forms.Textarea)
 

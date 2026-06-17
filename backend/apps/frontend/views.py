@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.utils.decorators import method_decorator
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -6,7 +8,9 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.generic import DetailView, TemplateView
 
 from apps.accounts.models import User
+from apps.interactions.models import Favorite
 from apps.listings.models import Room, RoomImage
+from apps.listings.validators import validate_room_image_upload
 
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")
@@ -79,6 +83,10 @@ class RoomDetailView(DetailView):
         context["approved_images"] = room.images.filter(
             status=RoomImage.ModerationStatus.APPROVED
         ).select_related("uploaded_by")
+        context["is_favorited"] = (
+            self.request.user.is_authenticated
+            and Favorite.objects.filter(user=self.request.user, room=room).exists()
+        )
         return context
 
 
@@ -90,6 +98,15 @@ def upload_room_image(request, pk):
     image = request.FILES.get("image")
     if not image:
         messages.error(request, "Hãy chọn ảnh trước khi gửi.")
+        return redirect("frontend-room-detail", pk=room.pk)
+
+    if room.images.count() >= settings.RENTIFY_ROOM_IMAGE_LIMIT:
+        messages.error(request, f"Phòng chỉ được có tối đa {settings.RENTIFY_ROOM_IMAGE_LIMIT} ảnh.")
+        return redirect("frontend-room-detail", pk=room.pk)
+    try:
+        validate_room_image_upload(image)
+    except ValidationError as exc:
+        messages.error(request, " ".join(exc.messages))
         return redirect("frontend-room-detail", pk=room.pk)
 
     user = request.user

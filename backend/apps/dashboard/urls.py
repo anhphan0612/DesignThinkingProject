@@ -5,6 +5,7 @@ from . import views
 
 urlpatterns = [
     path("landlord/", views.landlord_dashboard, name="landlord-dashboard"),
+    path("landlord/verification/", views.landlord_verification, name="landlord-verification"),
     path("landlord/rooms/new/", views.landlord_room_create, name="landlord-room-create"),
     path("landlord/rooms/<int:pk>/", views.landlord_room_detail, name="landlord-room-detail"),
     path("landlord/rooms/<int:pk>/edit/", views.landlord_room_edit, name="landlord-room-edit"),
@@ -15,6 +16,8 @@ urlpatterns = [
     path("moderation/rooms/<int:pk>/", views.moderation_room_detail, name="moderation-room-detail"),
     path("moderation/rooms/<int:pk>/approve/", views.moderation_room_approve, name="moderation-room-approve"),
     path("moderation/rooms/<int:pk>/reject/", views.moderation_room_reject, name="moderation-room-reject"),
+    path("moderation/landlords/<int:pk>/approve/", views.moderation_landlord_approve, name="moderation-landlord-approve"),
+    path("moderation/landlords/<int:pk>/reject/", views.moderation_landlord_reject, name="moderation-landlord-reject"),
     path("moderation/images/<int:pk>/approve/", views.moderation_image_approve, name="moderation-image-approve"),
     path("moderation/images/<int:pk>/reject/", views.moderation_image_reject, name="moderation-image-reject"),
 ]

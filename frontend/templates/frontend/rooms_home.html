@@ -17,17 +17,14 @@
                 <span>Rentify</span>
             </a>
             <div class="nav-actions">
+                <a href="{% url 'room-search' %}">Tìm phòng</a>
+                <a href="{% url 'roommate-home' %}">Ghép trọ</a>
+                <a href="{% url 'landlord-home' %}">Cho thuê</a>
                 {% if request.user.is_authenticated %}
-                    {% if request.user.role == "landlord" %}
-                        <a href="{% url 'landlord-home' %}">Kênh chủ trọ</a>
-                    {% else %}
-                        <a href="{% url 'roommate-home' %}">Ghép trọ</a>
-                    {% endif %}
                     {% if request.user.is_staff %}<a href="{% url 'moderation-dashboard' %}">Kiểm duyệt</a>{% endif %}
                     <a href="{% url 'web-profile' %}">{{ request.user.full_name|default:request.user.email }}</a>
                     <a href="{% url 'web-logout' %}">Đăng xuất</a>
                 {% else %}
-                    <a href="{% url 'roommate-home' %}">Ghép trọ</a>
                     <a href="{% url 'web-login' %}?role=student">Đăng nhập</a>
                     <a class="nav-primary" href="{% url 'web-register' %}?role=student">Đăng ký</a>
                 {% endif %}
@@ -45,9 +42,6 @@
                 <div class="hero-actions">
                     <a class="button-link light" href="#search">Bắt đầu tìm phòng</a>
                     <a class="button-link ghost" href="{% url 'roommate-home' %}">Tìm người ở ghép</a>
-                    {% if not request.user.is_authenticated or request.user.role != "landlord" %}
-                        <a class="button-link ghost" href="{% url 'roommate-home' %}">Tìm người ở ghép</a>
-                    {% endif %}
                 </div>
             </div>
             <div class="hero-card">
@@ -69,7 +63,7 @@
                 <h2>Nhu cầu của bạn</h2>
                 <p class="muted">Chọn trường trước nếu muốn lọc theo khoảng cách.</p>
             </div>
-            <label>Tìm từ khóa <input id="query" type="search" placeholder="VD: Bách khoa, khép kín, ban công"></label>
+            <label>Từ khóa <input id="query" type="search" placeholder="Tên trường, tiện ích, khu vực..."></label>
             <label>Trường đại học <select id="university"><option value="">Tất cả trường</option></select></label>
             <label>Bán kính tối đa
                 <select id="distance">
@@ -81,10 +75,10 @@
                 </select>
             </label>
             <div class="field-row">
-                <label>Giá từ <input id="minPrice" type="number" min="0" step="100000" placeholder="1500000"></label>
-                <label>Đến <input id="maxPrice" type="number" min="0" step="100000" placeholder="4000000"></label>
+                <label>Giá từ <input id="minPrice" type="number" min="0" step="100000" placeholder="1.500.000 VND"></label>
+                <label>Đến <input id="maxPrice" type="number" min="0" step="100000" placeholder="4.000.000 VND"></label>
             </div>
-            <label>Diện tích tối thiểu <input id="minArea" type="number" min="0" step="1" placeholder="18"></label>
+            <label>Diện tích tối thiểu <input id="minArea" type="number" min="0" step="1" placeholder="18 m²"></label>
             <fieldset>
                 <legend>Tiện ích mong muốn</legend>
                 <div id="amenities" class="checks"></div>

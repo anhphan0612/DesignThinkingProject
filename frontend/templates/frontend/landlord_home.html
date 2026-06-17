@@ -1,4 +1,4 @@
-{% load static %}
+{% load static humanize %}
 <!doctype html>
 <html lang="vi">
 <head>
@@ -15,7 +15,9 @@
                 <span>Rentify Chủ trọ</span>
             </a>
             <div class="nav-actions">
-                <a href="{% url 'home' %}">Trang chủ</a>
+                <a href="{% url 'room-search' %}">Tìm phòng</a>
+                <a href="{% url 'roommate-home' %}">Ghép trọ</a>
+                <a href="{% url 'landlord-home' %}">Cho thuê</a>
                 {% if request.user.is_authenticated %}
                     <a href="{% url 'web-profile' %}">{{ request.user.full_name|default:request.user.email }}</a>
                     {% if request.user.role == "landlord" %}
@@ -38,7 +40,11 @@
                 </p>
                 <div class="hero-actions">
                     {% if is_landlord %}
-                        <a class="button light" href="{% url 'landlord-room-create' %}">Đăng phòng mới</a>
+                        {% if profile.verification_status == "approved" %}
+                            <a class="button light" href="{% url 'landlord-room-create' %}">Đăng phòng mới</a>
+                        {% else %}
+                            <a class="button light" href="{% url 'landlord-verification' %}">Gửi hồ sơ xác minh</a>
+                        {% endif %}
                         <a class="button ghost" href="{% url 'landlord-dashboard' %}">Quản lý phòng</a>
                     {% elif request.user.is_authenticated %}
                         <a class="button light" href="{% url 'web-profile' %}">Xem hồ sơ hiện tại</a>
@@ -55,6 +61,9 @@
                     <p class="eyebrow">Tổng quan của bạn</p>
                     <h2>{{ profile.business_name|default:"Chủ trọ cá nhân" }}</h2>
                     <span class="verification">{{ profile.get_verification_status_display }}</span>
+                    {% if profile.verification_status != "approved" %}
+                        <p class="panel-note">Bạn cần được xác minh trước khi gửi phòng cho admin duyệt công khai.</p>
+                    {% endif %}
                     <div class="stat-grid">
                         <div><strong>{{ total_rooms }}</strong><span>Tổng phòng</span></div>
                         <div><strong>{{ active_rooms }}</strong><span>Đang hiển thị</span></div>
@@ -91,7 +100,7 @@
                             <span class="status {{ room.status }}">{{ room.get_status_display }}</span>
                             <h3>{{ room.title }}</h3>
                             <p>{{ room.address }}</p>
-                            <strong>{{ room.price|floatformat:0 }} VND / tháng</strong>
+                            <strong>{{ room.price|floatformat:0|intcomma }} VND / tháng</strong>
                         </div>
                         <div class="card-actions">
                             <a href="{% url 'landlord-room-detail' room.id %}">Quản lý</a>

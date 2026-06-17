@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.humanize",
     "django.contrib.sites",
     "django.contrib.gis",
     "django.contrib.postgres",
@@ -142,6 +143,24 @@ REFERRER_POLICY = os.environ.get("DJANGO_REFERRER_POLICY", "same-origin")
 if os.environ.get("DJANGO_SECURE_PROXY_SSL_HEADER", "").lower() in {"1", "true", "yes", "on"}:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
+EMAIL_BACKEND = os.environ.get(
+    "DJANGO_EMAIL_BACKEND",
+    "django.core.mail.backends.console.EmailBackend" if DEBUG else "django.core.mail.backends.smtp.EmailBackend",
+)
+EMAIL_HOST = os.environ.get("DJANGO_EMAIL_HOST", "localhost")
+EMAIL_PORT = int(os.environ.get("DJANGO_EMAIL_PORT", 25))
+EMAIL_HOST_USER = os.environ.get("DJANGO_EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("DJANGO_EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = env_bool("DJANGO_EMAIL_USE_TLS", False)
+EMAIL_USE_SSL = env_bool("DJANGO_EMAIL_USE_SSL", False)
+DEFAULT_FROM_EMAIL = os.environ.get("DJANGO_DEFAULT_FROM_EMAIL", "Rentify <no-reply@rentify.local>")
+RENTIFY_MAX_ROOM_IMAGE_SIZE_MB = int(os.environ.get("RENTIFY_MAX_ROOM_IMAGE_SIZE_MB", 5))
+RENTIFY_ROOM_IMAGE_LIMIT = int(os.environ.get("RENTIFY_ROOM_IMAGE_LIMIT", 12))
+RENTIFY_ALLOWED_ROOM_IMAGE_TYPES = env_list(
+    "RENTIFY_ALLOWED_ROOM_IMAGE_TYPES",
+    "image/jpeg,image/png,image/webp",
+)
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "accounts.User"
 SITE_ID = 1
@@ -181,6 +200,17 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.TokenAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+        "rest_framework.throttling.ScopedRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": os.environ.get("DRF_ANON_THROTTLE_RATE", "120/min"),
+        "user": os.environ.get("DRF_USER_THROTTLE_RATE", "600/min"),
+        "auth_register": os.environ.get("DRF_AUTH_REGISTER_THROTTLE_RATE", "10/hour"),
+        "auth_login": os.environ.get("DRF_AUTH_LOGIN_THROTTLE_RATE", "20/hour"),
+    },
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],

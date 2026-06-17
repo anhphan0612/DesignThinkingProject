@@ -148,6 +148,26 @@ figcaption small {
     gap: 14px;
 }
 
+.form-hint {
+    margin: -6px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.room-sidebar .favorite-button {
+    width: 100%;
+    margin-bottom: 10px;
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--primary-dark);
+}
+
+.room-sidebar .favorite-button.active {
+    border-color: #bae6fd;
+    background: #e0f2fe;
+    color: #075985;
+}
+
 .button-link {
     display: inline-flex;
     justify-content: center;

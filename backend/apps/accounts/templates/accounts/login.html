@@ -8,9 +8,15 @@
 <p class="eyebrow">Đăng nhập</p>
 <h2>Chào mừng trở lại</h2>
 
-<div class="role-tabs" aria-label="Chọn vai trò đăng nhập">
-    <a class="{% if active_role == 'student' %}active{% endif %}" href="{{ student_login_url }}">Người thuê trọ</a>
-    <a class="{% if active_role == 'landlord' %}active{% endif %}" href="{{ landlord_login_url }}">Người cho thuê</a>
+<div class="login-role-cards" aria-label="Chọn vai trò đăng nhập">
+    <a class="{% if active_role == 'student' %}active{% endif %}" href="{{ student_login_url }}">
+        <strong>Người thuê trọ</strong>
+        <span>Tìm phòng, lưu phòng yêu thích và ghép trọ theo nguyện vọng.</span>
+    </a>
+    <a class="{% if active_role == 'landlord' %}active{% endif %}" href="{{ landlord_login_url }}">
+        <strong>Chủ trọ</strong>
+        <span>Đăng phòng, gửi duyệt và theo dõi trạng thái cho thuê.</span>
+    </a>
 </div>
 
 {% if active_role == "landlord" %}
@@ -31,6 +37,8 @@
     {% endfor %}
     <button type="submit">Đăng nhập</button>
 </form>
+
+<p class="switch"><a href="{% url 'password-reset' %}">Quên mật khẩu?</a></p>
 
 {% if "google" in social_providers or "facebook" in social_providers %}
     <div class="divider"><span>Hoặc đăng nhập bằng</span></div>

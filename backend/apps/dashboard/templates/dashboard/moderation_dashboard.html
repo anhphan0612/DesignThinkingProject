@@ -31,6 +31,27 @@
 </section>
 
 <section class="card">
+    <h2>Chủ trọ chờ xác minh</h2>
+    <div class="grid-list compact">
+        {% for profile in pending_landlords %}
+            <article class="review-card">
+                <h3>{{ profile.business_name|default:profile.user.full_name }}</h3>
+                <p>{{ profile.user.email }}{% if profile.identity_number %} - {{ profile.identity_number }}{% endif %}</p>
+                {% if profile.identity_document %}
+                    <p><a href="{{ profile.identity_document.url }}" target="_blank" rel="noopener">Xem giấy tờ</a></p>
+                {% endif %}
+                <div class="actions">
+                    <form method="post" action="{% url 'moderation-landlord-approve' profile.id %}">{% csrf_token %}<button>Duyệt</button></form>
+                    <a href="{% url 'moderation-landlord-reject' profile.id %}">Từ chối</a>
+                </div>
+            </article>
+        {% empty %}
+            <p>Không có chủ trọ chờ xác minh.</p>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="card">
     <h2>Ảnh người dùng gửi chờ duyệt</h2>
     <div class="image-grid">
         {% for image in pending_images %}

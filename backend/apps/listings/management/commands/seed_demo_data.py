@@ -11,54 +11,54 @@ from apps.roommates.models import LifestyleTag, RoommatePost
 
 
 DISTRICTS = (
-    ("Dong Da", "DD"),
-    ("Hai Ba Trung", "HBT"),
-    ("Cau Giay", "CG"),
-    ("Thanh Xuan", "TX"),
+    ("Đống Đa", "DD"),
+    ("Hai Bà Trưng", "HBT"),
+    ("Cầu Giấy", "CG"),
+    ("Thanh Xuân", "TX"),
 )
 
 WARDS = (
-    ("DD", "Phuong Bach Mai", "DD-BM"),
-    ("DD", "Phuong Trung Liet", "DD-TL"),
-    ("HBT", "Phuong Bach Khoa", "HBT-BK"),
-    ("HBT", "Phuong Dong Tam", "HBT-DT"),
-    ("CG", "Phuong Dich Vong Hau", "CG-DVH"),
-    ("CG", "Phuong Quan Hoa", "CG-QH"),
-    ("TX", "Phuong Nhan Chinh", "TX-NC"),
-    ("TX", "Phuong Khuong Trung", "TX-KT"),
+    ("DD", "Phường Bạch Mai", "DD-BM"),
+    ("DD", "Phường Trung Liệt", "DD-TL"),
+    ("HBT", "Phường Bách Khoa", "HBT-BK"),
+    ("HBT", "Phường Đồng Tâm", "HBT-DT"),
+    ("CG", "Phường Dịch Vọng Hậu", "CG-DVH"),
+    ("CG", "Phường Quan Hoa", "CG-QH"),
+    ("TX", "Phường Nhân Chính", "TX-NC"),
+    ("TX", "Phường Khương Trung", "TX-KT"),
 )
 
 UNIVERSITIES = (
-    ("Dai hoc Bach khoa Ha Noi", "HUST", "1 Dai Co Viet, Hai Ba Trung", 105.8435, 21.0059),
-    ("Dai hoc Kinh te Quoc dan", "NEU", "207 Giai Phong, Hai Ba Trung", 105.8420, 21.0007),
-    ("Dai hoc Xay dung Ha Noi", "HUCE", "55 Giai Phong, Hai Ba Trung", 105.8428, 21.0037),
-    ("Dai hoc Quoc gia Ha Noi", "VNU", "144 Xuan Thuy, Cau Giay", 105.7829, 21.0379),
-    ("Hoc vien Bao chi va Tuyen truyen", "AJC", "36 Xuan Thuy, Cau Giay", 105.7850, 21.0375),
+    ("Đại học Bách khoa Hà Nội", "HUST", "1 Đại Cồ Việt, Hai Bà Trưng", 105.8435, 21.0059),
+    ("Đại học Kinh tế Quốc dân", "NEU", "207 Giải Phóng, Hai Bà Trưng", 105.8420, 21.0007),
+    ("Đại học Xây dựng Hà Nội", "HUCE", "55 Giải Phóng, Hai Bà Trưng", 105.8428, 21.0037),
+    ("Đại học Quốc gia Hà Nội", "VNU", "144 Xuân Thủy, Cầu Giấy", 105.7829, 21.0379),
+    ("Học viện Báo chí và Tuyên truyền", "AJC", "36 Xuân Thủy, Cầu Giấy", 105.7850, 21.0375),
 )
 
 AMENITIES = (
     ("Wifi", "wifi"),
-    ("Dieu hoa", "air-conditioner"),
-    ("May giat", "washing-machine"),
-    ("Cho de xe", "parking"),
-    ("Nha tam rieng", "private-bathroom"),
-    ("Bep", "kitchen"),
+    ("Điều hòa", "air-conditioner"),
+    ("Máy giặt", "washing-machine"),
+    ("Chỗ để xe", "parking"),
+    ("Nhà tắm riêng", "private-bathroom"),
+    ("Bếp", "kitchen"),
 )
 
 LIFESTYLE_TAGS = (
-    ("Yen tinh", "quiet"),
-    ("Ngu som", "early-sleeper"),
-    ("Sach se", "clean"),
-    ("Nau an", "cooking"),
-    ("Khong hut thuoc", "non-smoking"),
-    ("Than thien thu cung", "pet-friendly"),
+    ("Yên tĩnh", "quiet"),
+    ("Ngủ sớm", "early-sleeper"),
+    ("Sạch sẽ", "clean"),
+    ("Nấu ăn", "cooking"),
+    ("Không hút thuốc", "non-smoking"),
+    ("Thân thiện thú cưng", "pet-friendly"),
 )
 
 ROOMS = (
     {
-        "title": "Phong tro gan Bach khoa, day du noi that",
+        "title": "Phòng trọ gần Bách Khoa, đầy đủ nội thất",
         "ward_code": "HBT-BK",
-        "address": "Ngo 30 Ta Quang Buu, Hai Ba Trung",
+        "address": "Ngõ 30 Tạ Quang Bửu, Hai Bà Trưng",
         "lng": 105.8461,
         "lat": 21.0072,
         "price": "3200000",
@@ -67,9 +67,9 @@ ROOMS = (
         "amenities": ("wifi", "air-conditioner", "parking", "private-bathroom"),
     },
     {
-        "title": "Phong khep kin gan NEU, gio giac tu do",
+        "title": "Phòng khép kín gần NEU, giờ giấc tự do",
         "ward_code": "HBT-DT",
-        "address": "Ngo 121 Le Thanh Nghi, Hai Ba Trung",
+        "address": "Ngõ 121 Lê Thanh Nghị, Hai Bà Trưng",
         "lng": 105.8448,
         "lat": 21.0023,
         "price": "2800000",
@@ -78,9 +78,9 @@ ROOMS = (
         "amenities": ("wifi", "parking", "private-bathroom"),
     },
     {
-        "title": "Can ho mini Dich Vong Hau gan Cau Giay",
+        "title": "Căn hộ mini Dịch Vọng Hậu gần Cầu Giấy",
         "ward_code": "CG-DVH",
-        "address": "Ngo 68 Cau Giay, Cau Giay",
+        "address": "Ngõ 68 Cầu Giấy, Cầu Giấy",
         "lng": 105.7904,
         "lat": 21.0328,
         "price": "4200000",
@@ -89,9 +89,9 @@ ROOMS = (
         "amenities": ("wifi", "air-conditioner", "washing-machine", "kitchen"),
     },
     {
-        "title": "Phong tro gia tot gan Dai hoc Quoc gia",
+        "title": "Phòng trọ giá tốt gần Đại học Quốc gia",
         "ward_code": "CG-QH",
-        "address": "Ngo 79 Cau Giay, Cau Giay",
+        "address": "Ngõ 79 Cầu Giấy, Cầu Giấy",
         "lng": 105.7856,
         "lat": 21.0367,
         "price": "2500000",
@@ -100,9 +100,9 @@ ROOMS = (
         "amenities": ("wifi", "parking"),
     },
     {
-        "title": "Phong rong Nhan Chinh phu hop o ghep",
+        "title": "Phòng rộng Nhân Chính phù hợp ở ghép",
         "ward_code": "TX-NC",
-        "address": "Ngo 1 Quan Nhan, Thanh Xuan",
+        "address": "Ngõ 1 Quan Nhân, Thanh Xuân",
         "lng": 105.8031,
         "lat": 21.0052,
         "price": "3600000",
@@ -113,17 +113,17 @@ ROOMS = (
 )
 
 STUDENTS = (
-    ("student.hust@example.com", "Nguyen Minh Anh", "0911000001", "HUST", ("DD", "HBT"), ("quiet", "clean", "non-smoking")),
-    ("student.neu@example.com", "Tran Hoang Nam", "0911000002", "NEU", ("HBT",), ("cooking", "clean")),
-    ("student.vnu@example.com", "Le Phuong Linh", "0911000003", "VNU", ("CG",), ("quiet", "early-sleeper")),
+    ("student.hust@example.com", "Nguyễn Minh Anh", "0911000001", "HUST", ("DD", "HBT"), ("quiet", "clean", "non-smoking")),
+    ("student.neu@example.com", "Trần Hoàng Nam", "0911000002", "NEU", ("HBT",), ("cooking", "clean")),
+    ("student.vnu@example.com", "Lê Phương Linh", "0911000003", "VNU", ("CG",), ("quiet", "early-sleeper")),
 )
 
 ROOMMATE_POSTS = (
     {
         "email": "student.hust@example.com",
         "type": RoommatePost.Type.LOOKING_TOGETHER,
-        "title": "Tim 1 ban nu ghep tro gan Bach khoa",
-        "description": "Uu tien ban sach se, gio giac on dinh, ngan sach moi nguoi khoang 2-3 trieu.",
+        "title": "Tìm 1 bạn nữ ghép trọ gần Bách Khoa",
+        "description": "Ưu tiên bạn sạch sẽ, giờ giấc ổn định, ngân sách mỗi người khoảng 2-3 triệu.",
         "university": "HUST",
         "districts": ("HBT", "DD"),
         "budget_min": "1800000",
@@ -137,11 +137,11 @@ ROOMMATE_POSTS = (
     {
         "email": "student.neu@example.com",
         "type": RoommatePost.Type.HAS_ROOM,
-        "title": "Da co phong gan NEU can them 1 ban o cung",
-        "description": "Phong khep kin, chia tien ro rang, uu tien ban ton trong khong gian chung.",
+        "title": "Đã có phòng gần NEU, cần thêm 1 bạn ở cùng",
+        "description": "Phòng khép kín, chia tiền rõ ràng, ưu tiên bạn tôn trọng không gian chung.",
         "university": "NEU",
         "ward": "HBT-DT",
-        "address": "Ngo 121 Le Thanh Nghi, Hai Ba Trung",
+        "address": "Ngõ 121 Lê Thanh Nghị, Hai Bà Trưng",
         "budget_min": "1400000",
         "budget_max": "1800000",
         "available_slots": 1,
@@ -153,8 +153,8 @@ ROOMMATE_POSTS = (
     {
         "email": "student.vnu@example.com",
         "type": RoommatePost.Type.LOOKING_TOGETHER,
-        "title": "Tim ban cung thue phong khu Cau Giay",
-        "description": "Muon tim phong quanh Xuan Thuy, uu tien yen tinh de hoc bai.",
+        "title": "Tìm bạn cùng thuê phòng khu Cầu Giấy",
+        "description": "Muốn tìm phòng quanh Xuân Thủy, ưu tiên yên tĩnh để học bài.",
         "university": "VNU",
         "districts": ("CG",),
         "budget_min": "2000000",
@@ -210,7 +210,7 @@ class Command(BaseCommand):
         landlord_user, _ = User.objects.update_or_create(
             email="landlord.demo@example.com",
             defaults={
-                "full_name": "Chu tro demo",
+                "full_name": "Chủ trọ demo",
                 "phone": "0900000000",
                 "role": User.Role.LANDLORD,
                 "is_active": True,
@@ -221,7 +221,7 @@ class Command(BaseCommand):
         landlord_profile, _ = LandlordProfile.objects.update_or_create(
             user=landlord_user,
             defaults={
-                "business_name": "Nha tro demo",
+                "business_name": "Nhà trọ demo",
                 "verification_status": LandlordProfile.VerificationStatus.APPROVED,
             },
         )
@@ -232,7 +232,7 @@ class Command(BaseCommand):
                 title=item["title"],
                 defaults={
                     "ward": ward_map[item["ward_code"]],
-                    "description": "Phong demo phuc vu prototype tim tro cho sinh vien.",
+                    "description": "Phòng mẫu phục vụ trải nghiệm tìm trọ cho sinh viên.",
                     "address": item["address"],
                     "location": Point(item["lng"], item["lat"], srid=4326),
                     "price": Decimal(item["price"]),

@@ -1,0 +1,28 @@
+{% extends "accounts/auth_base.html" %}
+
+{% block title %}Nguyện vọng tìm phòng{% endblock %}
+{% block headline %}Cho Rentify biết kiểu phòng bạn đang cần{% endblock %}
+
+{% block content %}
+<p class="eyebrow">Nguyện vọng</p>
+<h2>Tùy chỉnh kết quả tìm trọ</h2>
+<p class="muted">Bạn có thể nhập ngân sách, trường học, khu vực ưu tiên và thói quen sống để Rentify gợi ý phòng phù hợp hơn.</p>
+
+<form method="post" novalidate>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for field in form %}
+        <label class="{% if field.field.widget.input_type == 'checkbox' %}choice-group{% endif %}">
+            {{ field.label }}
+            {{ field }}
+            {{ field.errors }}
+        </label>
+    {% endfor %}
+    <button type="submit">Lưu và tìm trọ</button>
+</form>
+
+<div class="profile-actions">
+    <a class="secondary-action" href="{% url 'room-search' %}">Bỏ qua</a>
+    <a href="{% url 'web-profile' %}">Cập nhật sau trong hồ sơ</a>
+</div>
+{% endblock %}

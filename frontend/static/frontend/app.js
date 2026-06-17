@@ -32,6 +32,17 @@ function formatCurrency(value) {
     }).format(Number(value));
 }
 
+function formatNumber(value, suffix = "") {
+    if (value === null || value === undefined || value === "") {
+        return "Chưa cập nhật";
+    }
+    return `${new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 1 }).format(Number(value))}${suffix}`;
+}
+
+function csrfToken() {
+    return document.querySelector("meta[name='csrf-token']").content;
+}
+
 function endpoint(path, params = {}) {
     const url = new URL(path, window.location.origin);
     Object.entries(params).forEach(([key, value]) => {
@@ -46,6 +57,21 @@ function endpoint(path, params = {}) {
 
 async function fetchJson(path, params) {
     const response = await fetch(endpoint(path, params));
+    if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+    }
+    return response.json();
+}
+
+async function sendJson(path, method = "POST", body = {}) {
+    const response = await fetch(path, {
+        method,
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken(),
+        },
+        body: JSON.stringify(body),
+    });
     if (!response.ok) {
         throw new Error(`Request failed with status ${response.status}`);
     }
@@ -183,7 +209,7 @@ function roomCard(room) {
     const meta = document.createElement("div");
     meta.className = "meta";
     meta.append(
-        textElement("span", `${room.area} m²`),
+        textElement("span", formatNumber(room.area, " m²")),
         textElement("span", `${room.max_occupants} người`),
         textElement("span", distance),
     );
@@ -192,14 +218,51 @@ function roomCard(room) {
     tags.className = "tags";
     room.amenities.slice(0, 4).forEach((amenity) => tags.append(tagElement(amenity.name)));
 
-    const detailLink = textElement("span", "Xem chi tiết", "card-link");
+    const cardActions = document.createElement("div");
+    cardActions.className = "card-actions-row";
+    const detailLink = document.createElement("a");
+    detailLink.className = "card-link";
+    detailLink.href = `/rooms/${room.id}/`;
+    detailLink.textContent = "Xem chi tiết";
+    detailLink.addEventListener("click", (event) => event.stopPropagation());
+    const favoriteButton = document.createElement("button");
+    favoriteButton.type = "button";
+    favoriteButton.className = room.is_favorited ? "favorite-button active" : "favorite-button";
+    favoriteButton.textContent = room.is_favorited ? "Đã lưu" : "Lưu phòng";
+    favoriteButton.setAttribute("aria-pressed", room.is_favorited ? "true" : "false");
+    favoriteButton.addEventListener("click", async (event) => {
+        event.stopPropagation();
+        if (!state.isAuthenticated) {
+            window.location.href = `/auth/login/?next=/rooms/${room.id}/`;
+            return;
+        }
+        favoriteButton.disabled = true;
+        try {
+            if (room.is_favorited) {
+                await sendJson(`/api/rooms/${room.id}/unfavorite/`, "DELETE");
+                room.is_favorited = false;
+            } else {
+                await sendJson(`/api/rooms/${room.id}/favorite/`, "POST");
+                room.is_favorited = true;
+            }
+            favoriteButton.classList.toggle("active", room.is_favorited);
+            favoriteButton.textContent = room.is_favorited ? "Đã lưu" : "Lưu phòng";
+            favoriteButton.setAttribute("aria-pressed", room.is_favorited ? "true" : "false");
+        } catch (error) {
+            showStatus("Không cập nhật được phòng yêu thích. Hãy thử lại.", true);
+            console.error(error);
+        } finally {
+            favoriteButton.disabled = false;
+        }
+    });
+    cardActions.append(detailLink, favoriteButton);
     content.append(
         textElement("h3", room.title),
         textElement("div", `${formatCurrency(room.price)} / tháng`, "price"),
         meta,
         textElement("p", room.address, "muted"),
         tags,
-        detailLink,
+        cardActions,
     );
     card.append(thumb, content);
 
@@ -239,8 +302,13 @@ async function bootstrap() {
         renderAmenities();
         await loadRooms();
         if (state.isAuthenticated) {
-            const recommendations = await fetchJson("/api/recommendations/");
-            renderRecommendations(recommendations);
+            try {
+                const recommendations = await fetchJson("/api/recommendations/");
+                renderRecommendations(recommendations);
+            } catch (error) {
+                els.recommendationBox.hidden = true;
+                console.error(error);
+            }
         }
     } catch (error) {
         showStatus("Không tải được dữ liệu cần thiết. Hãy thử tải lại trang sau ít phút.", true);

@@ -55,15 +55,15 @@ def amenity_score(room):
 def explain(room, scores):
     reasons = []
     if scores["budget"] >= 0.8:
-        reasons.append("Gia phong phu hop voi ngan sach")
+        reasons.append("Giá phòng phù hợp với ngân sách")
     if scores["distance"] >= 0.7:
-        reasons.append("Gan truong ban dang quan tam")
+        reasons.append("Gần trường bạn đang quan tâm")
     if scores["amenities"] >= 0.6:
-        reasons.append("Co nhieu tien ich co ban")
+        reasons.append("Có nhiều tiện ích cơ bản")
     if scores["area"] >= 0.7:
-        reasons.append("Dien tich kha rong")
+        reasons.append("Diện tích khá rộng")
     if not reasons:
-        reasons.append("Phu hop tuong doi voi bo loc hien tai")
+        reasons.append("Phù hợp tương đối với bộ lọc hiện tại")
     return reasons
 
 

@@ -13,6 +13,7 @@ from apps.roommates.models import LifestyleTag, RoommatePost
 class RoommatePostApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
+        RoommatePost.objects.all().delete()
         suffix = uuid4().hex[:6]
         self.district = District.objects.create(name="Hai Ba Trung", code=f"H{suffix}")
         self.ward = Ward.objects.create(district=self.district, name="Bach Khoa", code=f"HBK{suffix}")

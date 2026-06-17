@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -7,7 +8,7 @@ from apps.accounts.models import LandlordProfile
 from apps.listings.models import Room, RoomImage
 from apps.listings.services import approve_room, mark_room_rented, reject_room, submit_room_for_review
 
-from .forms import LandlordRoomImageForm, RejectImageForm, RejectRoomForm, RoomForm
+from .forms import LandlordRoomImageForm, LandlordVerificationForm, RejectImageForm, RejectLandlordForm, RejectRoomForm, RoomForm
 from .permissions import landlord_required, staff_required
 
 
@@ -20,6 +21,31 @@ def landlord_dashboard(request):
         .order_by("-created_at")
     )
     return render(request, "dashboard/landlord_dashboard.html", {"rooms": rooms, "profile": profile})
+
+
+@landlord_required
+def landlord_verification(request):
+    profile = request.user.landlord_profile
+    form = LandlordVerificationForm(request.POST or None, request.FILES or None, instance=profile)
+    if request.method == "POST" and form.is_valid():
+        profile = form.save(commit=False)
+        profile.verification_status = LandlordProfile.VerificationStatus.PENDING
+        profile.verification_note = ""
+        profile.verified_at = None
+        profile.save(
+            update_fields=(
+                "business_name",
+                "identity_number",
+                "identity_document",
+                "verification_status",
+                "verification_note",
+                "verified_at",
+                "updated_at",
+            )
+        )
+        messages.success(request, "Đã gửi hồ sơ xác minh. Admin sẽ kiểm tra trước khi bạn đăng phòng công khai.")
+        return redirect("landlord-dashboard")
+    return render(request, "dashboard/landlord_verification.html", {"form": form, "profile": profile})
 
 
 @landlord_required
@@ -90,6 +116,15 @@ def landlord_room_image_upload(request, pk):
     room = get_object_or_404(Room, pk=pk, landlord=request.user.landlord_profile, deleted_at__isnull=True)
     form = LandlordRoomImageForm(request.POST or None, request.FILES or None)
     if request.method == "POST" and form.is_valid():
+        if room.images.count() >= settings.RENTIFY_ROOM_IMAGE_LIMIT:
+            messages.error(request, f"Phòng chỉ được có tối đa {settings.RENTIFY_ROOM_IMAGE_LIMIT} ảnh.")
+            return redirect("landlord-room-detail", pk=room.pk)
+        if form.cleaned_data.get("is_cover") and room.images.filter(
+            is_cover=True,
+            status=RoomImage.ModerationStatus.APPROVED,
+        ).exists():
+            messages.error(request, "Phòng đã có ảnh bìa. Hãy bỏ ảnh bìa cũ trước khi đặt ảnh mới.")
+            return redirect("landlord-room-detail", pk=room.pk)
         image = form.save(commit=False)
         image.room = room
         image.uploaded_by = request.user
@@ -142,6 +177,32 @@ def moderation_room_reject(request, pk):
         messages.success(request, "Đã từ chối phòng.")
         return redirect("moderation-dashboard")
     return render(request, "dashboard/reject_form.html", {"form": form, "title": "Từ chối phòng"})
+
+
+@staff_required
+@require_POST
+def moderation_landlord_approve(request, pk):
+    profile = get_object_or_404(LandlordProfile, pk=pk)
+    profile.verification_status = LandlordProfile.VerificationStatus.APPROVED
+    profile.verification_note = ""
+    profile.verified_at = timezone.now()
+    profile.save(update_fields=("verification_status", "verification_note", "verified_at", "updated_at"))
+    messages.success(request, "Đã duyệt hồ sơ chủ trọ.")
+    return redirect("moderation-dashboard")
+
+
+@staff_required
+def moderation_landlord_reject(request, pk):
+    profile = get_object_or_404(LandlordProfile, pk=pk)
+    form = RejectLandlordForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        profile.verification_status = LandlordProfile.VerificationStatus.REJECTED
+        profile.verification_note = form.cleaned_data["verification_note"]
+        profile.verified_at = None
+        profile.save(update_fields=("verification_status", "verification_note", "verified_at", "updated_at"))
+        messages.success(request, "Đã từ chối hồ sơ chủ trọ.")
+        return redirect("moderation-dashboard")
+    return render(request, "dashboard/reject_form.html", {"form": form, "title": "Từ chối hồ sơ chủ trọ"})
 
 
 @staff_required

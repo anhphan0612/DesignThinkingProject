@@ -267,25 +267,50 @@ function formPayload(form) {
     return payload;
 }
 
+function readableErrors(errorPayload) {
+    if (!errorPayload || typeof errorPayload !== "object") {
+        return "Không gửi được bài. Hãy kiểm tra lại thông tin.";
+    }
+    return Object.entries(errorPayload)
+        .map(([field, messages]) => {
+            const text = Array.isArray(messages) ? messages.join(", ") : String(messages);
+            return `${field}: ${text}`;
+        })
+        .join(" ");
+}
+
 async function submitRoommatePost(event) {
     event.preventDefault();
-    const response = await fetch("/api/roommate-posts/", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": csrfToken(),
-        },
-        body: JSON.stringify(formPayload(event.currentTarget)),
-    });
-    if (!response.ok) {
-        const error = await response.json();
-        showRoommateStatus(JSON.stringify(error), true);
-        return;
+    const submitButton = event.currentTarget.querySelector("button[type='submit']");
+    submitButton.disabled = true;
+    const originalText = submitButton.textContent;
+    submitButton.textContent = "Đang đăng...";
+    showRoommateStatus("Đang gửi bài ghép trọ...");
+    try {
+        const response = await fetch("/api/roommate-posts/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrfToken(),
+            },
+            body: JSON.stringify(formPayload(event.currentTarget)),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            showRoommateStatus(readableErrors(error), true);
+            return;
+        }
+        event.currentTarget.reset();
+        showRoommateStatus("Đã đăng bài ghép trọ.");
+        await loadRoommates();
+        await loadMatches();
+    } catch (error) {
+        showRoommateStatus("Không gửi được bài. Hãy kiểm tra kết nối và thử lại.", true);
+        console.error(error);
+    } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = originalText;
     }
-    event.currentTarget.reset();
-    showRoommateStatus("Đã đăng bài ghép trọ.");
-    await loadRoommates();
-    await loadMatches();
 }
 
 async function bootstrapRoommates() {

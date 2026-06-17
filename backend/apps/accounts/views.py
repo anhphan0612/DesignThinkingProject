@@ -1,12 +1,15 @@
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from allauth.socialaccount.models import SocialApp
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from apps.interactions.models import Favorite
 
 from .models import User
 from .forms import StudentPreferenceForm, WebLoginForm, WebProfileForm, WebRegisterForm
@@ -27,10 +30,12 @@ class IsStudent(permissions.BasePermission):
 class RegisterAPIView(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = RegisterSerializer
+    throttle_scope = "auth_register"
 
 
 class LoginAPIView(APIView):
     permission_classes = [permissions.AllowAny]
+    throttle_scope = "auth_login"
 
     def post(self, request):
         serializer = LoginSerializer(data=request.data, context={"request": request})
@@ -128,11 +133,33 @@ def web_register(request):
         user = form.save()
         login(request, user, backend="django.contrib.auth.backends.ModelBackend")
         messages.success(request, "Tạo tài khoản thành công.")
+        if user.role == User.Role.STUDENT:
+            return redirect("web-preferences-onboarding")
         return redirect(role_destination(user))
     return render(
         request,
         "accounts/register.html",
         auth_context(request, form),
+    )
+
+
+@login_required
+def web_preferences_onboarding(request):
+    if request.user.role != User.Role.STUDENT:
+        return redirect(role_destination(request.user))
+    if not hasattr(request.user, "student_profile"):
+        return HttpResponseForbidden("Student profile is required.")
+
+    form = StudentPreferenceForm(request.POST or None, instance=request.user.student_profile)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Đã lưu nguyện vọng tìm phòng.")
+        return redirect("room-search")
+
+    return render(
+        request,
+        "accounts/preferences_onboarding.html",
+        {"form": form},
     )
 
 
@@ -147,8 +174,14 @@ def web_logout(request):
 def web_profile(request):
     profile_form = WebProfileForm(request.POST or None, instance=request.user)
     preference_form = None
+    favorite_rooms = []
     if request.user.role == User.Role.STUDENT and hasattr(request.user, "student_profile"):
         preference_form = StudentPreferenceForm(request.POST or None, instance=request.user.student_profile)
+        favorite_rooms = (
+            Favorite.objects.filter(user=request.user, room__deleted_at__isnull=True)
+            .select_related("room", "room__ward__district")
+            .order_by("-created_at")[:6]
+        )
 
     if request.method == "POST":
         forms = [profile_form]
@@ -164,5 +197,9 @@ def web_profile(request):
     return render(
         request,
         "accounts/profile.html",
-        {"profile_form": profile_form, "preference_form": preference_form},
+        {
+            "profile_form": profile_form,
+            "preference_form": preference_form,
+            "favorite_rooms": favorite_rooms,
+        },
     )

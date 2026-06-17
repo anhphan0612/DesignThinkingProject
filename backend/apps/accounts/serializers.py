@@ -87,8 +87,8 @@ class StudentProfileSerializer(serializers.ModelSerializer):
 class LandlordProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = LandlordProfile
-        fields = ("business_name", "verification_status", "verified_at")
-        read_only_fields = ("verification_status", "verified_at")
+        fields = ("business_name", "verification_status", "verification_note", "verified_at")
+        read_only_fields = ("verification_status", "verification_note", "verified_at")
 
 
 class LoginSerializer(serializers.Serializer):

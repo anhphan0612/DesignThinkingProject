@@ -15,15 +15,14 @@
                 <span>Rentify</span>
             </a>
             <div class="nav-actions">
+                <a href="{% url 'room-search' %}">Tìm phòng</a>
+                <a href="{% url 'roommate-home' %}">Ghép trọ</a>
+                <a href="{% url 'landlord-home' %}">Cho thuê</a>
                 {% if request.user.is_authenticated %}
                     {% if request.user.role == "landlord" %}
-                        <a href="{% url 'landlord-home' %}">Kênh chủ trọ</a>
                         <a class="nav-primary" href="{% url 'landlord-dashboard' %}">Dashboard</a>
                     {% elif request.user.is_staff %}
                         <a href="{% url 'moderation-dashboard' %}">Kiểm duyệt</a>
-                    {% else %}
-                        <a href="{% url 'room-search' %}">Tìm phòng</a>
-                        <a href="{% url 'roommate-home' %}">Ghép trọ</a>
                     {% endif %}
                     <a href="{% url 'web-profile' %}">{{ request.user.full_name|default:request.user.email }}</a>
                     <a href="{% url 'web-logout' %}">Đăng xuất</a>

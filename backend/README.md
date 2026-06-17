@@ -92,7 +92,10 @@ http://127.0.0.1:8000/dashboard/moderation/
 | `GET /auth/login/` | Trang dang nhap web |
 | `GET /auth/register/` | Trang dang ky web |
 | `GET /auth/profile/` | Ho so web |
+| `GET/POST /auth/password/reset/` | Gui email dat lai mat khau |
+| `GET/POST /auth/password/change/` | Doi mat khau khi da dang nhap |
 | `GET /dashboard/landlord/` | Dashboard chu tro |
+| `GET/POST /dashboard/landlord/verification/` | Chu tro gui ho so xac minh |
 | `GET /dashboard/moderation/` | Dashboard admin kiem duyet |
 | `GET /accounts/google/login/` | OAuth Google qua django-allauth |
 | `GET /accounts/facebook/login/` | OAuth Facebook qua django-allauth |
@@ -126,6 +129,12 @@ GET /api/rooms/?min_price=1500000&max_price=3500000&amenity=1&university=1&max_d
 ```
 
 Phong dang cong khai se quay lai trang thai cho duyet khi chu tro sua noi dung, gia, toa do hoac tien ich.
+
+## Cau hinh san pham
+
+- Email reset mat khau dung cac bien `DJANGO_EMAIL_*`; local mac dinh in email ra console.
+- API dang ky/dang nhap co throttle qua `DRF_AUTH_REGISTER_THROTTLE_RATE` va `DRF_AUTH_LOGIN_THROTTLE_RATE`.
+- Upload anh phong mac dinh chi nhan JPG/PNG/WebP, toi da `RENTIFY_MAX_ROOM_IMAGE_SIZE_MB` MB va `RENTIFY_ROOM_IMAGE_LIMIT` anh moi phong.
 
 ## Buoc tiep theo
 

@@ -136,6 +136,28 @@ button:hover, .social:hover { background: var(--primary-dark); }
     gap: 10px;
 }
 
+.choice-group ul {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    list-style: none;
+}
+
+.choice-group li label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--ink);
+    font-weight: 700;
+}
+
+.choice-group input[type="checkbox"] {
+    width: auto;
+}
+
 .role-tabs {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -158,6 +180,47 @@ button:hover, .social:hover { background: var(--primary-dark); }
     background: #fff;
     color: var(--primary-dark);
     box-shadow: 0 8px 18px rgba(15, 23, 42, .08);
+}
+
+.login-role-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.login-role-cards a {
+    display: grid;
+    gap: 6px;
+    min-height: 112px;
+    align-content: start;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: #f8fafc;
+    color: var(--ink);
+    padding: 14px;
+}
+
+.login-role-cards a.active {
+    border-color: rgba(23,105,224,.45);
+    background: var(--soft);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, .08);
+}
+
+.login-role-cards strong {
+    color: var(--primary-dark);
+}
+
+.login-role-cards span {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.45;
+}
+
+.form-section {
+    display: grid;
+    gap: 15px;
 }
 
 .divider {
@@ -191,9 +254,39 @@ button:hover, .social:hover { background: var(--primary-dark); }
 
 .profile-actions { margin-top: 20px; }
 
+.saved-room-list {
+    display: grid;
+    gap: 10px;
+}
+
+.saved-room-list a {
+    display: grid;
+    gap: 4px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: #f8fafc;
+    color: var(--ink);
+    padding: 12px;
+}
+
+.saved-room-list span {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.secondary-action {
+    display: inline-flex;
+    justify-content: center;
+    border-radius: 15px;
+    background: var(--soft);
+    color: var(--primary-dark);
+    padding: 12px 16px;
+}
+
 @media (max-width: 900px) {
     .auth-shell { grid-template-columns: 1fr; padding: 24px 0; }
     .auth-copy { min-height: auto; }
     .auth-copy h1 { margin-top: 60px; }
+    .login-role-cards { grid-template-columns: 1fr; }
 }
 

@@ -1,0 +1,33 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Xác minh chủ trọ{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <p class="eyebrow">Xác minh</p>
+        <h1>Gửi hồ sơ chủ trọ</h1>
+        <p>Hồ sơ được duyệt sẽ cho phép bạn đăng phòng công khai trên Rentify.</p>
+    </div>
+</section>
+
+<section class="card">
+    <p><strong>Trạng thái hiện tại:</strong> {{ profile.get_verification_status_display }}</p>
+    {% if profile.verification_note %}
+        <p class="danger">Ghi chú: {{ profile.verification_note }}</p>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {% for field in form %}
+            <label>
+                {{ field.label }}
+                {{ field }}
+                {{ field.errors }}
+            </label>
+        {% endfor %}
+        <button type="submit">Gửi hồ sơ xác minh</button>
+    </form>
+</section>
+{% endblock %}

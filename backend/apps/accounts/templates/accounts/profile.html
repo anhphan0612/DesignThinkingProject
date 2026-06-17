@@ -21,7 +21,8 @@
     {% endfor %}
 
     {% if preference_form %}
-        <h3>Nhu cầu sinh viên</h3>
+        <h3>Nhu cầu tìm trọ</h3>
+        <p class="muted">Các thông tin này giúp Rentify ưu tiên phòng theo ngân sách, khu vực, trường học và thói quen sống.</p>
         {{ preference_form.non_field_errors }}
         {% for field in preference_form %}
             <label>
@@ -30,15 +31,33 @@
                 {{ field.errors }}
             </label>
         {% endfor %}
+        <h3>Phòng đã lưu</h3>
+        <div class="saved-room-list">
+            {% for favorite in favorite_rooms %}
+                <a href="{% url 'frontend-room-detail' favorite.room.id %}">
+                    <strong>{{ favorite.room.title }}</strong>
+                    <span>{{ favorite.room.ward.name }}, {{ favorite.room.ward.district.name }}</span>
+                </a>
+            {% empty %}
+                <p class="muted">Bạn chưa lưu phòng nào. Hãy lưu các phòng phù hợp để xem lại nhanh tại đây.</p>
+            {% endfor %}
+        </div>
     {% else %}
-        <div class="notice">Hồ sơ chủ trọ sẽ tiếp tục được mở rộng ở increment dashboard đăng phòng.</div>
+        <div class="notice">Hồ sơ chủ trọ và trạng thái xác minh được quản lý trong kênh chủ trọ.</div>
     {% endif %}
 
     <button type="submit">Lưu thay đổi</button>
 </form>
 
 <div class="profile-actions">
-    <a href="/">Về trang tìm phòng</a>
+    {% if request.user.is_staff %}
+        <a href="{% url 'moderation-dashboard' %}">Quay lại kiểm duyệt</a>
+    {% elif request.user.role == "landlord" %}
+        <a href="{% url 'landlord-dashboard' %}">Quay lại kênh chủ trọ</a>
+    {% else %}
+        <a href="{% url 'room-search' %}">Quay lại trang tìm phòng</a>
+    {% endif %}
+    <a href="{% url 'password-change' %}">Đổi mật khẩu</a>
     <a href="{% url 'web-logout' %}">Đăng xuất</a>
 </div>
 {% endblock %}

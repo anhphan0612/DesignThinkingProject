@@ -12,7 +12,7 @@ DEFAULT_PASSWORD = "demo-password"
 STUDENTS = (
     {
         "email": "student.hust.demo@example.com",
-        "full_name": "Nguyen Van An",
+        "full_name": "Nguyễn Văn An",
         "phone": "0911000001",
         "student_code": "HUST-DEMO-001",
         "university": "HUST",
@@ -22,7 +22,7 @@ STUDENTS = (
     },
     {
         "email": "student.neu.demo@example.com",
-        "full_name": "Tran Thi Binh",
+        "full_name": "Trần Thị Bình",
         "phone": "0911000002",
         "student_code": "NEU-DEMO-002",
         "university": "NEU",
@@ -32,7 +32,7 @@ STUDENTS = (
     },
     {
         "email": "student.huce.demo@example.com",
-        "full_name": "Le Minh Chau",
+        "full_name": "Lê Minh Châu",
         "phone": "0911000003",
         "student_code": "HUCE-DEMO-003",
         "university": "HUCE",
@@ -42,7 +42,7 @@ STUDENTS = (
     },
     {
         "email": "student.vnu.demo@example.com",
-        "full_name": "Pham Quang Dung",
+        "full_name": "Phạm Quang Dũng",
         "phone": "0911000004",
         "student_code": "VNU-DEMO-004",
         "university": "VNU",
@@ -52,7 +52,7 @@ STUDENTS = (
     },
     {
         "email": "student.ajc.demo@example.com",
-        "full_name": "Hoang Thu Ha",
+        "full_name": "Hoàng Thu Hà",
         "phone": "0911000005",
         "student_code": "AJC-DEMO-005",
         "university": "AJC",
@@ -65,16 +65,16 @@ STUDENTS = (
 LANDLORDS = (
     {
         "email": "landlord.demo@example.com",
-        "full_name": "Chu tro demo",
+        "full_name": "Chủ trọ demo",
         "phone": "0900000000",
-        "business_name": "Nha tro demo",
+        "business_name": "Nhà trọ demo",
         "identity_number": "LANDLORD-DEMO-001",
     },
     {
         "email": "landlord.hanoi.demo@example.com",
-        "full_name": "Do Manh Hung",
+        "full_name": "Đỗ Mạnh Hùng",
         "phone": "0900000002",
-        "business_name": "Phong tro Minh Hung",
+        "business_name": "Phòng trọ Minh Hùng",
         "identity_number": "LANDLORD-DEMO-002",
     },
 )

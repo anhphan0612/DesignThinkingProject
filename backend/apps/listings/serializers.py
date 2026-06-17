@@ -1,11 +1,14 @@
 from django.contrib.gis.geos import Point
+from django.conf import settings
 from rest_framework import serializers
 
 from apps.accounts.models import LandlordProfile, User
+from apps.interactions.models import Favorite
 from apps.locations.models import Ward
 
 from .models import Amenity, Room, RoomImage
 from .services import require_reapproval_after_edit
+from .validators import validate_room_image_upload
 
 
 class AmenitySerializer(serializers.ModelSerializer):
@@ -35,6 +38,10 @@ class RoomImageSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id", "source", "source_label", "status", "uploaded_by_name", "created_at")
 
+    def validate_image(self, image):
+        validate_room_image_upload(image)
+        return image
+
     def validate_room(self, room):
         user = self.context["request"].user
         if user.is_staff:
@@ -44,12 +51,13 @@ class RoomImageSerializer(serializers.ModelSerializer):
         if room.status == Room.Status.ACTIVE:
             return room
         raise serializers.ValidationError("You cannot add an image to this room.")
-        return room
 
     def validate(self, attrs):
         room = attrs.get("room", getattr(self.instance, "room", None))
         is_cover = attrs.get("is_cover", getattr(self.instance, "is_cover", False))
         user = self.context["request"].user
+        if self.instance is None and room and room.images.count() >= settings.RENTIFY_ROOM_IMAGE_LIMIT:
+            raise serializers.ValidationError("This room has reached the image limit.")
         if is_cover and not (
             user.is_staff
             or (room and hasattr(user, "landlord_profile") and room.landlord_id == user.landlord_profile.id)
@@ -77,6 +85,7 @@ class RoomReadSerializer(serializers.ModelSerializer):
     latitude = serializers.SerializerMethodField()
     longitude = serializers.SerializerMethodField()
     distance_km = serializers.SerializerMethodField()
+    is_favorited = serializers.SerializerMethodField()
 
     class Meta:
         model = Room
@@ -103,6 +112,7 @@ class RoomReadSerializer(serializers.ModelSerializer):
             "status",
             "rejection_reason",
             "distance_km",
+            "is_favorited",
             "created_at",
         )
 
@@ -115,6 +125,12 @@ class RoomReadSerializer(serializers.ModelSerializer):
     def get_distance_km(self, obj):
         distance = getattr(obj, "distance", None)
         return round(distance.km, 2) if distance else None
+
+    def get_is_favorited(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        return Favorite.objects.filter(user=request.user, room=obj).exists()
 
     def get_images(self, obj):
         images = obj.images.filter(status=RoomImage.ModerationStatus.APPROVED).select_related("uploaded_by")

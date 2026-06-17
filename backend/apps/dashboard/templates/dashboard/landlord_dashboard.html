@@ -9,7 +9,10 @@
         <h1>Quản lý phòng của bạn</h1>
         <p>{{ profile.business_name|default:"Chủ trọ cá nhân" }} - {{ profile.get_verification_status_display }}</p>
     </div>
-    <a class="button" href="{% url 'landlord-room-create' %}">Tạo phòng mới</a>
+    <div class="actions">
+        <a href="{% url 'landlord-verification' %}">Xác minh chủ trọ</a>
+        <a class="button" href="{% url 'landlord-room-create' %}">Tạo phòng mới</a>
+    </div>
 </section>
 
 <section class="grid-list">

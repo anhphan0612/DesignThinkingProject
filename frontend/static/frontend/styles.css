@@ -435,10 +435,31 @@ button:disabled { cursor: not-allowed; background: #d9e3f0; color: #718096; }
 
 .card-link {
     display: inline-flex;
-    margin-top: 10px;
     color: var(--primary);
     font-size: 13px;
     font-weight: 900;
+}
+
+.card-actions-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.favorite-button {
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--primary-dark);
+    font-size: 13px;
+    padding: 8px 11px;
+}
+
+.favorite-button.active {
+    border-color: #bae6fd;
+    background: #e0f2fe;
+    color: #075985;
 }
 
 .tags { flex-wrap: wrap; gap: 8px; margin-top: 12px; }
