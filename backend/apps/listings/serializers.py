@@ -2,8 +2,9 @@ from django.contrib.gis.geos import Point
 from django.conf import settings
 from rest_framework import serializers
 
-from apps.accounts.models import LandlordProfile, User
+from apps.accounts.models import User
 from apps.interactions.models import Favorite
+from apps.locations.geocoding import GeocodingError, geocode_room_address
 from apps.locations.models import Ward
 
 from .models import Amenity, Room, RoomImage
@@ -63,16 +64,6 @@ class RoomImageSerializer(serializers.ModelSerializer):
             or (room and hasattr(user, "landlord_profile") and room.landlord_id == user.landlord_profile.id)
         ):
             raise serializers.ValidationError("Only the landlord or admin can set a cover image.")
-        if room and is_cover:
-            covers = RoomImage.objects.filter(
-                room=room,
-                is_cover=True,
-                status=RoomImage.ModerationStatus.APPROVED,
-            )
-            if self.instance:
-                covers = covers.exclude(pk=self.instance.pk)
-            if covers.exists():
-                raise serializers.ValidationError("This room already has a cover image.")
         return attrs
 
 
@@ -100,6 +91,8 @@ class RoomReadSerializer(serializers.ModelSerializer):
             "address",
             "latitude",
             "longitude",
+            "location_status",
+            "location_label",
             "price",
             "deposit",
             "area",
@@ -138,8 +131,8 @@ class RoomReadSerializer(serializers.ModelSerializer):
 
 
 class RoomWriteSerializer(serializers.ModelSerializer):
-    latitude = serializers.DecimalField(max_digits=9, decimal_places=6, write_only=True)
-    longitude = serializers.DecimalField(max_digits=9, decimal_places=6, write_only=True)
+    latitude = serializers.DecimalField(max_digits=9, decimal_places=6, write_only=True, required=False)
+    longitude = serializers.DecimalField(max_digits=9, decimal_places=6, write_only=True, required=False)
     amenities = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=Amenity.objects.all(),
@@ -177,17 +170,16 @@ class RoomWriteSerializer(serializers.ModelSerializer):
         if self.instance is None:
             if user.role != User.Role.LANDLORD or not hasattr(user, "landlord_profile"):
                 raise serializers.ValidationError("Only landlords can create rooms.")
-            if user.landlord_profile.verification_status != LandlordProfile.VerificationStatus.APPROVED:
-                raise serializers.ValidationError("The landlord account must be verified first.")
         return attrs
 
     def create(self, validated_data):
         amenities = validated_data.pop("amenities", [])
-        latitude = validated_data.pop("latitude")
-        longitude = validated_data.pop("longitude")
+        latitude = validated_data.pop("latitude", None)
+        longitude = validated_data.pop("longitude", None)
+        location_data = self._resolve_location(validated_data, latitude=latitude, longitude=longitude)
         room = Room.objects.create(
             landlord=self.context["request"].user.landlord_profile,
-            location=Point(float(longitude), float(latitude), srid=4326),
+            **location_data,
             **validated_data,
         )
         room.amenities.set(amenities)
@@ -199,13 +191,49 @@ class RoomWriteSerializer(serializers.ModelSerializer):
         latitude = validated_data.pop("latitude", None)
         longitude = validated_data.pop("longitude", None)
         if latitude is not None and longitude is not None:
-            validated_data["location"] = Point(float(longitude), float(latitude), srid=4326)
+            validated_data.update(self._resolve_location(validated_data, latitude=latitude, longitude=longitude))
+        elif "address" in validated_data or "ward" in validated_data:
+            address = validated_data.get("address", instance.address)
+            ward = validated_data.get("ward", instance.ward)
+            validated_data.update(self._resolve_location({"address": address, "ward": ward}))
         instance = super().update(instance, validated_data)
         if amenities is not None:
             instance.amenities.set(amenities)
         if was_active:
             require_reapproval_after_edit(room=instance)
         return instance
+
+    def _resolve_location(self, attrs, *, latitude=None, longitude=None):
+        if latitude is not None and longitude is not None:
+            return {
+                "location": Point(float(longitude), float(latitude), srid=4326),
+                "location_status": Room.LocationStatus.GEOCODED,
+                "location_query": attrs.get("address", ""),
+                "location_label": "Tọa độ được nhập thủ công",
+            }
+
+        address = attrs.get("address")
+        ward = attrs.get("ward")
+        try:
+            candidates = geocode_room_address(address=address, ward=ward, limit=1)
+        except GeocodingError:
+            candidates = []
+
+        if candidates:
+            candidate = candidates[0]
+            return {
+                "location": Point(float(candidate.longitude), float(candidate.latitude), srid=4326),
+                "location_status": Room.LocationStatus.GEOCODED,
+                "location_query": candidate.query,
+                "location_label": candidate.label,
+            }
+
+        return {
+            "location": Point(106.700806, 10.776889, srid=4326),
+            "location_status": Room.LocationStatus.FAILED,
+            "location_query": address or "",
+            "location_label": "",
+        }
 
 
 class RejectRoomSerializer(serializers.Serializer):

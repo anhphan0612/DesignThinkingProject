@@ -1,4 +1,5 @@
 {% extends "dashboard/base.html" %}
+{% load humanize %}
 
 {% block title %}Kiểm duyệt{% endblock %}
 
@@ -10,18 +11,28 @@
     </div>
 </section>
 
-<section class="card">
+<section class="moderation-tabs">
+    <a href="#rooms">Phòng chờ duyệt</a>
+    <a href="#images">Ảnh chờ duyệt</a>
+    <a href="#reports">Báo cáo</a>
+</section>
+
+<section id="rooms" class="card">
     <h2>Phòng chờ duyệt</h2>
     <div class="grid-list compact">
         {% for room in pending_rooms %}
             <article class="review-card">
                 <h3>{{ room.title }}</h3>
                 <p>{{ room.address }} - {{ room.landlord.user.full_name }}</p>
-                <p><strong>{{ room.price|floatformat:0 }} VND</strong></p>
+                <p><strong>{{ room.price|floatformat:0|intcomma }} VND/tháng</strong></p>
                 <div class="actions">
-                    <form method="post" action="{% url 'moderation-room-approve' room.id %}">{% csrf_token %}<button>Duyệt</button></form>
+                    <a href="{% url 'moderation-room-detail' room.id %}">Xem chi tiết</a>
+                    <a href="{% url 'moderation-room-preview' room.id %}" target="_blank" rel="noopener">Preview</a>
+                    <form method="post" action="{% url 'moderation-room-approve' room.id %}">
+                        {% csrf_token %}
+                        <button>Duyệt</button>
+                    </form>
                     <a href="{% url 'moderation-room-reject' room.id %}">Từ chối</a>
-                    <a href="{% url 'moderation-room-detail' room.id %}">Xem</a>
                 </div>
             </article>
         {% empty %}
@@ -30,43 +41,61 @@
     </div>
 </section>
 
-<section class="card">
-    <h2>Chủ trọ chờ xác minh</h2>
-    <div class="grid-list compact">
-        {% for profile in pending_landlords %}
-            <article class="review-card">
-                <h3>{{ profile.business_name|default:profile.user.full_name }}</h3>
-                <p>{{ profile.user.email }}{% if profile.identity_number %} - {{ profile.identity_number }}{% endif %}</p>
-                {% if profile.identity_document %}
-                    <p><a href="{{ profile.identity_document.url }}" target="_blank" rel="noopener">Xem giấy tờ</a></p>
-                {% endif %}
-                <div class="actions">
-                    <form method="post" action="{% url 'moderation-landlord-approve' profile.id %}">{% csrf_token %}<button>Duyệt</button></form>
-                    <a href="{% url 'moderation-landlord-reject' profile.id %}">Từ chối</a>
-                </div>
-            </article>
-        {% empty %}
-            <p>Không có chủ trọ chờ xác minh.</p>
-        {% endfor %}
-    </div>
-</section>
-
-<section class="card">
+<section id="images" class="card">
     <h2>Ảnh người dùng gửi chờ duyệt</h2>
     <div class="image-grid">
         {% for image in pending_images %}
             <figure>
-                <img src="{{ image.image.url }}" alt="{{ image.caption|default:image.room.title }}">
+                <a href="{{ image.image.url }}" target="_blank" rel="noopener">
+                    <img src="{{ image.image.url }}" alt="{{ image.caption|default:image.room.title }}">
+                </a>
                 <figcaption>
-                    {{ image.room.title }} - {{ image.uploaded_by.email|default:"unknown" }}
+                    <strong>{{ image.room.title }}</strong>
+                    <span>{{ image.uploaded_by.email|default:"unknown" }}</span>
+                    {% if image.caption %}<span>{{ image.caption }}</span>{% endif %}
                     <div class="actions">
-                        <form method="post" action="{% url 'moderation-image-approve' image.id %}">{% csrf_token %}<button>Duyệt</button></form>
+                        <form method="post" action="{% url 'moderation-image-approve' image.id %}">
+                            {% csrf_token %}
+                            <button>Duyệt</button>
+                        </form>
                         <a href="{% url 'moderation-image-reject' image.id %}">Từ chối</a>
                     </div>
                 </figcaption>
             </figure>
         {% empty %}
             <p>Không có ảnh chờ duyệt.</p>
+        {% endfor %}
+    </div>
+</section>
+
+<section id="reports" class="card">
+    <h2>Báo cáo nội dung</h2>
+    <div class="grid-list compact">
+        {% for report in open_reports %}
+            <article class="review-card">
+                <span class="status">{{ report.get_target_type_display }}</span>
+                <h3>{{ report.reason }}</h3>
+                <p>{{ report.target_label|default:"Nội dung đã bị xóa" }}</p>
+                {% if report.details %}<p class="muted">{{ report.details }}</p>{% endif %}
+                <p class="muted">Người báo cáo: {{ report.reporter.email|default:"Khách" }}</p>
+                <div class="actions">
+                    {% if report.room %}
+                        <a href="{% url 'moderation-room-detail' report.room.id %}">Xem phòng</a>
+                    {% elif report.room_image %}
+                        <a href="{{ report.room_image.image.url }}" target="_blank" rel="noopener">Xem ảnh</a>
+                    {% endif %}
+                    <form method="post" action="{% url 'moderation-report-resolve' report.id %}">
+                        {% csrf_token %}
+                        <button>Đã xử lý</button>
+                    </form>
+                    <form method="post" action="{% url 'moderation-report-dismiss' report.id %}">
+                        {% csrf_token %}
+                        <button class="secondary-button">Bỏ qua</button>
+                    </form>
+                </div>
+            </article>
+        {% empty %}
+            <p>Không có báo cáo đang mở.</p>
         {% endfor %}
     </div>
 </section>

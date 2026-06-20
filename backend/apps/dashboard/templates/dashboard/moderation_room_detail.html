@@ -1,4 +1,5 @@
 {% extends "dashboard/base.html" %}
+{% load humanize %}
 
 {% block title %}Kiểm duyệt phòng{% endblock %}
 
@@ -10,8 +11,12 @@
         <p>{{ room.address }} - {{ room.landlord.user.full_name }}</p>
     </div>
     <div class="actions">
+        <a class="button secondary" href="{% url 'moderation-room-preview' room.id %}" target="_blank" rel="noopener">Preview</a>
         {% if room.status == "pending" %}
-            <form method="post" action="{% url 'moderation-room-approve' room.id %}">{% csrf_token %}<button>Duyệt phòng</button></form>
+            <form method="post" action="{% url 'moderation-room-approve' room.id %}">
+                {% csrf_token %}
+                <button>Duyệt phòng</button>
+            </form>
             <a class="button" href="{% url 'moderation-room-reject' room.id %}">Từ chối</a>
         {% endif %}
     </div>
@@ -20,20 +25,25 @@
 <section class="two-col">
     <article class="card">
         <h2>Thông tin phòng</h2>
-        <p><strong>Giá:</strong> {{ room.price|floatformat:0 }} VND / tháng</p>
-        <p><strong>Diện tích:</strong> {{ room.area }} m²</p>
-        <p><strong>Số người:</strong> {{ room.max_occupants }}</p>
+        <p><strong>Giá:</strong> {{ room.price|floatformat:0|intcomma }} VND/tháng</p>
+        <p><strong>Diện tích:</strong> {{ room.area|floatformat:1 }} m²</p>
+        <p><strong>Số người:</strong> {{ room.max_occupants }} người</p>
+        <p><strong>Vị trí:</strong> {{ room.get_location_status_display }}</p>
+        {% if room.location_label %}<p class="muted">{{ room.location_label }}</p>{% endif %}
         <p>{{ room.description }}</p>
         <div class="actions">
             {% for amenity in room.amenities.all %}<span class="status">{{ amenity.name }}</span>{% endfor %}
         </div>
     </article>
     <article class="card">
-        <h2>Chủ trọ</h2>
+        <h2>Người đăng</h2>
         <p>{{ room.landlord.user.full_name }}</p>
         <p>{{ room.landlord.user.email }}</p>
         <p>{{ room.landlord.user.phone }}</p>
-        <p>{{ room.landlord.get_verification_status_display }}</p>
+        <p>{{ room.landlord.business_name|default:"Chủ trọ cá nhân" }}</p>
+        {% if room.rejection_reason %}
+            <p class="danger">Lý do từ chối gần nhất: {{ room.rejection_reason }}</p>
+        {% endif %}
     </article>
 </section>
 
@@ -42,8 +52,10 @@
     <div class="image-grid">
         {% for image in room.images.all %}
             <figure>
-                <img src="{{ image.image.url }}" alt="{{ image.caption|default:room.title }}">
-                <figcaption>{{ image.caption|default:"Ảnh phòng" }} - {{ image.get_status_display }}</figcaption>
+                <a href="{{ image.image.url }}" target="_blank" rel="noopener">
+                    <img src="{{ image.image.url }}" alt="{{ image.caption|default:room.title }}">
+                </a>
+                <figcaption>{{ image.caption|default:"Ảnh phòng" }} - {{ image.get_status_display }}{% if image.is_cover %} - Ảnh bìa{% endif %}</figcaption>
             </figure>
         {% empty %}
             <p>Phòng chưa có ảnh.</p>
@@ -51,4 +63,3 @@
     </div>
 </section>
 {% endblock %}
-

@@ -319,6 +319,14 @@ button {
 button:hover:not(:disabled) { background: var(--primary-dark); }
 button.secondary { background: var(--soft); color: var(--primary-dark); }
 button.secondary-action { background: var(--soft); color: var(--primary-dark); }
+button.danger-inline {
+    background: #fee2e2;
+    color: #991b1b;
+}
+button.danger-inline:hover:not(:disabled) {
+    background: #fecaca;
+    color: #7f1d1d;
+}
 button:disabled { cursor: not-allowed; background: #d9e3f0; color: #718096; }
 
 .results-bar {
@@ -345,12 +353,55 @@ button:disabled { cursor: not-allowed; background: #d9e3f0; color: #718096; }
     padding: 14px;
 }
 
+.segmented-control {
+    display: inline-grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+    margin-bottom: 18px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: #f8fafc;
+    padding: 4px;
+}
+
+.segmented-control button {
+    border-radius: 12px;
+    background: transparent;
+    color: var(--muted);
+    padding: 9px 12px;
+}
+
+.segmented-control button.active {
+    background: #fff;
+    color: var(--primary-dark);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, .08);
+}
+
 .recommendations {
     margin-bottom: 18px;
     border: 1px solid var(--line);
     border-radius: 20px;
     background: #f8fafc;
     padding: 14px;
+}
+
+.map-panel {
+    margin-bottom: 18px;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    background: #f8fafc;
+    padding: 14px;
+}
+
+.map-panel iframe {
+    height: 320px;
+    margin-top: 8px;
+}
+
+.map-note {
+    margin: 10px 0 0;
+    font-size: 13px;
+    line-height: 1.5;
 }
 
 .mini-heading {
@@ -407,6 +458,10 @@ button:disabled { cursor: not-allowed; background: #d9e3f0; color: #718096; }
     transform: translateY(-2px);
     border-color: rgba(23,105,224,.45);
     box-shadow: 0 16px 30px rgba(15,23,42,.10);
+}
+
+.room-card.active {
+    background: #f8fbff;
 }
 
 .thumb {

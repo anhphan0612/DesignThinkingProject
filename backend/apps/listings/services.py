@@ -1,16 +1,14 @@
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
-from apps.accounts.models import LandlordProfile
-
 from .models import Room
 
 
 def submit_room_for_review(*, room):
     if room.status not in {Room.Status.DRAFT, Room.Status.REJECTED}:
         raise ValidationError("Only draft or rejected rooms can be submitted.")
-    if room.landlord.verification_status != LandlordProfile.VerificationStatus.APPROVED:
-        raise ValidationError("The landlord account must be verified before submitting rooms.")
+    if room.location_status != Room.LocationStatus.GEOCODED:
+        raise ValidationError("The room address must be mapped before submitting.")
     room.status = Room.Status.PENDING
     room.rejection_reason = ""
     room.save(update_fields=("status", "rejection_reason", "updated_at"))

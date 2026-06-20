@@ -17,15 +17,41 @@ from apps.listings.validators import validate_room_image_upload
 class HomeView(TemplateView):
     template_name = "frontend/home.html"
 
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            if request.user.is_staff:
+                return redirect("moderation-dashboard")
+            if request.user.role == User.Role.LANDLORD:
+                return redirect("landlord-dashboard")
+            return redirect("room-search")
+        return super().dispatch(request, *args, **kwargs)
+
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")
 class RoomSearchView(TemplateView):
     template_name = "frontend/rooms_home.html"
 
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            if request.user.is_staff:
+                return redirect("moderation-dashboard")
+            if request.user.role == User.Role.LANDLORD:
+                return redirect("landlord-dashboard")
+        return super().dispatch(request, *args, **kwargs)
+
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")
 class LandlordHomeView(TemplateView):
     template_name = "frontend/landlord_home.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            if request.user.is_staff:
+                return redirect("moderation-dashboard")
+            if request.user.role == User.Role.LANDLORD:
+                return redirect("landlord-dashboard")
+            return redirect("room-search")
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -49,6 +75,14 @@ class LandlordHomeView(TemplateView):
 @method_decorator(ensure_csrf_cookie, name="dispatch")
 class RoommateHomeView(TemplateView):
     template_name = "frontend/roommate_home.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            if request.user.is_staff:
+                return redirect("moderation-dashboard")
+            if request.user.role == User.Role.LANDLORD:
+                return redirect("landlord-dashboard")
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

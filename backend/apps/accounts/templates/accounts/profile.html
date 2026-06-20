@@ -1,7 +1,7 @@
 {% extends "accounts/auth_base.html" %}
 
 {% block title %}Hồ sơ{% endblock %}
-{% block headline %}Cập nhật hồ sơ và nhu cầu tìm phòng{% endblock %}
+{% block headline %}Cập nhật hồ sơ Rentify của bạn{% endblock %}
 
 {% block content %}
 <p class="eyebrow">Hồ sơ</p>
@@ -21,16 +21,12 @@
     {% endfor %}
 
     {% if preference_form %}
-        <h3>Nhu cầu tìm trọ</h3>
-        <p class="muted">Các thông tin này giúp Rentify ưu tiên phòng theo ngân sách, khu vực, trường học và thói quen sống.</p>
+        <div class="profile-section-title">
+            <h3>Nhu cầu tìm trọ</h3>
+            <p class="muted">Các thông tin này giúp Rentify ưu tiên phòng theo ngân sách, khu vực, trường học và thói quen sống.</p>
+        </div>
         {{ preference_form.non_field_errors }}
-        {% for field in preference_form %}
-            <label>
-                {{ field.label }}
-                {{ field }}
-                {{ field.errors }}
-            </label>
-        {% endfor %}
+        {% include "accounts/_student_preference_fields.html" with form=preference_form %}
         <h3>Phòng đã lưu</h3>
         <div class="saved-room-list">
             {% for favorite in favorite_rooms %}
@@ -43,7 +39,7 @@
             {% endfor %}
         </div>
     {% else %}
-        <div class="notice">Hồ sơ chủ trọ và trạng thái xác minh được quản lý trong kênh chủ trọ.</div>
+        <div class="notice">Thông tin cho thuê và danh sách phòng được quản lý trong dashboard chủ trọ.</div>
     {% endif %}
 
     <button type="submit">Lưu thay đổi</button>
@@ -53,7 +49,7 @@
     {% if request.user.is_staff %}
         <a href="{% url 'moderation-dashboard' %}">Quay lại kiểm duyệt</a>
     {% elif request.user.role == "landlord" %}
-        <a href="{% url 'landlord-dashboard' %}">Quay lại kênh chủ trọ</a>
+        <a href="{% url 'landlord-dashboard' %}">Quay lại dashboard chủ trọ</a>
     {% else %}
         <a href="{% url 'room-search' %}">Quay lại trang tìm phòng</a>
     {% endif %}
@@ -61,4 +57,3 @@
     <a href="{% url 'web-logout' %}">Đăng xuất</a>
 </div>
 {% endblock %}
-

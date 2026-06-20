@@ -136,10 +136,24 @@ class RoomViewSet(viewsets.ModelViewSet):
             if distance_limit <= 0:
                 raise serializers.ValidationError({"max_distance_km": "Enter a positive distance."})
             queryset = (
-                queryset.filter(location__distance_lte=(university.location, D(km=distance_limit)))
+                queryset.filter(
+                    location_status=Room.LocationStatus.GEOCODED,
+                    location__distance_lte=(university.location, D(km=distance_limit)),
+                )
                 .annotate(distance=Distance("location", university.location))
-                .order_by("distance", "price")
             )
+
+        sort = params.get("sort") or ("distance" if university_id and max_distance_km else "newest")
+        if sort == "price_asc":
+            queryset = queryset.order_by("price", "-created_at")
+        elif sort == "price_desc":
+            queryset = queryset.order_by("-price", "-created_at")
+        elif sort == "area_desc":
+            queryset = queryset.order_by("-area", "price")
+        elif sort == "distance" and university_id and max_distance_km:
+            queryset = queryset.order_by("distance", "price")
+        elif not params.get("q"):
+            queryset = queryset.order_by("-created_at")
         return queryset
 
     def list(self, request, *args, **kwargs):
@@ -261,6 +275,8 @@ class RoomImageViewSet(viewsets.ModelViewSet):
         room = serializer.validated_data["room"]
         user = self.request.user
         is_landlord_owner = hasattr(user, "landlord_profile") and room.landlord_id == user.landlord_profile.id
+        if serializer.validated_data.get("is_cover"):
+            room.images.filter(is_cover=True).update(is_cover=False)
         if user.is_staff:
             image = serializer.save(
                 uploaded_by=user,
@@ -274,6 +290,15 @@ class RoomImageViewSet(viewsets.ModelViewSet):
                 status=RoomImage.ModerationStatus.APPROVED,
             )
             require_reapproval_after_edit(room=image.room)
+        approved_cover_exists = room.images.filter(
+            status=RoomImage.ModerationStatus.APPROVED,
+            is_cover=True,
+        ).exists()
+        if not approved_cover_exists:
+            first_image = room.images.filter(status=RoomImage.ModerationStatus.APPROVED).order_by("sort_order", "id").first()
+            if first_image:
+                first_image.is_cover = True
+                first_image.save(update_fields=("is_cover",))
         else:
             serializer.save(
                 uploaded_by=user,
@@ -284,12 +309,23 @@ class RoomImageViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         image = serializer.save()
+        if image.is_cover:
+            image.room.images.exclude(pk=image.pk).update(is_cover=False)
         if image.status == RoomImage.ModerationStatus.APPROVED and image.source == RoomImage.Source.LANDLORD:
             require_reapproval_after_edit(room=image.room)
 
     def perform_destroy(self, instance):
         room = instance.room
+        visible_images = room.images.filter(status=RoomImage.ModerationStatus.APPROVED).count()
+        if room.status in {Room.Status.ACTIVE, Room.Status.PENDING} and visible_images <= 1:
+            raise serializers.ValidationError("Rooms that are active or pending must keep at least one approved image.")
+        was_cover = instance.is_cover
         instance.delete()
+        if was_cover:
+            first_image = room.images.filter(status=RoomImage.ModerationStatus.APPROVED).order_by("sort_order", "id").first()
+            if first_image:
+                first_image.is_cover = True
+                first_image.save(update_fields=("is_cover",))
         require_reapproval_after_edit(room=room)
 
     @action(detail=True, methods=["post"], permission_classes=[permissions.IsAdminUser])

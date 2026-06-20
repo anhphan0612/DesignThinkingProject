@@ -4,6 +4,8 @@ const roommateState = {
     wards: [],
     tags: [],
     posts: [],
+    viewMode: "open",
+    editingPostId: null,
     isAuthenticated: document.querySelector("meta[name='is-authenticated']").content === "true",
     isStudent: document.querySelector("meta[name='is-student']").content === "true",
 };
@@ -15,6 +17,7 @@ const roommateEls = {
     district: document.querySelector("#roommateDistrict"),
     minBudget: document.querySelector("#roommateMinBudget"),
     maxBudget: document.querySelector("#roommateMaxBudget"),
+    sort: document.querySelector("#roommateSort"),
     tags: document.querySelector("#roommateTags"),
     apply: document.querySelector("#applyRoommateFilters"),
     reset: document.querySelector("#resetRoommateFilters"),
@@ -27,7 +30,11 @@ const roommateEls = {
     heroPostCount: document.querySelector("#heroPostCount"),
     heroMatchCount: document.querySelector("#heroMatchCount"),
     form: document.querySelector("#roommateForm"),
+    formTitle: document.querySelector("#roommateFormTitle"),
     formTags: document.querySelector("#roommateFormTags"),
+    cancelEdit: document.querySelector("#cancelRoommateEdit"),
+    showOpen: document.querySelector("#showOpenPosts"),
+    showMine: document.querySelector("#showMyPosts"),
 };
 
 function roommateEndpoint(path, params = {}) {
@@ -46,6 +53,27 @@ async function roommateFetchJson(path, params) {
     const response = await fetch(roommateEndpoint(path, params));
     if (!response.ok) {
         throw new Error(`Request failed with status ${response.status}`);
+    }
+    return response.json();
+}
+
+async function roommateSendJson(path, method = "POST", body = {}) {
+    const response = await fetch(path, {
+        method,
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken(),
+        },
+        body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        const error = new Error(`Request failed with status ${response.status}`);
+        error.payload = payload;
+        throw error;
+    }
+    if (response.status === 204) {
+        return {};
     }
     return response.json();
 }
@@ -96,6 +124,7 @@ function currentRoommateFilters() {
         min_budget: roommateEls.minBudget.value,
         max_budget: roommateEls.maxBudget.value,
         lifestyle_tag: selectedTagIds(),
+        sort: roommateEls.sort.value,
     };
 }
 
@@ -147,10 +176,14 @@ function renderReferenceData() {
 function renderEmptyRoommates() {
     const empty = document.createElement("div");
     empty.className = "empty-state";
+    const title = roommateState.viewMode === "mine" ? "Bạn chưa có bài ghép trọ nào" : "Chưa có bài ghép trọ phù hợp";
+    const copy = roommateState.viewMode === "mine"
+        ? "Tạo bài mới để tìm người ở ghép hoặc tìm bạn cùng thuê phòng."
+        : "Thử giảm điều kiện lọc hoặc tạo bài nhu cầu mới nếu bạn là sinh viên.";
     empty.append(
         textNode("p", "Không có kết quả", "eyebrow"),
-        textNode("h2", "Chưa có bài ghép trọ phù hợp"),
-        textNode("p", "Thử giảm điều kiện lọc hoặc tạo bài nhu cầu mới nếu bạn là sinh viên.", "muted"),
+        textNode("h2", title),
+        textNode("p", copy, "muted"),
     );
     roommateEls.list.replaceChildren(empty);
 }
@@ -171,6 +204,7 @@ function roommateCard(post) {
         textNode("span", post.university_name || "Chưa chọn trường"),
         textNode("span", post.district_name || post.preferred_districts.map((item) => item.name).join(", ") || "Chưa chọn khu vực"),
         textNode("span", `${post.available_slots} chỗ trống`),
+        textNode("span", post.status_label),
     );
 
     const tags = document.createElement("div");
@@ -186,13 +220,74 @@ function roommateCard(post) {
         textNode("span", post.contact_phone ? `Liên hệ: ${post.contact_phone}` : "Liên hệ sau khi trao đổi", "card-link"),
     );
 
+    if (roommateState.viewMode === "mine") {
+        content.append(ownerActions(post));
+    } else {
+        content.append(reportAction(post));
+    }
+
     card.append(badge, content);
     return card;
 }
 
+function reportAction(post) {
+    const actions = document.createElement("div");
+    actions.className = "card-actions-row";
+    const report = document.createElement("button");
+    report.type = "button";
+    report.className = "secondary";
+    report.textContent = "Báo cáo";
+    report.addEventListener("click", async () => {
+        report.disabled = true;
+        try {
+            await roommateSendJson("/api/reports/", "POST", {
+                target_type: "roommate_post",
+                roommate_post: post.id,
+                reason: "Bài ghép trọ cần kiểm tra",
+                details: post.title,
+            });
+            showRoommateStatus("Đã gửi báo cáo. Admin sẽ kiểm tra bài này.");
+        } catch (error) {
+            showRoommateStatus("Không gửi được báo cáo. Hãy thử lại.", true);
+        } finally {
+            report.disabled = false;
+        }
+    });
+    actions.append(report);
+    return actions;
+}
+
+function ownerActions(post) {
+    const actions = document.createElement("div");
+    actions.className = "card-actions-row";
+    const edit = document.createElement("button");
+    edit.type = "button";
+    edit.className = "secondary";
+    edit.textContent = "Sửa";
+    edit.addEventListener("click", () => startEdit(post));
+    actions.append(edit);
+
+    if (post.status === "active") {
+        const close = document.createElement("button");
+        close.type = "button";
+        close.className = "secondary";
+        close.textContent = "Đóng bài";
+        close.addEventListener("click", () => closePost(post));
+        actions.append(close);
+    }
+
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "danger-inline";
+    remove.textContent = "Xóa";
+    remove.addEventListener("click", () => deletePost(post));
+    actions.append(remove);
+    return actions;
+}
+
 function renderRoommatePosts() {
     roommateEls.resultCount.textContent = `${roommateState.posts.length} bài`;
-    if (roommateEls.heroPostCount) {
+    if (roommateEls.heroPostCount && roommateState.viewMode === "open") {
         roommateEls.heroPostCount.textContent = roommateState.posts.length;
     }
     if (!roommateState.posts.length) {
@@ -204,7 +299,7 @@ function renderRoommatePosts() {
 }
 
 function renderMatches(items) {
-    if (!items.length) {
+    if (!items.length || roommateState.viewMode === "mine") {
         roommateEls.matchBox.hidden = true;
         if (roommateEls.heroMatchCount) {
             roommateEls.heroMatchCount.textContent = "0";
@@ -231,9 +326,11 @@ function renderMatches(items) {
 }
 
 async function loadRoommates() {
-    showRoommateStatus("Đang tải bài ghép trọ...");
+    const mine = roommateState.viewMode === "mine";
+    showRoommateStatus(mine ? "Đang tải bài của bạn..." : "Đang tải bài ghép trọ...");
     try {
-        const data = await roommateFetchJson("/api/roommate-posts/", currentRoommateFilters());
+        const path = mine ? "/api/roommate-posts/mine/" : "/api/roommate-posts/";
+        const data = await roommateFetchJson(path, mine ? {} : currentRoommateFilters());
         roommateState.posts = data.results || [];
         showRoommateStatus("");
         renderRoommatePosts();
@@ -244,7 +341,8 @@ async function loadRoommates() {
 }
 
 async function loadMatches() {
-    if (!roommateState.isStudent) {
+    if (!roommateState.isStudent || roommateState.viewMode === "mine") {
+        renderMatches([]);
         return;
     }
     try {
@@ -259,7 +357,7 @@ function formPayload(form) {
     const data = new FormData(form);
     const payload = {};
     for (const [key, value] of data.entries()) {
-        if (key !== "lifestyle_tags" && value !== "") {
+        if (!["lifestyle_tags", "post_id"].includes(key) && value !== "") {
             payload[key] = value;
         }
     }
@@ -281,36 +379,98 @@ function readableErrors(errorPayload) {
 
 async function submitRoommatePost(event) {
     event.preventDefault();
-    const submitButton = event.currentTarget.querySelector("button[type='submit']");
+    const form = event.currentTarget;
+    const submitButton = form.querySelector("button[type='submit']");
     submitButton.disabled = true;
     const originalText = submitButton.textContent;
-    submitButton.textContent = "Đang đăng...";
-    showRoommateStatus("Đang gửi bài ghép trọ...");
+    submitButton.textContent = roommateState.editingPostId ? "Đang lưu..." : "Đang đăng...";
+    showRoommateStatus(roommateState.editingPostId ? "Đang cập nhật bài ghép trọ..." : "Đang gửi bài ghép trọ...");
     try {
-        const response = await fetch("/api/roommate-posts/", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": csrfToken(),
-            },
-            body: JSON.stringify(formPayload(event.currentTarget)),
-        });
-        if (!response.ok) {
-            const error = await response.json();
-            showRoommateStatus(readableErrors(error), true);
-            return;
+        const payload = formPayload(form);
+        if (roommateState.editingPostId) {
+            await roommateSendJson(`/api/roommate-posts/${roommateState.editingPostId}/`, "PATCH", payload);
+            showRoommateStatus("Đã cập nhật bài ghép trọ.");
+        } else {
+            await roommateSendJson("/api/roommate-posts/", "POST", payload);
+            showRoommateStatus("Đã đăng bài ghép trọ.");
         }
-        event.currentTarget.reset();
-        showRoommateStatus("Đã đăng bài ghép trọ.");
+        resetForm();
         await loadRoommates();
         await loadMatches();
     } catch (error) {
-        showRoommateStatus("Không gửi được bài. Hãy kiểm tra kết nối và thử lại.", true);
+        showRoommateStatus(readableErrors(error.payload), true);
         console.error(error);
     } finally {
         submitButton.disabled = false;
         submitButton.textContent = originalText;
     }
+}
+
+function startEdit(post) {
+    const form = roommateEls.form;
+    roommateState.editingPostId = post.id;
+    roommateEls.formTitle.textContent = "Sửa bài ghép trọ";
+    roommateEls.cancelEdit.hidden = false;
+    form.elements.post_id.value = post.id;
+    form.elements.title.value = post.title || "";
+    form.elements.type.value = post.type || "looking_together";
+    form.elements.university.value = post.university || "";
+    form.elements.ward.value = post.ward || "";
+    form.elements.address.value = post.address || "";
+    form.elements.budget_min.value = post.budget_min || "";
+    form.elements.budget_max.value = post.budget_max || "";
+    form.elements.move_in_date.value = post.move_in_date || "";
+    form.elements.available_slots.value = post.available_slots || 1;
+    form.elements.max_roommates.value = post.max_roommates || 2;
+    form.elements.current_occupants.value = post.current_occupants || 0;
+    form.elements.gender_preference.value = post.gender_preference || "any";
+    form.elements.contact_phone.value = post.contact_phone || "";
+    form.elements.description.value = post.description || "";
+    const selected = new Set(post.lifestyle_tags.map((tag) => String(tag.id)));
+    form.querySelectorAll("input[name='lifestyle_tags']").forEach((input) => {
+        input.checked = selected.has(input.value);
+    });
+    document.querySelector("#createRoommatePost").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function resetForm() {
+    if (!roommateEls.form) {
+        return;
+    }
+    roommateEls.form.reset();
+    roommateState.editingPostId = null;
+    roommateEls.formTitle.textContent = "Tạo bài ghép trọ";
+    roommateEls.cancelEdit.hidden = true;
+}
+
+async function closePost(post) {
+    try {
+        await roommateSendJson(`/api/roommate-posts/${post.id}/close/`, "POST");
+        showRoommateStatus("Đã đóng bài ghép trọ.");
+        await loadRoommates();
+    } catch (error) {
+        showRoommateStatus("Không đóng được bài. Hãy thử lại.", true);
+        console.error(error);
+    }
+}
+
+async function deletePost(post) {
+    try {
+        await roommateSendJson(`/api/roommate-posts/${post.id}/`, "DELETE");
+        showRoommateStatus("Đã xóa bài khỏi danh sách đang mở.");
+        await loadRoommates();
+    } catch (error) {
+        showRoommateStatus("Không xóa được bài. Hãy thử lại.", true);
+        console.error(error);
+    }
+}
+
+function setViewMode(mode) {
+    roommateState.viewMode = mode;
+    roommateEls.showOpen?.classList.toggle("active", mode === "open");
+    roommateEls.showMine?.classList.toggle("active", mode === "mine");
+    loadRoommates();
+    loadMatches();
 }
 
 async function bootstrapRoommates() {
@@ -335,6 +495,7 @@ async function bootstrapRoommates() {
 }
 
 roommateEls.apply.addEventListener("click", loadRoommates);
+roommateEls.sort.addEventListener("change", loadRoommates);
 roommateEls.reset.addEventListener("click", () => {
     roommateEls.query.value = "";
     roommateEls.type.value = "";
@@ -342,6 +503,7 @@ roommateEls.reset.addEventListener("click", () => {
     roommateEls.district.value = "";
     roommateEls.minBudget.value = "";
     roommateEls.maxBudget.value = "";
+    roommateEls.sort.value = "newest";
     document.querySelectorAll("input[name='roommate_lifestyle_tag']").forEach((input) => {
         input.checked = false;
     });
@@ -352,6 +514,9 @@ roommateEls.query.addEventListener("keydown", (event) => {
         loadRoommates();
     }
 });
+roommateEls.showOpen?.addEventListener("click", () => setViewMode("open"));
+roommateEls.showMine?.addEventListener("click", () => setViewMode("mine"));
+roommateEls.cancelEdit?.addEventListener("click", resetForm);
 if (roommateEls.form) {
     roommateEls.form.addEventListener("submit", submitRoommatePost);
 }

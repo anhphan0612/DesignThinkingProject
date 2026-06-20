@@ -1,8 +1,10 @@
+from django.utils import timezone
 from rest_framework import mixins, permissions, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .models import Favorite, SearchLog, UserEvent
-from .serializers import FavoriteSerializer, SearchLogSerializer, UserEventSerializer
+from .models import ContentReport, Favorite, SearchLog, UserEvent
+from .serializers import ContentReportSerializer, FavoriteSerializer, SearchLogSerializer, UserEventSerializer
 from .services import get_session_key
 
 
@@ -49,3 +51,46 @@ class SearchLogViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
             **serializer.validated_data,
         )
         return Response(SearchLogSerializer(search_log).data, status=status.HTTP_201_CREATED)
+
+
+class ContentReportViewSet(viewsets.ModelViewSet):
+    serializer_class = ContentReportSerializer
+
+    def get_permissions(self):
+        if self.action in {"list", "retrieve", "resolve", "dismiss"}:
+            return [permissions.IsAdminUser()]
+        return [permissions.AllowAny()]
+
+    def get_queryset(self):
+        return (
+            ContentReport.objects.select_related(
+                "reporter",
+                "handled_by",
+                "room",
+                "room_image__room",
+                "roommate_post",
+            )
+            .order_by("-created_at")
+        )
+
+    def perform_create(self, serializer):
+        serializer.save(
+            reporter=self.request.user if self.request.user.is_authenticated else None,
+            session_key=get_session_key(self.request),
+        )
+
+    def _handle(self, status_value):
+        report = self.get_object()
+        report.status = status_value
+        report.handled_by = self.request.user
+        report.handled_at = timezone.now()
+        report.save(update_fields=("status", "handled_by", "handled_at"))
+        return Response(ContentReportSerializer(report, context={"request": self.request}).data)
+
+    @action(detail=True, methods=["post"])
+    def resolve(self, request, pk=None):
+        return self._handle(ContentReport.Status.RESOLVED)
+
+    @action(detail=True, methods=["post"])
+    def dismiss(self, request, pk=None):
+        return self._handle(ContentReport.Status.DISMISSED)

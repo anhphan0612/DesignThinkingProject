@@ -25,6 +25,7 @@ class RoommatePost(models.Model):
         DRAFT = "draft", "Bản nháp"
         ACTIVE = "active", "Đang hiển thị"
         CLOSED = "closed", "Đã đóng"
+        EXPIRED = "expired", "Hết hạn"
         REJECTED = "rejected", "Bị từ chối"
 
     class GenderPreference(models.TextChoices):

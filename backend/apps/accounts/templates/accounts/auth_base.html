@@ -7,10 +7,20 @@
     <title>{% block title %}Tài khoản{% endblock %} - Rentify</title>
     <link rel="stylesheet" href="{% static 'accounts/auth.css' %}">
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
     <main class="auth-shell">
         <section class="auth-copy">
-            <a class="brand" href="/">Rentify</a>
+            {% if request.user.is_authenticated %}
+                {% if request.user.is_staff %}
+                    <a class="brand" href="{% url 'moderation-dashboard' %}">Rentify</a>
+                {% elif request.user.role == "landlord" %}
+                    <a class="brand" href="{% url 'landlord-dashboard' %}">Rentify</a>
+                {% else %}
+                    <a class="brand" href="{% url 'room-search' %}">Rentify</a>
+                {% endif %}
+            {% else %}
+                <a class="brand" href="{% url 'home' %}">Rentify</a>
+            {% endif %}
             <h1>{% block headline %}Vào đúng không gian Rentify của bạn{% endblock %}</h1>
             <p>
                 Sinh viên dùng Rentify để tìm phòng, lưu lựa chọn và tìm người ở ghép. Người cho thuê có khu vực riêng

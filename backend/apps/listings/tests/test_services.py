@@ -6,7 +6,6 @@ from django.test import SimpleTestCase
 from django.test import override_settings
 from rest_framework.exceptions import ValidationError
 
-from apps.accounts.models import LandlordProfile
 from apps.listings.models import Room
 from apps.listings.services import approve_room, mark_room_rented, submit_room_for_review
 from apps.listings.validators import validate_room_image_upload
@@ -15,7 +14,7 @@ from apps.listings.validators import validate_room_image_upload
 class RoomStateServiceTests(SimpleTestCase):
     def room(self, state):
         room = Mock(status=state)
-        room.landlord.verification_status = LandlordProfile.VerificationStatus.APPROVED
+        room.location_status = Room.LocationStatus.GEOCODED
         room.rejection_reason = "old reason"
         return room
 
@@ -31,16 +30,16 @@ class RoomStateServiceTests(SimpleTestCase):
         with self.assertRaises(ValidationError):
             approve_room(room=self.room(Room.Status.DRAFT), admin_user=Mock())
 
-    def test_submit_requires_verified_landlord(self):
-        room = self.room(Room.Status.DRAFT)
-        room.landlord.verification_status = LandlordProfile.VerificationStatus.PENDING
-
-        with self.assertRaises(ValidationError):
-            submit_room_for_review(room=room)
-
     def test_mark_rented_requires_active_room(self):
         with self.assertRaises(ValidationError):
             mark_room_rented(room=self.room(Room.Status.PENDING))
+
+    def test_submit_requires_geocoded_location(self):
+        room = self.room(Room.Status.DRAFT)
+        room.location_status = Room.LocationStatus.FAILED
+
+        with self.assertRaises(ValidationError):
+            submit_room_for_review(room=room)
 
 
 class RoomImageUploadValidatorTests(SimpleTestCase):
@@ -65,4 +64,3 @@ class RoomImageUploadValidatorTests(SimpleTestCase):
 
         with self.assertRaises(DjangoValidationError):
             validate_room_image_upload(upload)
-

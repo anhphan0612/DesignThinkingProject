@@ -79,6 +79,28 @@ class WebProfileForm(forms.ModelForm):
 
 
 class StudentPreferenceForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["university"].empty_label = "Chọn trường của bạn"
+        self.fields["student_code"].widget.attrs.update({"placeholder": "VD: 20231234"})
+        self.fields["budget_min"].widget.attrs.update({
+            "placeholder": "1.500.000",
+            "inputmode": "numeric",
+            "min": "0",
+            "step": "100000",
+        })
+        self.fields["budget_max"].widget.attrs.update({
+            "placeholder": "3.500.000",
+            "inputmode": "numeric",
+            "min": "0",
+            "step": "100000",
+        })
+        self.fields["max_distance_km"].widget.attrs.update({
+            "placeholder": "5",
+            "min": "0.5",
+            "step": "0.5",
+        })
+
     class Meta:
         model = StudentProfile
         fields = (

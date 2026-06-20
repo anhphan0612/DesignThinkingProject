@@ -9,18 +9,24 @@
 </head>
 <body>
     <header class="dash-header">
-        <a class="brand" href="/">Rentify</a>
+        {% if request.user.is_staff %}
+            <a class="brand" href="{% url 'moderation-dashboard' %}">Rentify</a>
+        {% elif request.user.role == "landlord" %}
+            <a class="brand" href="{% url 'landlord-dashboard' %}">Rentify</a>
+        {% else %}
+            <a class="brand" href="{% url 'room-search' %}">Rentify</a>
+        {% endif %}
         <nav>
             {% if request.user.is_staff %}
                 <a href="{% url 'moderation-dashboard' %}">Kiểm duyệt</a>
             {% elif request.user.role == "landlord" %}
-                <a href="{% url 'landlord-home' %}">Kênh chủ trọ</a>
                 <a href="{% url 'landlord-dashboard' %}">Phòng của tôi</a>
             {% else %}
                 <a href="{% url 'room-search' %}">Tìm phòng</a>
                 <a href="{% url 'roommate-home' %}">Ghép trọ</a>
             {% endif %}
             <a href="{% url 'web-profile' %}">Hồ sơ</a>
+            <a href="{% url 'web-logout' %}">Đăng xuất</a>
         </nav>
     </header>
     <main class="dash-shell">

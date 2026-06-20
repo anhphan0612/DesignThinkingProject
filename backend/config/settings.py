@@ -160,6 +160,14 @@ RENTIFY_ALLOWED_ROOM_IMAGE_TYPES = env_list(
     "RENTIFY_ALLOWED_ROOM_IMAGE_TYPES",
     "image/jpeg,image/png,image/webp",
 )
+RENTIFY_GEOCODING_PROVIDER = os.environ.get("RENTIFY_GEOCODING_PROVIDER", "nominatim")
+RENTIFY_GEOCODING_TIMEOUT_SECONDS = float(os.environ.get("RENTIFY_GEOCODING_TIMEOUT_SECONDS", "4"))
+RENTIFY_GEOCODING_CACHE_SECONDS = int(os.environ.get("RENTIFY_GEOCODING_CACHE_SECONDS", "86400"))
+RENTIFY_GEOCODING_USER_AGENT = os.environ.get(
+    "RENTIFY_GEOCODING_USER_AGENT",
+    "Rentify local development contact@example.com",
+)
+RENTIFY_GEOCODING_COUNTRY_CODES = os.environ.get("RENTIFY_GEOCODING_COUNTRY_CODES", "vn")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "accounts.User"

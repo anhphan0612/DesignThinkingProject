@@ -1,0 +1,37 @@
+<nav class="topbar">
+    {% if request.user.is_authenticated %}
+        {% if request.user.is_staff %}
+            <a class="brand" href="{% url 'moderation-dashboard' %}">
+        {% elif request.user.role == "landlord" %}
+            <a class="brand" href="{% url 'landlord-dashboard' %}">
+        {% else %}
+            <a class="brand" href="{% url 'room-search' %}">
+        {% endif %}
+    {% else %}
+        <a class="brand" href="{% url 'home' %}">
+    {% endif %}
+        <span class="brand-mark">R</span>
+        <span>Rentify{% if brand_suffix %} {{ brand_suffix }}{% endif %}</span>
+    </a>
+
+    <div class="nav-actions">
+        {% if request.user.is_authenticated %}
+            {% if request.user.is_staff %}
+                <a class="nav-primary" href="{% url 'moderation-dashboard' %}">Kiểm duyệt</a>
+            {% elif request.user.role == "landlord" %}
+                <a class="nav-primary" href="{% url 'landlord-dashboard' %}">Dashboard</a>
+            {% else %}
+                <a href="{% url 'room-search' %}">Tìm phòng</a>
+                <a href="{% url 'roommate-home' %}">Ghép trọ</a>
+            {% endif %}
+            <a href="{% url 'web-profile' %}">{{ request.user.full_name|default:request.user.email }}</a>
+            <a href="{% url 'web-logout' %}">Đăng xuất</a>
+        {% else %}
+            <a href="{% url 'room-search' %}">Tìm phòng</a>
+            <a href="{% url 'roommate-home' %}">Ghép trọ</a>
+            <a href="{% url 'landlord-home' %}">Cho thuê</a>
+            <a href="{% url 'web-login' %}">Đăng nhập</a>
+            <a class="nav-primary" href="{% url 'web-register' %}">Đăng ký</a>
+        {% endif %}
+    </div>
+</nav>

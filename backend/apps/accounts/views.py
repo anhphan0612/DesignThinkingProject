@@ -85,7 +85,7 @@ def role_destination(user):
     if user.is_staff or user.role == User.Role.ADMIN:
         return "moderation-dashboard"
     if user.role == User.Role.LANDLORD:
-        return "landlord-home"
+        return "landlord-dashboard"
     return "room-search"
 
 

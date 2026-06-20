@@ -28,7 +28,7 @@ class WebAuthRoleFlowTests(TestCase):
 
         self.assertRedirects(response, reverse("room-search"))
 
-    def test_landlord_login_redirects_to_landlord_home(self):
+    def test_landlord_login_redirects_to_landlord_dashboard(self):
         user = User.objects.create_user(
             email=self.unique_email("landlord"),
             password="password-123",
@@ -42,7 +42,7 @@ class WebAuthRoleFlowTests(TestCase):
             {"email": user.email, "password": "password-123"},
         )
 
-        self.assertRedirects(response, reverse("landlord-home"))
+        self.assertRedirects(response, reverse("landlord-dashboard"))
 
     def test_landlord_register_tab_creates_landlord_account(self):
         response = self.client.post(
@@ -57,7 +57,7 @@ class WebAuthRoleFlowTests(TestCase):
             },
         )
 
-        self.assertRedirects(response, reverse("landlord-home"))
+        self.assertRedirects(response, reverse("landlord-dashboard"))
         user = User.objects.latest("id")
         self.assertEqual(user.role, User.Role.LANDLORD)
         self.assertTrue(LandlordProfile.objects.filter(user=user).exists())

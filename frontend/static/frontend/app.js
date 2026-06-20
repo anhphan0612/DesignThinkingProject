@@ -2,6 +2,7 @@ const state = {
     amenities: [],
     universities: [],
     rooms: [],
+    activeRoomId: null,
     isAuthenticated: document.querySelector("meta[name='is-authenticated']").content === "true",
 };
 
@@ -12,6 +13,7 @@ const els = {
     minPrice: document.querySelector("#minPrice"),
     maxPrice: document.querySelector("#maxPrice"),
     minArea: document.querySelector("#minArea"),
+    sort: document.querySelector("#sortRooms"),
     amenities: document.querySelector("#amenities"),
     apply: document.querySelector("#applyFilters"),
     reset: document.querySelector("#resetFilters"),
@@ -22,6 +24,11 @@ const els = {
     recommendationList: document.querySelector("#recommendationList"),
     recommendationCount: document.querySelector("#recommendationCount"),
     heroRoomCount: document.querySelector("#heroRoomCount"),
+    mapPanel: document.querySelector("#mapPanel"),
+    map: document.querySelector("#resultsMap"),
+    mapTitle: document.querySelector("#mapTitle"),
+    mapCount: document.querySelector("#mapCount"),
+    mapHint: document.querySelector("#mapHint"),
 };
 
 function formatCurrency(value) {
@@ -105,6 +112,7 @@ function currentFilters() {
         max_price: els.maxPrice.value,
         min_area: els.minArea.value,
         amenity: checkedAmenityIds(),
+        sort: els.sort.value,
     };
 }
 
@@ -149,6 +157,42 @@ function renderEmptyRooms() {
     els.roomList.replaceChildren(empty);
 }
 
+function geocodedRooms() {
+    return state.rooms.filter((room) => room.location_status === "geocoded" && room.latitude && room.longitude);
+}
+
+function mapUrlForRoom(room) {
+    const latitude = Number(room.latitude);
+    const longitude = Number(room.longitude);
+    const delta = 0.006;
+    const bbox = [
+        longitude - delta,
+        latitude - delta,
+        longitude + delta,
+        latitude + delta,
+    ].join("%2C");
+    return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${latitude}%2C${longitude}`;
+}
+
+function updateMap(room = null) {
+    const mapped = geocodedRooms();
+    els.mapPanel.hidden = mapped.length === 0;
+    els.mapCount.textContent = `${mapped.length} vị trí`;
+    if (!mapped.length) {
+        els.map.removeAttribute("src");
+        return;
+    }
+
+    const activeRoom = room || mapped.find((item) => item.id === state.activeRoomId) || mapped[0];
+    state.activeRoomId = activeRoom.id;
+    els.mapTitle.textContent = activeRoom.title;
+    els.map.src = mapUrlForRoom(activeRoom);
+    els.mapHint.textContent = `${activeRoom.address}. Bản đồ đang hiển thị phòng được chọn trong danh sách.`;
+    document.querySelectorAll(".room-card").forEach((card) => {
+        card.classList.toggle("active", Number(card.dataset.roomId) === activeRoom.id);
+    });
+}
+
 function renderRooms() {
     els.roomList.replaceChildren();
     els.resultCount.textContent = `${state.rooms.length} phòng`;
@@ -156,10 +200,12 @@ function renderRooms() {
         els.heroRoomCount.textContent = state.rooms.length;
     }
     if (!state.rooms.length) {
+        els.mapPanel.hidden = true;
         renderEmptyRooms();
         return;
     }
     state.rooms.forEach((room) => els.roomList.append(roomCard(room)));
+    updateMap();
 }
 
 function renderRecommendations(items) {
@@ -205,13 +251,15 @@ function roomCard(room) {
     }
 
     const content = document.createElement("div");
-    const distance = room.distance_km ? `Cách trường ${room.distance_km} km` : "Chưa lọc theo trường";
+    const distance = room.distance_km ? `Cách trường ${formatNumber(room.distance_km, " km")}` : "Chưa lọc theo trường";
+    const location = room.location_status === "geocoded" ? "Có bản đồ" : "Chưa ghim bản đồ";
     const meta = document.createElement("div");
     meta.className = "meta";
     meta.append(
         textElement("span", formatNumber(room.area, " m²")),
         textElement("span", `${room.max_occupants} người`),
         textElement("span", distance),
+        textElement("span", location),
     );
 
     const tags = document.createElement("div");
@@ -258,7 +306,7 @@ function roomCard(room) {
     cardActions.append(detailLink, favoriteButton);
     content.append(
         textElement("h3", room.title),
-        textElement("div", `${formatCurrency(room.price)} / tháng`, "price"),
+        textElement("div", `${formatCurrency(room.price)}/tháng`, "price"),
         meta,
         textElement("p", room.address, "muted"),
         tags,
@@ -266,12 +314,13 @@ function roomCard(room) {
     );
     card.append(thumb, content);
 
-    card.addEventListener("click", () => {
+    card.addEventListener("click", () => updateMap(room));
+    card.addEventListener("dblclick", () => {
         window.location.href = `/rooms/${room.id}/`;
     });
     card.addEventListener("keydown", (event) => {
         if (event.key === "Enter") {
-            window.location.href = `/rooms/${room.id}/`;
+            updateMap(room);
         }
     });
     return card;
@@ -282,6 +331,7 @@ async function loadRooms() {
     try {
         const data = await fetchJson("/api/rooms/", currentFilters());
         state.rooms = data.results || [];
+        state.activeRoomId = null;
         showStatus("");
         renderRooms();
     } catch (error) {
@@ -317,6 +367,7 @@ async function bootstrap() {
 }
 
 els.apply.addEventListener("click", loadRooms);
+els.sort.addEventListener("change", loadRooms);
 els.reset.addEventListener("click", () => {
     els.query.value = "";
     els.university.value = "";
@@ -324,6 +375,7 @@ els.reset.addEventListener("click", () => {
     els.minPrice.value = "";
     els.maxPrice.value = "";
     els.minArea.value = "";
+    els.sort.value = "newest";
     document.querySelectorAll("input[name='amenity']").forEach((input) => {
         input.checked = false;
     });

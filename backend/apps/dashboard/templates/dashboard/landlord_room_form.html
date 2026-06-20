@@ -7,22 +7,69 @@
     <div>
         <p class="eyebrow">Chủ trọ</p>
         <h1>{{ title }}</h1>
+        <p>Điền thông tin theo từng nhóm để bài đăng dễ duyệt và dễ hiểu với người thuê.</p>
+    </div>
+    <div class="actions">
+        {% if room %}
+            <a class="button secondary" href="{% url 'landlord-room-detail' room.id %}">Quay lại quản lý</a>
+        {% else %}
+            <a class="button secondary" href="{% url 'landlord-dashboard' %}">Quay lại dashboard</a>
+        {% endif %}
     </div>
 </section>
 
-<form class="form-card" method="post">
+<form class="form-card room-form" method="post">
     {% csrf_token %}
     {{ form.non_field_errors }}
-    <div class="form-grid">
-        {% for field in form %}
-            <label class="{% if field.name == 'description' or field.name == 'amenities' %}span-2{% endif %}">
-                {{ field.label }}
-                {{ field }}
-                {{ field.errors }}
-            </label>
-        {% endfor %}
+    {{ form.latitude }}
+    {{ form.longitude }}
+
+    <fieldset class="form-section">
+        <legend>Thông tin cơ bản</legend>
+        <div class="form-grid">
+            {% include "dashboard/partials/field.html" with field=form.title %}
+            {% include "dashboard/partials/field.html" with field=form.ward %}
+            {% include "dashboard/partials/field.html" with field=form.description span=True %}
+        </div>
+    </fieldset>
+
+    <fieldset class="form-section">
+        <legend>Giá và chi phí</legend>
+        <div class="form-grid">
+            {% include "dashboard/partials/field.html" with field=form.price %}
+            {% include "dashboard/partials/field.html" with field=form.deposit %}
+            {% include "dashboard/partials/field.html" with field=form.electricity_price %}
+            {% include "dashboard/partials/field.html" with field=form.water_price %}
+        </div>
+    </fieldset>
+
+    <fieldset class="form-section">
+        <legend>Diện tích và người ở</legend>
+        <div class="form-grid">
+            {% include "dashboard/partials/field.html" with field=form.area %}
+            {% include "dashboard/partials/field.html" with field=form.max_occupants %}
+            {% include "dashboard/partials/field.html" with field=form.gender_policy %}
+        </div>
+    </fieldset>
+
+    <fieldset class="form-section">
+        <legend>Vị trí</legend>
+        <p class="section-note">Chủ trọ chỉ cần nhập địa chỉ dạng text. Khi lưu, hệ thống sẽ tự tìm tọa độ bản đồ từ địa chỉ và phường/khu vực.</p>
+        <div class="form-grid">
+            {% include "dashboard/partials/field.html" with field=form.address span=True %}
+        </div>
+    </fieldset>
+
+    <fieldset class="form-section">
+        <legend>Tiện ích</legend>
+        {% include "dashboard/partials/field.html" with field=form.amenities %}
+    </fieldset>
+
+    <div class="form-actions">
+        <button type="submit">Lưu phòng</button>
+        {% if room %}
+            <a class="button secondary" href="{% url 'landlord-room-preview' room.id %}" target="_blank" rel="noopener">Xem bản nháp</a>
+        {% endif %}
     </div>
-    <button type="submit">Lưu phòng</button>
 </form>
 {% endblock %}
-

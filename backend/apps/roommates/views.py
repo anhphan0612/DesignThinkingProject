@@ -70,6 +70,8 @@ class RoommatePostViewSet(viewsets.ModelViewSet):
         params = self.request.query_params
         if params.get("type"):
             queryset = queryset.filter(type=params["type"])
+        if params.get("status") and self.request.user.is_authenticated:
+            queryset = queryset.filter(status=params["status"])
         if params.get("university"):
             queryset = queryset.filter(university_id=params["university"])
         if params.get("district"):
@@ -105,6 +107,12 @@ class RoommatePostViewSet(viewsets.ModelViewSet):
                 .filter(rank__gte=0.05)
                 .order_by("-rank", "-created_at")
             )
+        elif params.get("sort") == "budget_asc":
+            queryset = queryset.order_by("budget_min", "-created_at")
+        elif params.get("sort") == "move_in":
+            queryset = queryset.order_by("move_in_date", "-created_at")
+        else:
+            queryset = queryset.order_by("-created_at")
         return queryset
 
     def perform_destroy(self, instance):

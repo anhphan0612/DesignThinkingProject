@@ -28,6 +28,11 @@ class Room(models.Model):
         MALE = "male", "Nam"
         FEMALE = "female", "Nữ"
 
+    class LocationStatus(models.TextChoices):
+        UNVERIFIED = "unverified", "Chưa xác định"
+        GEOCODED = "geocoded", "Đã ghim bản đồ"
+        FAILED = "failed", "Không tìm thấy vị trí"
+
     landlord = models.ForeignKey(
         "accounts.LandlordProfile",
         on_delete=models.PROTECT,
@@ -38,6 +43,13 @@ class Room(models.Model):
     description = models.TextField(blank=True)
     address = models.TextField()
     location = models.PointField(srid=4326, geography=True)
+    location_status = models.CharField(
+        max_length=20,
+        choices=LocationStatus.choices,
+        default=LocationStatus.UNVERIFIED,
+    )
+    location_query = models.TextField(blank=True)
+    location_label = models.TextField(blank=True)
     price = models.DecimalField(max_digits=12, decimal_places=2)
     deposit = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     area = models.DecimalField(max_digits=7, decimal_places=2)
@@ -85,6 +97,7 @@ class Room(models.Model):
         ]
         indexes = [
             models.Index(fields=("status", "price"), name="room_status_price_idx"),
+            models.Index(fields=("location_status",), name="room_location_status_idx"),
         ]
 
     def __str__(self):

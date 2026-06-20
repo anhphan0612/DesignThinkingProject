@@ -1,28 +1,33 @@
 {% extends "accounts/auth_base.html" %}
 
+{% block body_class %}preference-page{% endblock %}
 {% block title %}Nguyện vọng tìm phòng{% endblock %}
-{% block headline %}Cho Rentify biết kiểu phòng bạn đang cần{% endblock %}
+{% block headline %}Thiết lập nhanh nhu cầu tìm trọ của bạn{% endblock %}
 
 {% block content %}
-<p class="eyebrow">Nguyện vọng</p>
-<h2>Tùy chỉnh kết quả tìm trọ</h2>
-<p class="muted">Bạn có thể nhập ngân sách, trường học, khu vực ưu tiên và thói quen sống để Rentify gợi ý phòng phù hợp hơn.</p>
+<div class="preference-header">
+    <p class="eyebrow">Bước cuối</p>
+    <h2>Cho Rentify biết phòng bạn đang cần</h2>
+    <p class="muted">Bạn có thể điền vài thông tin chính để nhận gợi ý sát hơn. Mọi mục đều có thể cập nhật sau trong hồ sơ.</p>
+</div>
 
-<form method="post" novalidate>
+<div class="progress-strip" aria-label="Tiến trình đăng ký">
+    <span class="done">Tài khoản</span>
+    <span class="active">Nguyện vọng</span>
+    <span>Tìm trọ</span>
+</div>
+
+<form method="post" class="preference-form" novalidate>
     {% csrf_token %}
     {{ form.non_field_errors }}
-    {% for field in form %}
-        <label class="{% if field.field.widget.input_type == 'checkbox' %}choice-group{% endif %}">
-            {{ field.label }}
-            {{ field }}
-            {{ field.errors }}
-        </label>
-    {% endfor %}
-    <button type="submit">Lưu và tìm trọ</button>
+
+    {% include "accounts/_student_preference_fields.html" with form=form %}
+
+    <div class="sticky-actions">
+        <a class="secondary-action" href="{% url 'room-search' %}">Bỏ qua</a>
+        <button type="submit">Lưu và tìm trọ</button>
+    </div>
 </form>
 
-<div class="profile-actions">
-    <a class="secondary-action" href="{% url 'room-search' %}">Bỏ qua</a>
-    <a href="{% url 'web-profile' %}">Cập nhật sau trong hồ sơ</a>
-</div>
+<p class="switch"><a href="{% url 'web-profile' %}">Cập nhật sau trong hồ sơ</a></p>
 {% endblock %}

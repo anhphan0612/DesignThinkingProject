@@ -11,25 +11,7 @@
 </head>
 <body>
     <header class="hero">
-        <nav class="topbar">
-            <a class="brand" href="{% url 'home' %}">
-                <span class="brand-mark">R</span>
-                <span>Rentify</span>
-            </a>
-            <div class="nav-actions">
-                <a href="{% url 'room-search' %}">Tìm phòng</a>
-                <a href="{% url 'roommate-home' %}">Ghép trọ</a>
-                <a href="{% url 'landlord-home' %}">Cho thuê</a>
-                {% if request.user.is_authenticated %}
-                    {% if request.user.is_staff %}<a href="{% url 'moderation-dashboard' %}">Kiểm duyệt</a>{% endif %}
-                    <a href="{% url 'web-profile' %}">{{ request.user.full_name|default:request.user.email }}</a>
-                    <a href="{% url 'web-logout' %}">Đăng xuất</a>
-                {% else %}
-                    <a href="{% url 'web-login' %}?role=student">Đăng nhập</a>
-                    <a class="nav-primary" href="{% url 'web-register' %}?role=student">Đăng ký</a>
-                {% endif %}
-            </div>
-        </nav>
+        {% include "frontend/partials/topbar.html" %}
 
         <section class="hero-content">
             <div>
@@ -75,10 +57,19 @@
                 </select>
             </label>
             <div class="field-row">
-                <label>Giá từ <input id="minPrice" type="number" min="0" step="100000" placeholder="1.500.000 VND"></label>
-                <label>Đến <input id="maxPrice" type="number" min="0" step="100000" placeholder="4.000.000 VND"></label>
+                <label>Giá từ <input id="minPrice" type="number" min="0" step="100000" placeholder="1500000"></label>
+                <label>Đến <input id="maxPrice" type="number" min="0" step="100000" placeholder="4000000"></label>
             </div>
-            <label>Diện tích tối thiểu <input id="minArea" type="number" min="0" step="1" placeholder="18 m²"></label>
+            <label>Diện tích tối thiểu <input id="minArea" type="number" min="0" step="1" placeholder="18"></label>
+            <label>Sắp xếp
+                <select id="sortRooms">
+                    <option value="newest">Mới nhất</option>
+                    <option value="distance">Gần trường nhất</option>
+                    <option value="price_asc">Giá thấp nhất</option>
+                    <option value="price_desc">Giá cao nhất</option>
+                    <option value="area_desc">Diện tích lớn nhất</option>
+                </select>
+            </label>
             <fieldset>
                 <legend>Tiện ích mong muốn</legend>
                 <div id="amenities" class="checks"></div>
@@ -97,6 +88,19 @@
                 </div>
                 <span id="resultCount" class="pill">Đang tải...</span>
             </div>
+
+            <section id="mapPanel" class="map-panel" hidden>
+                <div class="mini-heading">
+                    <div>
+                        <p class="eyebrow">Bản đồ</p>
+                        <h3 id="mapTitle">Vị trí phòng</h3>
+                    </div>
+                    <span id="mapCount" class="pill">0 vị trí</span>
+                </div>
+                <iframe id="resultsMap" title="Bản đồ kết quả tìm phòng" loading="lazy"></iframe>
+                <p id="mapHint" class="muted map-note"></p>
+            </section>
+
             <section id="recommendationBox" class="recommendations" hidden>
                 <div class="mini-heading">
                     <div>
@@ -110,7 +114,6 @@
             <div id="status" class="status" hidden></div>
             <div id="roomList" class="room-list"></div>
         </section>
-
     </main>
 
     <section id="roommate-scope" class="trust-section">

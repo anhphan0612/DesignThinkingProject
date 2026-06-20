@@ -9,27 +9,7 @@
 </head>
 <body>
     <header class="landlord-hero">
-        <nav class="topbar">
-            <a class="brand" href="{% url 'landlord-home' %}">
-                <span class="brand-mark">R</span>
-                <span>Rentify Chủ trọ</span>
-            </a>
-            <div class="nav-actions">
-                <a href="{% url 'room-search' %}">Tìm phòng</a>
-                <a href="{% url 'roommate-home' %}">Ghép trọ</a>
-                <a href="{% url 'landlord-home' %}">Cho thuê</a>
-                {% if request.user.is_authenticated %}
-                    <a href="{% url 'web-profile' %}">{{ request.user.full_name|default:request.user.email }}</a>
-                    {% if request.user.role == "landlord" %}
-                        <a class="nav-primary" href="{% url 'landlord-dashboard' %}">Dashboard</a>
-                    {% endif %}
-                    <a href="{% url 'web-logout' %}">Đăng xuất</a>
-                {% else %}
-                    <a href="{% url 'web-login' %}?next={% url 'landlord-home' %}">Đăng nhập</a>
-                    <a class="nav-primary" href="{% url 'web-register' %}?role=landlord">Tạo tài khoản chủ trọ</a>
-                {% endif %}
-            </div>
-        </nav>
+        {% include "frontend/partials/topbar.html" with brand_suffix="Chủ trọ" %}
 
         <section class="hero-grid">
             <div class="hero-copy">
@@ -40,11 +20,7 @@
                 </p>
                 <div class="hero-actions">
                     {% if is_landlord %}
-                        {% if profile.verification_status == "approved" %}
-                            <a class="button light" href="{% url 'landlord-room-create' %}">Đăng phòng mới</a>
-                        {% else %}
-                            <a class="button light" href="{% url 'landlord-verification' %}">Gửi hồ sơ xác minh</a>
-                        {% endif %}
+                        <a class="button light" href="{% url 'landlord-room-create' %}">Đăng phòng mới</a>
                         <a class="button ghost" href="{% url 'landlord-dashboard' %}">Quản lý phòng</a>
                     {% elif request.user.is_authenticated %}
                         <a class="button light" href="{% url 'web-profile' %}">Xem hồ sơ hiện tại</a>
@@ -60,10 +36,7 @@
                 {% if is_landlord %}
                     <p class="eyebrow">Tổng quan của bạn</p>
                     <h2>{{ profile.business_name|default:"Chủ trọ cá nhân" }}</h2>
-                    <span class="verification">{{ profile.get_verification_status_display }}</span>
-                    {% if profile.verification_status != "approved" %}
-                        <p class="panel-note">Bạn cần được xác minh trước khi gửi phòng cho admin duyệt công khai.</p>
-                    {% endif %}
+                    <span class="verification">Tài khoản cho thuê</span>
                     <div class="stat-grid">
                         <div><strong>{{ total_rooms }}</strong><span>Tổng phòng</span></div>
                         <div><strong>{{ active_rooms }}</strong><span>Đang hiển thị</span></div>

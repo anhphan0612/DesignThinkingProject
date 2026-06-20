@@ -12,24 +12,7 @@
 </head>
 <body>
     <header class="hero compact-hero">
-        <nav class="topbar">
-            <a class="brand" href="{% url 'home' %}">
-                <span class="brand-mark">R</span>
-                <span>Rentify</span>
-            </a>
-            <div class="nav-actions">
-                <a href="{% url 'room-search' %}">Tìm phòng</a>
-                <a href="{% url 'roommate-home' %}">Ghép trọ</a>
-                <a href="{% url 'landlord-home' %}">Cho thuê</a>
-                {% if request.user.is_authenticated %}
-                    <a href="{% url 'web-profile' %}">{{ request.user.full_name|default:request.user.email }}</a>
-                    <a href="{% url 'web-logout' %}">Đăng xuất</a>
-                {% else %}
-                    <a href="{% url 'web-login' %}?next={% url 'roommate-home' %}">Đăng nhập</a>
-                    <a class="nav-primary" href="{% url 'web-register' %}">Đăng ký</a>
-                {% endif %}
-            </div>
-        </nav>
+        {% include "frontend/partials/topbar.html" %}
         <section class="hero-content">
             <div>
                 <p class="eyebrow">Ghép trọ sinh viên</p>
@@ -64,7 +47,7 @@
             <div class="panel-heading">
                 <p class="eyebrow">Bộ lọc</p>
                 <h2>Nhu cầu ghép trọ</h2>
-                <p class="muted">Từ khóa là tìm kiếm mở; bộ lọc là điều kiện cứng; hồ sơ dùng cho gợi ý cá nhân.</p>
+                <p class="muted">Bộ lọc giúp thu hẹp bài đăng; hồ sơ dùng cho gợi ý cá nhân.</p>
             </div>
             <label>Từ khóa <input id="roommateQuery" type="search" placeholder="VD: Bách khoa, yên tĩnh, ở ghép nữ"></label>
             <label>Kiểu nhu cầu
@@ -80,6 +63,13 @@
                 <label>Ngân sách từ <input id="roommateMinBudget" type="number" min="0" step="100000" placeholder="1500000"></label>
                 <label>Đến <input id="roommateMaxBudget" type="number" min="0" step="100000" placeholder="3500000"></label>
             </div>
+            <label>Sắp xếp
+                <select id="roommateSort">
+                    <option value="newest">Mới nhất</option>
+                    <option value="budget_asc">Ngân sách thấp nhất</option>
+                    <option value="move_in">Ngày chuyển vào gần nhất</option>
+                </select>
+            </label>
             <fieldset>
                 <legend>Thói quen sống</legend>
                 <div id="roommateTags" class="checks"></div>
@@ -98,6 +88,13 @@
                 </div>
                 <span id="roommateResultCount" class="pill">Đang tải...</span>
             </div>
+
+            {% if is_student %}
+                <div class="segmented-control">
+                    <button id="showOpenPosts" type="button" class="active">Bài đang mở</button>
+                    <button id="showMyPosts" type="button">Bài của tôi</button>
+                </div>
+            {% endif %}
 
             <section id="roommateMatchBox" class="recommendations" hidden>
                 <div class="mini-heading">
@@ -118,10 +115,12 @@
                     <div class="mini-heading">
                         <div>
                             <p class="eyebrow">Đăng nhu cầu</p>
-                            <h3>Tạo bài ghép trọ</h3>
+                            <h3 id="roommateFormTitle">Tạo bài ghép trọ</h3>
                         </div>
+                        <button id="cancelRoommateEdit" type="button" class="secondary" hidden>Hủy sửa</button>
                     </div>
                     <form id="roommateForm" class="form-grid">
+                        <input name="post_id" type="hidden">
                         <label>Tiêu đề <input name="title" required maxlength="255" placeholder="VD: Tìm 1 bạn nữ ở ghép gần HUST"></label>
                         <label>Kiểu nhu cầu
                             <select name="type" required>
