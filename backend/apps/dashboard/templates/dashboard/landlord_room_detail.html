@@ -15,7 +15,7 @@
         {% if room.status == "active" %}
             <a class="button secondary" href="{% url 'frontend-room-detail' room.id %}" target="_blank" rel="noopener">Xem trang công khai</a>
         {% else %}
-            <a class="button secondary" href="{% url 'landlord-room-preview' room.id %}" target="_blank" rel="noopener">Xem bản nháp</a>
+            <a class="button secondary" href="{% url 'landlord-room-preview' room.id %}" target="_blank" rel="noopener">Xem trước</a>
         {% endif %}
     </div>
 </section>
@@ -47,28 +47,47 @@
     </article>
 
     <aside class="card checklist-card">
-        <h2>Checklist gửi duyệt</h2>
-        <ul class="checklist">
-            {% for item in checklist %}
-                <li class="{% if item.done %}done{% endif %}">
-                    <span>{% if item.done %}✓{% else %}!{% endif %}</span>
-                    <strong>{{ item.label }}</strong>
-                    {% if not item.done and item.action_url %}
-                        <a href="{% url item.action_url room.id %}">{{ item.action_label }}</a>
-                    {% endif %}
-                </li>
-            {% endfor %}
-        </ul>
-        {% if room.status == "draft" or room.status == "rejected" %}
-            <form method="post" action="{% url 'landlord-room-submit' room.id %}">
+        {% if room.status == "active" %}
+            <h2>Đang công khai</h2>
+            <p class="muted">Phòng đã được duyệt và đang hiển thị cho người tìm trọ.</p>
+            <div class="actions">
+                <a class="button secondary" href="{% url 'frontend-room-detail' room.id %}" target="_blank" rel="noopener">Xem trang công khai</a>
+                <form method="post" action="{% url 'landlord-room-mark-rented' room.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="secondary-button">Đã cho thuê</button>
+                </form>
+            </div>
+        {% elif room.status == "rented" %}
+            <h2>Đã cho thuê</h2>
+            <p class="muted">Phòng đang được đánh dấu là đã cho thuê.</p>
+            <form method="post" action="{% url 'landlord-room-mark-available' room.id %}">
                 {% csrf_token %}
-                <button type="submit" {% if not can_submit %}disabled{% endif %}>Gửi duyệt</button>
+                <button type="submit">Mở lại cho thuê</button>
             </form>
-            {% if not can_submit %}
-                <p class="muted">Hoàn tất các mục còn thiếu để gửi admin duyệt.</p>
+        {% else %}
+            <h2>Checklist gửi duyệt</h2>
+            <ul class="checklist">
+                {% for item in checklist %}
+                    <li class="{% if item.done %}done{% endif %}">
+                        <span>{% if item.done %}✓{% else %}!{% endif %}</span>
+                        <strong>{{ item.label }}</strong>
+                        {% if not item.done and item.action_url %}
+                            <a href="{% url item.action_url room.id %}">{{ item.action_label }}</a>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+            {% if room.status == "draft" or room.status == "rejected" %}
+                <form method="post" action="{% url 'landlord-room-submit' room.id %}">
+                    {% csrf_token %}
+                    <button type="submit" {% if not can_submit %}disabled{% endif %}>Gửi duyệt</button>
+                </form>
+                {% if not can_submit %}
+                    <p class="muted">Hoàn tất các mục còn thiếu để gửi admin duyệt.</p>
+                {% endif %}
+            {% elif room.status == "pending" %}
+                <p class="muted">Phòng đang chờ admin duyệt. Nếu sửa thông tin, bài đăng vẫn cần duyệt lại.</p>
             {% endif %}
-        {% elif room.status == "pending" %}
-            <p class="muted">Phòng đang chờ admin duyệt. Nếu sửa thông tin, bài đăng vẫn cần duyệt lại.</p>
         {% endif %}
     </aside>
 </section>

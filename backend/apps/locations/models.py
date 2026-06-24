@@ -44,11 +44,11 @@ class University(models.Model):
 
 class Landmark(models.Model):
     class Type(models.TextChoices):
-        HOSPITAL = "hospital", "Hospital"
-        MARKET = "market", "Market"
-        BUS_STOP = "bus_stop", "Bus stop"
-        PARK = "park", "Park"
-        OTHER = "other", "Other"
+        UNIVERSITY = "university", "Trường đại học"
+        BUS_STOP = "bus_stop", "Trạm xe bus"
+        HOSPITAL = "hospital", "Bệnh viện"
+        PARK = "park", "Công viên"
+        SHOPPING_MALL = "shopping_mall", "Trung tâm thương mại"
 
     ward = models.ForeignKey(Ward, on_delete=models.PROTECT, related_name="landmarks")
     name = models.CharField(max_length=255)

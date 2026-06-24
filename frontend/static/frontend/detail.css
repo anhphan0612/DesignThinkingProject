@@ -99,6 +99,74 @@
     gap: 22px;
 }
 
+.location-card {
+    margin-bottom: 22px;
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    background: #fff;
+    box-shadow: var(--shadow);
+    padding: 22px;
+}
+
+.location-card-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: start;
+    margin-bottom: 18px;
+}
+
+.location-card-head h2 {
+    margin: 8px 0 8px;
+    font-size: clamp(26px, 3vw, 38px);
+    line-height: 1.08;
+}
+
+.location-card-head .muted {
+    max-width: 780px;
+    margin: 0;
+    line-height: 1.6;
+}
+
+.location-pill {
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: var(--soft);
+    color: var(--primary-dark);
+    font-size: 13px;
+    font-weight: 900;
+    padding: 9px 12px;
+    text-align: center;
+}
+
+.location-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 330px;
+    gap: 18px;
+    align-items: stretch;
+}
+
+.location-side {
+    display: grid;
+    align-content: start;
+    gap: 12px;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    background: #f8fafc;
+    padding: 16px;
+}
+
+.location-side h3 {
+    margin: 0;
+}
+
+.map-meta-row {
+    display: grid;
+    grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+    gap: 14px;
+    margin-top: 12px;
+}
+
 .gallery-card,
 .info-card {
     border: 1px solid var(--line);
@@ -136,6 +204,7 @@ figcaption {
     padding: 12px;
     color: var(--muted);
     font-weight: 800;
+    overflow-wrap: anywhere;
 }
 
 figcaption small {
@@ -226,6 +295,53 @@ figcaption small {
     line-height: 1.6;
 }
 
+.detail-local-map {
+    height: 430px;
+    margin-top: 0;
+}
+
+.detail-map-marker {
+    left: 52%;
+    top: 48%;
+}
+
+.map-coordinate {
+    margin: 10px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.landmark-list {
+    display: grid;
+    gap: 10px;
+}
+
+.landmark-list div {
+    display: grid;
+    gap: 3px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: #f8fafc;
+    padding: 10px 12px;
+}
+
+.landmark-list strong {
+    color: var(--primary-dark);
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.landmark-list span {
+    font-weight: 850;
+    overflow-wrap: anywhere;
+}
+
+.landmark-list small {
+    color: var(--muted);
+    font-weight: 750;
+}
+
 .room-sidebar {
     display: grid;
     gap: 18px;
@@ -239,10 +355,28 @@ figcaption small {
 }
 
 @media (max-width: 940px) {
+    .detail-hero {
+        padding: 18px;
+    }
+
     .room-summary,
     .detail-grid,
-    .gallery {
+    .gallery,
+    .location-layout,
+    .map-meta-row {
         grid-template-columns: 1fr;
+    }
+
+    .location-card-head {
+        display: grid;
+    }
+
+    .location-pill {
+        justify-self: start;
+    }
+
+    .detail-local-map {
+        height: 340px;
     }
 
     .summary-price {

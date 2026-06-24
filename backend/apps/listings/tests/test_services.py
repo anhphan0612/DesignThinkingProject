@@ -7,7 +7,7 @@ from django.test import override_settings
 from rest_framework.exceptions import ValidationError
 
 from apps.listings.models import Room
-from apps.listings.services import approve_room, mark_room_rented, submit_room_for_review
+from apps.listings.services import approve_room, mark_room_available, mark_room_rented, submit_room_for_review
 from apps.listings.validators import validate_room_image_upload
 
 
@@ -16,6 +16,10 @@ class RoomStateServiceTests(SimpleTestCase):
         room = Mock(status=state)
         room.location_status = Room.LocationStatus.GEOCODED
         room.rejection_reason = "old reason"
+        room.price = 2500000
+        room.area = 20
+        room.max_occupants = 2
+        room.images.filter.return_value.exists.return_value = True
         return room
 
     def test_submit_moves_draft_room_to_pending(self):
@@ -34,9 +38,28 @@ class RoomStateServiceTests(SimpleTestCase):
         with self.assertRaises(ValidationError):
             mark_room_rented(room=self.room(Room.Status.PENDING))
 
+    def test_mark_available_moves_rented_room_to_active(self):
+        room = self.room(Room.Status.RENTED)
+
+        mark_room_available(room=room)
+
+        self.assertEqual(room.status, Room.Status.ACTIVE)
+        room.save.assert_called_once()
+
+    def test_mark_available_requires_rented_room(self):
+        with self.assertRaises(ValidationError):
+            mark_room_available(room=self.room(Room.Status.PENDING))
+
     def test_submit_requires_geocoded_location(self):
         room = self.room(Room.Status.DRAFT)
         room.location_status = Room.LocationStatus.FAILED
+
+        with self.assertRaises(ValidationError):
+            submit_room_for_review(room=room)
+
+    def test_submit_requires_approved_image(self):
+        room = self.room(Room.Status.DRAFT)
+        room.images.filter.return_value.exists.return_value = False
 
         with self.assertRaises(ValidationError):
             submit_room_for_review(room=room)

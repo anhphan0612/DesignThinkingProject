@@ -7,6 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token }}">
     <meta name="is-authenticated" content="{% if request.user.is_authenticated %}true{% else %}false{% endif %}">
     <title>Rentify - Tìm phòng trọ</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="{% static 'frontend/styles.css' %}">
 </head>
 <body>
@@ -97,7 +98,7 @@
                     </div>
                     <span id="mapCount" class="pill">0 vị trí</span>
                 </div>
-                <iframe id="resultsMap" title="Bản đồ kết quả tìm phòng" loading="lazy"></iframe>
+                <div id="resultsMap" class="local-map" role="img" aria-label="Bản đồ kết quả tìm phòng"></div>
                 <p id="mapHint" class="muted map-note"></p>
             </section>
 
@@ -128,6 +129,7 @@
         </div>
     </section>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="{% static 'frontend/app.js' %}"></script>
 </body>
 </html>

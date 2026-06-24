@@ -3,6 +3,9 @@ const state = {
     universities: [],
     rooms: [],
     activeRoomId: null,
+    leafletMap: null,
+    roomLayer: null,
+    landmarkLayer: null,
     isAuthenticated: document.querySelector("meta[name='is-authenticated']").content === "true",
 };
 
@@ -43,7 +46,11 @@ function formatNumber(value, suffix = "") {
     if (value === null || value === undefined || value === "") {
         return "Chưa cập nhật";
     }
-    return `${new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 1 }).format(Number(value))}${suffix}`;
+    const number = Number(value);
+    if (!Number.isFinite(number)) {
+        return "Chưa cập nhật";
+    }
+    return `${new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 1 }).format(number)}${suffix}`;
 }
 
 function csrfToken() {
@@ -96,6 +103,17 @@ function textElement(tagName, text, className) {
 
 function tagElement(text) {
     return textElement("span", text, "tag");
+}
+
+function landmarkSummary(room) {
+    const landmarks = room.nearby_landmarks || [];
+    if (!landmarks.length) {
+        return "";
+    }
+    return landmarks
+        .slice(0, 3)
+        .map((landmark) => `${landmark.type_label}: ${landmark.name}${landmark.distance_km ? ` (${formatNumber(landmark.distance_km, " km")})` : ""}`)
+        .join(" · ");
 }
 
 function checkedAmenityIds() {
@@ -158,35 +176,182 @@ function renderEmptyRooms() {
 }
 
 function geocodedRooms() {
-    return state.rooms.filter((room) => room.location_status === "geocoded" && room.latitude && room.longitude);
+    return state.rooms.filter((room) => (
+        room.location_status === "geocoded"
+        && Number.isFinite(Number(room.latitude))
+        && Number.isFinite(Number(room.longitude))
+    ));
 }
 
-function mapUrlForRoom(room) {
+function mapBounds(rooms) {
+    const latitudes = rooms.map((item) => Number(item.latitude));
+    const longitudes = rooms.map((item) => Number(item.longitude));
+    return {
+        minLat: Math.min(...latitudes),
+        maxLat: Math.max(...latitudes),
+        minLng: Math.min(...longitudes),
+        maxLng: Math.max(...longitudes),
+    };
+}
+
+function markerPosition(room, bounds) {
     const latitude = Number(room.latitude);
     const longitude = Number(room.longitude);
-    const delta = 0.006;
-    const bbox = [
-        longitude - delta,
-        latitude - delta,
-        longitude + delta,
-        latitude + delta,
-    ].join("%2C");
-    return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${latitude}%2C${longitude}`;
+    const latRange = bounds.maxLat - bounds.minLat || 0.01;
+    const lngRange = bounds.maxLng - bounds.minLng || 0.01;
+    const left = 8 + ((longitude - bounds.minLng) / lngRange) * 84;
+    const top = 92 - ((latitude - bounds.minLat) / latRange) * 84;
+    return {
+        left: Math.max(6, Math.min(94, left)),
+        top: Math.max(6, Math.min(94, top)),
+    };
+}
+
+function landmarkMapItems(activeRoom) {
+    return (activeRoom?.nearby_landmarks || [])
+        .filter((landmark) => Number.isFinite(Number(landmark.latitude)) && Number.isFinite(Number(landmark.longitude)))
+        .map((landmark) => ({
+            ...landmark,
+            latitude: landmark.latitude,
+            longitude: landmark.longitude,
+        }));
+}
+
+function hasLeaflet() {
+    return typeof window.L !== "undefined" && els.map;
+}
+
+function markerIcon(className, label) {
+    return window.L.divIcon({
+        className,
+        html: `<span>${label}</span>`,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+        popupAnchor: [0, -14],
+    });
+}
+
+function ensureLeafletMap() {
+    if (!hasLeaflet()) {
+        return false;
+    }
+    if (!state.leafletMap) {
+        state.leafletMap = window.L.map(els.map, {
+            scrollWheelZoom: true,
+            zoomControl: true,
+        });
+        window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+            attribution: "&copy; OpenStreetMap",
+        }).addTo(state.leafletMap);
+        state.roomLayer = window.L.layerGroup().addTo(state.leafletMap);
+        state.landmarkLayer = window.L.layerGroup().addTo(state.leafletMap);
+    }
+    return true;
+}
+
+function renderLeafletMap(activeRoom) {
+    const mapped = geocodedRooms();
+    if (!ensureLeafletMap() || !mapped.length) {
+        return false;
+    }
+    const selectedRoom = activeRoom || mapped[0];
+    state.roomLayer.clearLayers();
+    state.landmarkLayer.clearLayers();
+    const bounds = [];
+    mapped.forEach((room, index) => {
+        const latLng = [Number(room.latitude), Number(room.longitude)];
+        const marker = window.L.marker(latLng, {
+            icon: markerIcon(room.id === selectedRoom.id ? "leaflet-room-marker active" : "leaflet-room-marker", index + 1),
+        }).bindPopup(`<strong>${room.title}</strong><br>${formatCurrency(room.price)}/tháng`);
+        marker.on("click", () => updateMap(room));
+        marker.addTo(state.roomLayer);
+        bounds.push(latLng);
+    });
+    landmarkMapItems(selectedRoom).forEach((landmark) => {
+        const latLng = [Number(landmark.latitude), Number(landmark.longitude)];
+        window.L.marker(latLng, {
+            icon: markerIcon(`leaflet-landmark-marker landmark-${landmark.type}`, landmark.type_label?.slice(0, 1) || "L"),
+        }).bindPopup(`<strong>${landmark.type_label}</strong><br>${landmark.name}`).addTo(state.landmarkLayer);
+        bounds.push(latLng);
+    });
+    if (bounds.length === 1) {
+        state.leafletMap.setView(bounds[0], 15);
+    } else {
+        state.leafletMap.fitBounds(bounds, { padding: [28, 28], maxZoom: 15 });
+    }
+    setTimeout(() => state.leafletMap.invalidateSize(), 0);
+    return true;
+}
+
+function renderLocalMap(activeRoom) {
+    const mapped = geocodedRooms();
+    if (mapped.length && renderLeafletMap(activeRoom)) {
+        return;
+    }
+    els.map.replaceChildren();
+    if (!mapped.length) {
+        const empty = document.createElement("div");
+        empty.className = "local-map-empty";
+        empty.append(
+            textElement("strong", "Chưa có phòng được ghim tọa độ"),
+            textElement("span", "Hãy cập nhật địa chỉ/geocoding hoặc chạy lại dữ liệu demo để kiểm tra bản đồ."),
+        );
+        els.map.append(empty);
+        return;
+    }
+    const landmarks = landmarkMapItems(activeRoom);
+    const bounds = mapBounds([...mapped, ...landmarks]);
+    const backdrop = document.createElement("div");
+    backdrop.className = "local-map-backdrop";
+    backdrop.append(
+        textElement("span", "Bắc", "map-axis map-axis-north"),
+        textElement("span", "Nam", "map-axis map-axis-south"),
+    );
+    els.map.append(backdrop);
+    mapped.forEach((room, index) => {
+        const position = markerPosition(room, bounds);
+        const marker = document.createElement("button");
+        marker.type = "button";
+        marker.className = room.id === activeRoom.id ? "map-marker active" : "map-marker";
+        marker.style.left = `${position.left}%`;
+        marker.style.top = `${position.top}%`;
+        marker.setAttribute("aria-label", room.title);
+        marker.title = room.title;
+        marker.textContent = String(index + 1);
+        marker.addEventListener("click", (event) => {
+            event.stopPropagation();
+            updateMap(room);
+        });
+        els.map.append(marker);
+    });
+    landmarks.forEach((landmark) => {
+        const position = markerPosition(landmark, bounds);
+        const marker = document.createElement("span");
+        marker.className = `landmark-marker landmark-${landmark.type}`;
+        marker.style.left = `${position.left}%`;
+        marker.style.top = `${position.top}%`;
+        marker.title = `${landmark.type_label}: ${landmark.name}`;
+        marker.textContent = landmark.type_label?.slice(0, 1) || "L";
+        els.map.append(marker);
+    });
 }
 
 function updateMap(room = null) {
     const mapped = geocodedRooms();
-    els.mapPanel.hidden = mapped.length === 0;
+    els.mapPanel.hidden = state.rooms.length === 0;
     els.mapCount.textContent = `${mapped.length} vị trí`;
     if (!mapped.length) {
-        els.map.removeAttribute("src");
+        renderLocalMap(null);
+        els.mapTitle.textContent = "Chưa có vị trí bản đồ";
+        els.mapHint.textContent = "Danh sách hiện có phòng, nhưng chưa phòng nào có tọa độ hợp lệ để ghim lên bản đồ.";
         return;
     }
 
     const activeRoom = room || mapped.find((item) => item.id === state.activeRoomId) || mapped[0];
     state.activeRoomId = activeRoom.id;
     els.mapTitle.textContent = activeRoom.title;
-    els.map.src = mapUrlForRoom(activeRoom);
+    renderLocalMap(activeRoom);
     els.mapHint.textContent = `${activeRoom.address}. Bản đồ đang hiển thị phòng được chọn trong danh sách.`;
     document.querySelectorAll(".room-card").forEach((card) => {
         card.classList.toggle("active", Number(card.dataset.roomId) === activeRoom.id);
@@ -216,15 +381,28 @@ function renderRecommendations(items) {
     els.recommendationBox.hidden = false;
     els.recommendationCount.textContent = `${items.length} phòng`;
     els.recommendationList.replaceChildren();
+    const profileMeta = items[0]?.score_detail?.profile;
+    if (profileMeta?.is_cold_start) {
+        const hint = document.createElement("div");
+        hint.className = "recommendation-hint";
+        hint.textContent = "Gợi ý sẽ chính xác hơn khi bạn bổ sung trường, ngân sách và khu vực ưu tiên trong hồ sơ.";
+        els.recommendationList.append(hint);
+    }
     items.slice(0, 3).forEach((item) => {
         const element = document.createElement("div");
         element.className = "recommendation-item";
         const copy = document.createElement("div");
+        const reasons = item.score_detail?.reasons || ["Phù hợp với hồ sơ của bạn"];
+        const reasonList = document.createElement("div");
+        reasonList.className = "reason-list";
+        reasons.slice(0, 4).forEach((reason) => {
+            reasonList.append(textElement("span", reason, "reason-chip"));
+        });
         copy.append(
             textElement("strong", item.room.title),
-            textElement("span", item.score_detail.reasons.join(" · ")),
+            reasonList,
         );
-        element.append(copy, textElement("span", `${Math.round(item.score * 100)}%`));
+        element.append(copy, textElement("span", `${Math.round(item.score * 100)}% phù hợp`, "recommendation-score"));
         element.addEventListener("click", () => {
             window.location.href = `/rooms/${item.room.id}/`;
         });
@@ -237,6 +415,8 @@ function roomCard(room) {
     card.className = "room-card";
     card.tabIndex = 0;
     card.dataset.roomId = room.id;
+    card.setAttribute("role", "link");
+    card.setAttribute("aria-label", `Xem chi tiết ${room.title}`);
 
     const cover = room.images.find((image) => image.is_cover) || room.images[0];
     const thumb = document.createElement("div");
@@ -251,7 +431,8 @@ function roomCard(room) {
     }
 
     const content = document.createElement("div");
-    const distance = room.distance_km ? `Cách trường ${formatNumber(room.distance_km, " km")}` : "Chưa lọc theo trường";
+    const hasDistance = room.distance_km !== null && room.distance_km !== undefined && room.distance_km !== "";
+    const distance = hasDistance ? `Cách trường ${formatNumber(room.distance_km, " km")}` : "Chưa lọc theo trường";
     const location = room.location_status === "geocoded" ? "Có bản đồ" : "Chưa ghim bản đồ";
     const meta = document.createElement("div");
     meta.className = "meta";
@@ -264,7 +445,8 @@ function roomCard(room) {
 
     const tags = document.createElement("div");
     tags.className = "tags";
-    room.amenities.slice(0, 4).forEach((amenity) => tags.append(tagElement(amenity.name)));
+    (room.amenities || []).slice(0, 4).forEach((amenity) => tags.append(tagElement(amenity.name)));
+    const landmarkText = landmarkSummary(room);
 
     const cardActions = document.createElement("div");
     cardActions.className = "card-actions-row";
@@ -309,21 +491,37 @@ function roomCard(room) {
         textElement("div", `${formatCurrency(room.price)}/tháng`, "price"),
         meta,
         textElement("p", room.address, "muted"),
+        landmarkText ? textElement("p", landmarkText, "landmark-summary") : "",
         tags,
         cardActions,
     );
     card.append(thumb, content);
 
-    card.addEventListener("click", () => updateMap(room));
-    card.addEventListener("dblclick", () => {
+    card.addEventListener("mouseenter", () => updateMap(room));
+    card.addEventListener("focus", () => updateMap(room));
+    card.addEventListener("click", () => {
         window.location.href = `/rooms/${room.id}/`;
     });
     card.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-            updateMap(room);
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            window.location.href = `/rooms/${room.id}/`;
         }
     });
     return card;
+}
+
+async function loadRecommendations() {
+    if (!state.isAuthenticated) {
+        return;
+    }
+    try {
+        const recommendations = await fetchJson("/api/recommendations/", { q: els.query.value.trim(), limit: 10 });
+        renderRecommendations(recommendations);
+    } catch (error) {
+        els.recommendationBox.hidden = true;
+        console.error(error);
+    }
 }
 
 async function loadRooms() {
@@ -332,8 +530,13 @@ async function loadRooms() {
         const data = await fetchJson("/api/rooms/", currentFilters());
         state.rooms = data.results || [];
         state.activeRoomId = null;
-        showStatus("");
+        if (data.search_intelligence?.fallback_used) {
+            showStatus("Không tìm thấy kết quả khớp chính xác với từ khóa, đang hiển thị các phòng gần với nhu cầu hơn.");
+        } else {
+            showStatus("");
+        }
         renderRooms();
+        await loadRecommendations();
     } catch (error) {
         showStatus("Không tải được danh sách phòng. Hãy kiểm tra server Django và API.", true);
         console.error(error);
@@ -351,15 +554,6 @@ async function bootstrap() {
         renderUniversities();
         renderAmenities();
         await loadRooms();
-        if (state.isAuthenticated) {
-            try {
-                const recommendations = await fetchJson("/api/recommendations/");
-                renderRecommendations(recommendations);
-            } catch (error) {
-                els.recommendationBox.hidden = true;
-                console.error(error);
-            }
-        }
     } catch (error) {
         showStatus("Không tải được dữ liệu cần thiết. Hãy thử tải lại trang sau ít phút.", true);
         console.error(error);

@@ -235,6 +235,9 @@ class Command(BaseCommand):
                     "description": "Phòng mẫu phục vụ trải nghiệm tìm trọ cho sinh viên.",
                     "address": item["address"],
                     "location": Point(item["lng"], item["lat"], srid=4326),
+                    "location_status": Room.LocationStatus.GEOCODED,
+                    "location_query": item["address"],
+                    "location_label": item["address"],
                     "price": Decimal(item["price"]),
                     "area": Decimal(item["area"]),
                     "max_occupants": item["max_occupants"],
@@ -308,4 +311,3 @@ class Command(BaseCommand):
                 f"{RoommatePost.objects.count()} roommate posts."
             )
         )
-

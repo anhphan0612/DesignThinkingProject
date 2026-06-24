@@ -1,59 +1,92 @@
 {% extends "accounts/auth_base.html" %}
 
+{% block body_class %}profile-page{% endblock %}
 {% block title %}Hồ sơ{% endblock %}
-{% block headline %}Cập nhật hồ sơ Rentify của bạn{% endblock %}
+{% block headline %}Quản lý hồ sơ Rentify của bạn{% endblock %}
 
 {% block content %}
-<p class="eyebrow">Hồ sơ</p>
-<h2>{{ request.user.full_name }}</h2>
-<p class="muted">{{ request.user.email }} - {{ request.user.get_role_display }}</p>
+<div class="profile-header">
+    <div>
+        <p class="eyebrow">Hồ sơ</p>
+        <h2>{{ request.user.full_name }}</h2>
+        <p class="muted">
+            {{ request.user.email }} -
+            {% if request.user.is_staff %}Admin{% elif request.user.role == "landlord" %}Chủ trọ{% else %}Sinh viên{% endif %}
+        </p>
+    </div>
+    <div class="profile-header-actions">
+        {% if request.user.is_staff %}
+            <a class="secondary-action" href="{% url 'moderation-dashboard' %}">Về kiểm duyệt</a>
+        {% elif request.user.role == "landlord" %}
+            <a class="secondary-action" href="{% url 'landlord-dashboard' %}">Về dashboard</a>
+        {% else %}
+            <a class="secondary-action" href="{% url 'room-search' %}">Về tìm phòng</a>
+        {% endif %}
+    </div>
+</div>
 
-<form method="post" novalidate>
+<form method="post" class="profile-form {% if preference_form %}has-preferences{% else %}without-preferences{% endif %}" novalidate>
     {% csrf_token %}
-    <h3>Thông tin cơ bản</h3>
-    {{ profile_form.non_field_errors }}
-    {% for field in profile_form %}
-        <label>
-            {{ field.label }}
-            {{ field }}
-            {{ field.errors }}
-        </label>
-    {% endfor %}
 
-    {% if preference_form %}
+    <section class="profile-card profile-account-card">
         <div class="profile-section-title">
-            <h3>Nhu cầu tìm trọ</h3>
-            <p class="muted">Các thông tin này giúp Rentify ưu tiên phòng theo ngân sách, khu vực, trường học và thói quen sống.</p>
+            <p class="eyebrow">Tài khoản</p>
+            <h3>Thông tin cơ bản</h3>
+            <p class="muted">Dùng cho liên hệ, lưu phòng yêu thích và cá nhân hóa gợi ý.</p>
         </div>
-        {{ preference_form.non_field_errors }}
-        {% include "accounts/_student_preference_fields.html" with form=preference_form %}
-        <h3>Phòng đã lưu</h3>
-        <div class="saved-room-list">
-            {% for favorite in favorite_rooms %}
-                <a href="{% url 'frontend-room-detail' favorite.room.id %}">
-                    <strong>{{ favorite.room.title }}</strong>
-                    <span>{{ favorite.room.ward.name }}, {{ favorite.room.ward.district.name }}</span>
-                </a>
-            {% empty %}
-                <p class="muted">Bạn chưa lưu phòng nào. Hãy lưu các phòng phù hợp để xem lại nhanh tại đây.</p>
+        {{ profile_form.non_field_errors }}
+        <div class="field-grid">
+            {% for field in profile_form %}
+                <label>
+                    {{ field.label }}
+                    {{ field }}
+                    {{ field.errors }}
+                </label>
             {% endfor %}
         </div>
-    {% else %}
-        <div class="notice">Thông tin cho thuê và danh sách phòng được quản lý trong dashboard chủ trọ.</div>
-    {% endif %}
+    </section>
 
-    <button type="submit">Lưu thay đổi</button>
+    <div class="profile-side-column">
+        {% if preference_form %}
+            <section class="profile-card profile-saved-card">
+                <div class="profile-section-title">
+                    <p class="eyebrow">Đã lưu</p>
+                    <h3>Phòng yêu thích</h3>
+                </div>
+                <div class="saved-room-list">
+                    {% for favorite in favorite_rooms %}
+                        <a href="{% url 'frontend-room-detail' favorite.room.id %}">
+                            <strong>{{ favorite.room.title }}</strong>
+                            <span>{{ favorite.room.ward.name }}, {{ favorite.room.ward.district.name }}</span>
+                        </a>
+                    {% empty %}
+                        <p class="muted">Bạn chưa lưu phòng nào. Hãy lưu các phòng phù hợp để xem lại nhanh tại đây.</p>
+                    {% endfor %}
+                </div>
+            </section>
+        {% else %}
+            <section class="profile-card profile-saved-card">
+                <div class="notice">Thông tin cho thuê và danh sách phòng được quản lý trong dashboard chủ trọ.</div>
+            </section>
+        {% endif %}
+
+        <div class="profile-sticky-actions">
+            <button type="submit">Lưu thay đổi</button>
+            <a class="secondary-action" href="{% url 'password-change' %}">Đổi mật khẩu</a>
+            <a class="secondary-action" href="{% url 'web-logout' %}">Đăng xuất</a>
+        </div>
+    </div>
+
+    {% if preference_form %}
+        <section class="profile-card profile-preference-card">
+            <div class="profile-section-title">
+                <p class="eyebrow">Nhu cầu</p>
+                <h3>Nhu cầu tìm trọ</h3>
+                <p class="muted">Các thông tin này giúp Rentify ưu tiên phòng theo ngân sách, khu vực, trường học và thói quen sống.</p>
+            </div>
+            {{ preference_form.non_field_errors }}
+            {% include "accounts/_student_preference_fields.html" with form=preference_form %}
+        </section>
+    {% endif %}
 </form>
-
-<div class="profile-actions">
-    {% if request.user.is_staff %}
-        <a href="{% url 'moderation-dashboard' %}">Quay lại kiểm duyệt</a>
-    {% elif request.user.role == "landlord" %}
-        <a href="{% url 'landlord-dashboard' %}">Quay lại dashboard chủ trọ</a>
-    {% else %}
-        <a href="{% url 'room-search' %}">Quay lại trang tìm phòng</a>
-    {% endif %}
-    <a href="{% url 'password-change' %}">Đổi mật khẩu</a>
-    <a href="{% url 'web-logout' %}">Đăng xuất</a>
-</div>
 {% endblock %}

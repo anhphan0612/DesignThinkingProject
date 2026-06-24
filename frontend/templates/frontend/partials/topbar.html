@@ -1,4 +1,4 @@
-<nav class="topbar">
+<nav class="topbar app-topbar">
     {% if request.user.is_authenticated %}
         {% if request.user.is_staff %}
             <a class="brand" href="{% url 'moderation-dashboard' %}">
@@ -20,11 +20,12 @@
                 <a class="nav-primary" href="{% url 'moderation-dashboard' %}">Kiểm duyệt</a>
             {% elif request.user.role == "landlord" %}
                 <a class="nav-primary" href="{% url 'landlord-dashboard' %}">Dashboard</a>
+                <a href="{% url 'landlord-room-create' %}">Đăng phòng</a>
             {% else %}
                 <a href="{% url 'room-search' %}">Tìm phòng</a>
                 <a href="{% url 'roommate-home' %}">Ghép trọ</a>
             {% endif %}
-            <a href="{% url 'web-profile' %}">{{ request.user.full_name|default:request.user.email }}</a>
+            <a href="{% url 'web-profile' %}">Hồ sơ</a>
             <a href="{% url 'web-logout' %}">Đăng xuất</a>
         {% else %}
             <a href="{% url 'room-search' %}">Tìm phòng</a>

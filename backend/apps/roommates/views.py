@@ -1,12 +1,12 @@
 from decimal import Decimal, InvalidOperation
 
-from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
 from django.db import models
 from rest_framework import permissions, serializers, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from apps.accounts.models import User
+from apps.recommendations.keywords import apply_roommate_keyword_search
 
 from .models import LifestyleTag, RoommatePost
 from .permissions import IsRoommatePostOwnerOrAdmin
@@ -98,16 +98,16 @@ class RoommatePostViewSet(viewsets.ModelViewSet):
             for tag_id in tag_ids:
                 queryset = queryset.filter(lifestyle_tags__id=tag_id)
             queryset = queryset.distinct()
+        search_intelligence = None
         query = params.get("q")
         if query:
-            vector = SearchVector("title", "description", "address", config="simple")
-            search_query = SearchQuery(query, config="simple")
-            queryset = (
-                queryset.annotate(rank=SearchRank(vector, search_query))
-                .filter(rank__gte=0.05)
-                .order_by("-rank", "-created_at")
-            )
-        elif params.get("sort") == "budget_asc":
+            result = apply_roommate_keyword_search(queryset, query)
+            queryset = result.queryset
+            search_intelligence = result.intent.as_dict()
+        self.search_intelligence = search_intelligence
+        if query:
+            return queryset
+        if params.get("sort") == "budget_asc":
             queryset = queryset.order_by("budget_min", "-created_at")
         elif params.get("sort") == "move_in":
             queryset = queryset.order_by("move_in_date", "-created_at")
@@ -125,6 +125,21 @@ class RoommatePostViewSet(viewsets.ModelViewSet):
         serializer = RoommatePostReadSerializer(page or queryset, many=True, context={"request": request})
         if page is not None:
             return self.get_paginated_response(serializer.data)
+        return Response(serializer.data)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(page or queryset, many=True)
+        response_meta = {}
+        if getattr(self, "search_intelligence", None):
+            response_meta["search_intelligence"] = self.search_intelligence
+        if page is not None:
+            response = self.get_paginated_response(serializer.data)
+            response.data.update(response_meta)
+            return response
+        if response_meta:
+            return Response({"results": serializer.data, **response_meta})
         return Response(serializer.data)
 
     @action(detail=False, methods=["get"])

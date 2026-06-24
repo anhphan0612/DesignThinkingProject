@@ -1,100 +1,106 @@
-<section class="preference-section">
-    <div class="section-heading">
-        <span>1</span>
-        <div>
-            <h3>Trường và khu vực ưu tiên</h3>
-            <p>Chọn trường và các khu vực bạn muốn Rentify ưu tiên khi gợi ý phòng.</p>
-        </div>
-    </div>
-
-    <div class="field-grid">
-        <label>
-            {{ form.university.label }}
-            {{ form.university }}
-            {{ form.university.errors }}
-        </label>
-        <label>
-            {{ form.student_code.label }}
-            {{ form.student_code }}
-            {{ form.student_code.errors }}
-        </label>
-    </div>
-
-    <div class="choice-panel">
-        <div>
-            <strong>{{ form.preferred_districts.label }}</strong>
-            <p>Chọn một hoặc nhiều quận phù hợp với lịch học và di chuyển của bạn.</p>
-        </div>
-        {{ form.preferred_districts }}
-        {{ form.preferred_districts.errors }}
-    </div>
-</section>
-
-<section class="preference-section">
-    <div class="section-heading">
-        <span>2</span>
-        <div>
-            <h3>Ngân sách và khoảng cách</h3>
-            <p>Khoảng giá càng rõ, kết quả gợi ý càng sát nhu cầu thực tế.</p>
-        </div>
-    </div>
-
-    <div class="field-grid three">
-        <label>
-            {{ form.budget_min.label }}
-            <div class="input-with-unit">
-                {{ form.budget_min }}
-                <span>VND/tháng</span>
+<div class="preference-sections{% if compact %} compact{% endif %}">
+    <section class="preference-section">
+        <div class="section-heading">
+            <span>1</span>
+            <div>
+                <h3>Trường và khu vực ưu tiên</h3>
+                <p>Chọn trường và các khu vực bạn muốn Rentify ưu tiên khi gợi ý phòng.</p>
             </div>
-            {{ form.budget_min.errors }}
-        </label>
-        <label>
-            {{ form.budget_max.label }}
-            <div class="input-with-unit">
-                {{ form.budget_max }}
-                <span>VND/tháng</span>
-            </div>
-            {{ form.budget_max.errors }}
-        </label>
-        <label>
-            {{ form.max_distance_km.label }}
-            <div class="input-with-unit">
-                {{ form.max_distance_km }}
-                <span>km</span>
-            </div>
-            {{ form.max_distance_km.errors }}
-        </label>
-    </div>
-</section>
-
-<section class="preference-section">
-    <div class="section-heading">
-        <span>3</span>
-        <div>
-            <h3>Lịch chuyển vào và thói quen sống</h3>
-            <p>Các thông tin này hữu ích khi tìm phòng ở ghép hoặc gợi ý bạn cùng thuê.</p>
         </div>
-    </div>
 
-    <div class="field-grid">
-        <label>
-            {{ form.gender.label }}
-            {{ form.gender }}
-            {{ form.gender.errors }}
-        </label>
-        <label>
-            {{ form.move_in_date.label }}
-            {{ form.move_in_date }}
-            {{ form.move_in_date.errors }}
-        </label>
-    </div>
-
-    <div class="choice-panel">
-        <div>
-            <strong>{{ form.lifestyle_tags.label }}</strong>
-            <p>Chọn những thói quen quan trọng để việc ghép trọ dễ hợp nhau hơn.</p>
+        <div class="field-grid">
+            <label>
+                {{ form.university.label }}
+                {{ form.university }}
+                {{ form.university.errors }}
+            </label>
+            <label>
+                {{ form.student_code.label }}
+                {{ form.student_code }}
+                {{ form.student_code.errors }}
+            </label>
         </div>
-        {{ form.lifestyle_tags }}
-        {{ form.lifestyle_tags.errors }}
-    </div>
-</section>
+
+        <div class="choice-panel">
+            <div>
+                <strong>{{ form.preferred_districts.label }}</strong>
+                <p>Chọn một hoặc nhiều quận phù hợp với lịch học và di chuyển của bạn.</p>
+            </div>
+            <div class="choice-list">
+                {{ form.preferred_districts }}
+            </div>
+            {{ form.preferred_districts.errors }}
+        </div>
+    </section>
+
+    <section class="preference-section">
+        <div class="section-heading">
+            <span>2</span>
+            <div>
+                <h3>Ngân sách và khoảng cách</h3>
+                <p>Khoảng giá càng rõ, kết quả gợi ý càng sát nhu cầu thực tế.</p>
+            </div>
+        </div>
+
+        <div class="field-grid three">
+            <label>
+                {{ form.budget_min.label }}
+                <div class="input-with-unit">
+                    {{ form.budget_min }}
+                    <span>đ/tháng</span>
+                </div>
+                {{ form.budget_min.errors }}
+            </label>
+            <label>
+                {{ form.budget_max.label }}
+                <div class="input-with-unit">
+                    {{ form.budget_max }}
+                    <span>đ/tháng</span>
+                </div>
+                {{ form.budget_max.errors }}
+            </label>
+            <label>
+                {{ form.max_distance_km.label }}
+                <div class="input-with-unit">
+                    {{ form.max_distance_km }}
+                    <span>km</span>
+                </div>
+                {{ form.max_distance_km.errors }}
+            </label>
+        </div>
+    </section>
+
+    <section class="preference-section">
+        <div class="section-heading">
+            <span>3</span>
+            <div>
+                <h3>Lịch chuyển vào và thói quen sống</h3>
+                <p>Các thông tin này hữu ích khi tìm phòng ở ghép hoặc gợi ý bạn cùng thuê.</p>
+            </div>
+        </div>
+
+        <div class="field-grid">
+            <label>
+                {{ form.gender.label }}
+                {{ form.gender }}
+                {{ form.gender.errors }}
+            </label>
+            <label>
+                {{ form.move_in_date.label }}
+                {{ form.move_in_date }}
+                {{ form.move_in_date.errors }}
+            </label>
+        </div>
+
+        <div class="choice-panel">
+            <div>
+                <strong>{{ form.lifestyle_tags.label }}</strong>
+                <p>Chọn những thói quen quan trọng để việc ghép trọ dễ hợp nhau hơn.</p>
+            </div>
+            <div class="choice-list">
+                {{ form.lifestyle_tags }}
+            </div>
+            {{ form.lifestyle_tags.errors }}
+        </div>
+    </section>
+</div>

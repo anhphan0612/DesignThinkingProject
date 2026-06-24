@@ -1,4 +1,4 @@
-{% load static humanize %}
+{% load static humanize l10n %}
 <!doctype html>
 <html lang="vi">
 <head>
@@ -7,6 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token }}">
     <meta name="is-authenticated" content="{% if request.user.is_authenticated %}true{% else %}false{% endif %}">
     <title>{{ room.title }} - Rentify</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="{% static 'frontend/styles.css' %}">
     <link rel="stylesheet" href="{% static 'frontend/detail.css' %}">
 </head>
@@ -37,6 +38,57 @@
                 <p class="muted">{{ room.address }} - {{ room.ward.name }}, {{ room.ward.district.name }}</p>
             </div>
             <div class="summary-price">{{ room.price|floatformat:0|intcomma }} VND/tháng</div>
+        </section>
+
+        <section class="location-card">
+            <div class="location-card-head">
+                <div>
+                    <p class="eyebrow">Vị trí</p>
+                    <h2>Bản đồ và khu vực xung quanh</h2>
+                    <p class="muted">Xem vị trí phòng, các mốc xung quanh và ước lượng khoảng cách trước khi liên hệ chủ trọ.</p>
+                </div>
+                <span class="location-pill">{{ room.ward.name }}, {{ room.ward.district.name }}</span>
+            </div>
+
+            <div class="location-layout">
+                <div>
+                    <div
+                        id="detailLeafletMap"
+                        class="local-map detail-local-map"
+                        role="img"
+                        aria-label="Bản đồ vị trí phòng"
+                        data-latitude="{{ room.location.y|unlocalize }}"
+                        data-longitude="{{ room.location.x|unlocalize }}"
+                        data-title="{{ room.title }}">
+                        <div class="local-map-backdrop">
+                            <span class="map-axis map-axis-north">Bắc</span>
+                            <span class="map-axis map-axis-south">Nam</span>
+                        </div>
+                        <span class="map-marker active detail-map-marker">1</span>
+                    </div>
+                    <div class="map-meta-row">
+                        <p class="map-coordinate">Tọa độ tham khảo: {{ room.location.y|floatformat:5 }}, {{ room.location.x|floatformat:5 }}</p>
+                        <p class="map-note">Vị trí dùng để tham khảo khi xem phòng. Hãy xác nhận lại địa chỉ với chủ trọ trước khi đặt cọc.</p>
+                    </div>
+                </div>
+
+                <aside class="location-side">
+                    <h3>Địa điểm gần phòng</h3>
+                    <div class="landmark-list">
+                        {% for landmark in nearby_landmarks %}
+                            <div>
+                                <strong>{{ landmark.get_type_display }}</strong>
+                                <span>{{ landmark.name }}</span>
+                                {% if landmark.distance %}
+                                    <small>Cách khoảng {{ landmark.distance.km|floatformat:1 }} km</small>
+                                {% endif %}
+                            </div>
+                        {% empty %}
+                            <p class="muted">Chưa có landmark phù hợp quanh phòng này.</p>
+                        {% endfor %}
+                    </div>
+                </aside>
+            </div>
         </section>
 
         <section class="detail-grid">
@@ -140,20 +192,13 @@
                     {% endif %}
                 </article>
 
-                <article class="info-card">
-                    <p class="eyebrow">Vị trí</p>
-                    <h2>Bản đồ</h2>
-                    <iframe
-                        title="Bản đồ phòng"
-                        loading="lazy"
-                        src="https://www.openstreetmap.org/export/embed.html?bbox={{ map_bbox.left }}%2C{{ map_bbox.bottom }}%2C{{ map_bbox.right }}%2C{{ map_bbox.top }}&layer=mapnik&marker={{ room.location.y }}%2C{{ room.location.x }}">
-                    </iframe>
-                    <p class="map-note">Vị trí dùng để tham khảo khi xem phòng. Hãy xác nhận lại địa chỉ với chủ trọ trước khi đặt cọc.</p>
-                </article>
             </aside>
         </section>
     </main>
 
+    {{ nearby_landmarks_json|json_script:"nearbyLandmarksData" }}
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="{% static 'frontend/detail-map.js' %}?v=4"></script>
     {% if not is_landlord_preview %}
         <script src="{% static 'frontend/detail.js' %}"></script>
     {% endif %}

@@ -68,7 +68,11 @@
     <div class="form-actions">
         <button type="submit">Lưu phòng</button>
         {% if room %}
-            <a class="button secondary" href="{% url 'landlord-room-preview' room.id %}" target="_blank" rel="noopener">Xem bản nháp</a>
+            {% if room.status == "active" %}
+                <a class="button secondary" href="{% url 'frontend-room-detail' room.id %}" target="_blank" rel="noopener">Xem trang công khai</a>
+            {% else %}
+                <a class="button secondary" href="{% url 'landlord-room-preview' room.id %}" target="_blank" rel="noopener">Xem trước</a>
+            {% endif %}
         {% endif %}
     </div>
 </form>

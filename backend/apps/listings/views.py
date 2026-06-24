@@ -2,7 +2,6 @@ from decimal import Decimal, InvalidOperation
 
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.measure import D
-from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
 from django.db import models
 from django.utils import timezone
 from rest_framework import permissions, serializers, status, viewsets
@@ -12,6 +11,7 @@ from rest_framework.response import Response
 from apps.interactions.models import UserEvent
 from apps.interactions.services import add_favorite, log_event, log_search, remove_favorite
 from apps.locations.models import University
+from apps.recommendations.keywords import apply_room_keyword_search
 
 from .models import Amenity, Room, RoomImage
 from .permissions import IsRoomOwnerOrAdmin
@@ -24,6 +24,7 @@ from .serializers import (
 )
 from .services import (
     approve_room,
+    mark_room_available,
     mark_room_rented,
     reject_room,
     require_reapproval_after_edit,
@@ -45,7 +46,7 @@ class RoomViewSet(viewsets.ModelViewSet):
             classes = [permissions.IsAuthenticated]
         elif self.action in {"approve", "reject"}:
             classes = [permissions.IsAdminUser]
-        elif self.action in {"update", "partial_update", "destroy", "submit", "mark_rented"}:
+        elif self.action in {"update", "partial_update", "destroy", "submit", "mark_rented", "mark_available"}:
             classes = [permissions.IsAuthenticated, IsRoomOwnerOrAdmin]
         else:
             classes = [permissions.IsAuthenticated]
@@ -115,15 +116,13 @@ class RoomViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(amenities__id=amenity_id)
             queryset = queryset.distinct()
 
+        search_intelligence = None
         query = params.get("q")
         if query:
-            vector = SearchVector("title", "description", "address", config="simple")
-            search_query = SearchQuery(query, config="simple")
-            queryset = (
-                queryset.annotate(rank=SearchRank(vector, search_query))
-                .filter(rank__gte=0.05)
-                .order_by("-rank", "-created_at")
-            )
+            result = apply_room_keyword_search(queryset, query)
+            queryset = result.queryset
+            search_intelligence = result.intent.as_dict()
+        self.search_intelligence = search_intelligence
 
         university_id = params.get("university")
         max_distance_km = params.get("max_distance_km")
@@ -168,8 +167,16 @@ class RoomViewSet(viewsets.ModelViewSet):
             filters={key: request.query_params.getlist(key) for key in request.query_params.keys()},
             result_ids=result_ids,
         )
+        if getattr(self, "search_intelligence", None):
+            response_meta = {"search_intelligence": self.search_intelligence}
+        else:
+            response_meta = {}
         if page is not None:
-            return self.get_paginated_response(serializer.data)
+            response = self.get_paginated_response(serializer.data)
+            response.data.update(response_meta)
+            return response
+        if response_meta:
+            return Response({"results": serializer.data, **response_meta})
         return Response(serializer.data)
 
     def retrieve(self, request, *args, **kwargs):
@@ -217,6 +224,12 @@ class RoomViewSet(viewsets.ModelViewSet):
         room = mark_room_rented(room=room)
         return Response(RoomReadSerializer(room, context={"request": request}).data)
 
+    @action(detail=True, methods=["post"])
+    def mark_available(self, request, pk=None):
+        room = self.get_object()
+        room = mark_room_available(room=room)
+        return Response(RoomReadSerializer(room, context={"request": request}).data)
+
     @action(detail=True, methods=["post"], permission_classes=[permissions.IsAuthenticated])
     def favorite(self, request, pk=None):
         room = self.get_object()
@@ -240,7 +253,7 @@ class RoomViewSet(viewsets.ModelViewSet):
             {
                 "landlord_name": room.landlord.user.full_name,
                 "phone": room.landlord.user.phone,
-                "message": "Thong tin lien he duoc ghi nhan cho prototype.",
+                "message": "Thông tin liên hệ đã được ghi nhận.",
             }
         )
 
@@ -277,19 +290,34 @@ class RoomImageViewSet(viewsets.ModelViewSet):
         is_landlord_owner = hasattr(user, "landlord_profile") and room.landlord_id == user.landlord_profile.id
         if serializer.validated_data.get("is_cover"):
             room.images.filter(is_cover=True).update(is_cover=False)
+
         if user.is_staff:
-            image = serializer.save(
-                uploaded_by=user,
-                source=RoomImage.Source.ADMIN,
-                status=RoomImage.ModerationStatus.APPROVED,
-            )
+            source = RoomImage.Source.ADMIN
+            image_status = RoomImage.ModerationStatus.APPROVED
         elif is_landlord_owner:
+            source = RoomImage.Source.LANDLORD
+            image_status = RoomImage.ModerationStatus.APPROVED
+        else:
+            source = RoomImage.Source.STUDENT
+            image_status = RoomImage.ModerationStatus.PENDING
+
+        if image_status == RoomImage.ModerationStatus.PENDING:
             image = serializer.save(
                 uploaded_by=user,
-                source=RoomImage.Source.LANDLORD,
-                status=RoomImage.ModerationStatus.APPROVED,
+                source=source,
+                status=image_status,
+                is_cover=False,
             )
+        else:
+            image = serializer.save(
+                uploaded_by=user,
+                source=source,
+                status=image_status,
+            )
+
+        if is_landlord_owner:
             require_reapproval_after_edit(room=image.room)
+
         approved_cover_exists = room.images.filter(
             status=RoomImage.ModerationStatus.APPROVED,
             is_cover=True,
@@ -299,13 +327,6 @@ class RoomImageViewSet(viewsets.ModelViewSet):
             if first_image:
                 first_image.is_cover = True
                 first_image.save(update_fields=("is_cover",))
-        else:
-            serializer.save(
-                uploaded_by=user,
-                source=RoomImage.Source.STUDENT,
-                status=RoomImage.ModerationStatus.PENDING,
-                is_cover=False,
-            )
 
     def perform_update(self, serializer):
         image = serializer.save()

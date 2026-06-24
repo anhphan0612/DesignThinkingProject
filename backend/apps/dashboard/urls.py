@@ -11,6 +11,7 @@ urlpatterns = [
     path("landlord/rooms/<int:pk>/edit/", views.landlord_room_edit, name="landlord-room-edit"),
     path("landlord/rooms/<int:pk>/submit/", views.landlord_room_submit, name="landlord-room-submit"),
     path("landlord/rooms/<int:pk>/mark-rented/", views.landlord_room_mark_rented, name="landlord-room-mark-rented"),
+    path("landlord/rooms/<int:pk>/mark-available/", views.landlord_room_mark_available, name="landlord-room-mark-available"),
     path("landlord/rooms/<int:pk>/images/upload/", views.landlord_room_image_upload, name="landlord-room-image-upload"),
     path("landlord/rooms/<int:pk>/images/<int:image_pk>/update/", views.landlord_room_image_update, name="landlord-room-image-update"),
     path("landlord/rooms/<int:pk>/images/<int:image_pk>/cover/", views.landlord_room_image_set_cover, name="landlord-room-image-cover"),

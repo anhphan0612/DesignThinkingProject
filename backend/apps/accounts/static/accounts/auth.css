@@ -9,6 +9,7 @@
     --soft: #e8f1ff;
     --danger: #b91c1c;
     --shadow: 0 18px 45px rgba(15, 23, 42, 0.10);
+    --profile-width: 1380px;
 }
 
 * { box-sizing: border-box; }
@@ -23,14 +24,74 @@ body {
 
 a { color: var(--primary); font-weight: 800; text-decoration: none; }
 
+.auth-topbar-shell {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+}
+
+.auth-topbar-shell .topbar {
+    max-width: 1380px;
+    width: auto;
+    margin: 0 auto;
+}
+
+.auth-topbar-shell .brand {
+    display: inline-flex;
+    background: transparent;
+    color: #fff;
+    padding: 0;
+}
+
+.auth-topbar-shell .nav-actions a {
+    border-color: rgba(255,255,255,.35);
+    color: #fff;
+}
+
+.auth-topbar-shell .nav-actions .nav-primary {
+    background: #fff;
+    color: var(--primary-dark);
+}
+
+.auth-topbar-shell .nav-actions a:hover {
+    background: rgba(255,255,255,.16);
+    color: #fff;
+}
+
 .auth-shell {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 460px;
     gap: 40px;
-    width: min(1120px, calc(100% - 36px));
+    width: min(1180px, calc(100% - 36px));
     margin: 0 auto;
     padding: 56px 0;
     align-items: center;
+}
+
+.profile-page .auth-shell {
+    grid-template-columns: minmax(0, 1fr);
+    width: min(var(--profile-width), calc(100% - 48px));
+    align-items: start;
+    padding: 28px 0 56px;
+}
+
+.profile-page .auth-copy {
+    display: none;
+}
+
+.profile-page .auth-card {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    overflow: visible;
+    width: 100%;
+}
+
+.profile-page .auth-topbar-shell .topbar {
+    max-width: 1380px;
+    width: auto;
 }
 
 .auth-copy {
@@ -188,6 +249,23 @@ button:hover, .social:hover { background: var(--primary-dark); }
     gap: 18px;
 }
 
+.preference-sections {
+    display: grid;
+    gap: 18px;
+}
+
+.preference-sections.compact {
+    gap: 14px;
+}
+
+.profile-card .preference-sections.compact {
+    grid-template-columns: 1fr;
+}
+
+.profile-card .preference-sections.compact .preference-section:first-child {
+    grid-row: auto;
+}
+
 .preference-section {
     display: grid;
     gap: 16px;
@@ -239,7 +317,7 @@ button:hover, .social:hover { background: var(--primary-dark); }
 
 .input-with-unit {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(150px, 1fr) auto;
     align-items: center;
     border: 1px solid var(--line);
     border-radius: 14px;
@@ -250,6 +328,8 @@ button:hover, .social:hover { background: var(--primary-dark); }
 .input-with-unit input {
     border: 0;
     border-radius: 0;
+    min-width: 0;
+    padding-right: 8px;
 }
 
 .input-with-unit input:focus {
@@ -257,7 +337,7 @@ button:hover, .social:hover { background: var(--primary-dark); }
 }
 
 .input-with-unit span {
-    padding: 0 12px;
+    padding: 0 10px;
     color: var(--muted);
     font-size: 12px;
     font-weight: 900;
@@ -274,20 +354,32 @@ button:hover, .social:hover { background: var(--primary-dark); }
     gap: 12px;
 }
 
-.choice-panel ul {
+.choice-panel ul,
+.choice-list ul,
+.choice-list > div {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(160px, 220px));
+    justify-content: start;
     gap: 10px;
+    width: fit-content;
+    max-width: 100%;
     margin: 0;
     padding: 0;
     list-style: none;
 }
 
-.choice-panel li label {
-    display: flex;
+.choice-list > div > div {
+    min-width: 0;
+}
+
+.choice-panel li label,
+.choice-list li label,
+.choice-list > div label {
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr);
     min-height: 44px;
     align-items: center;
-    gap: 9px;
+    gap: 10px;
     border: 1px solid var(--line);
     border-radius: 14px;
     background: #fff;
@@ -297,14 +389,20 @@ button:hover, .social:hover { background: var(--primary-dark); }
     padding: 10px 12px;
 }
 
-.choice-panel li label:has(input:checked) {
+.choice-panel li label:has(input:checked),
+.choice-list li label:has(input:checked),
+.choice-list > div label:has(input:checked) {
     border-color: rgba(23,105,224,.45);
     background: var(--soft);
     color: var(--primary-dark);
 }
 
-.choice-panel input[type="checkbox"] {
-    width: auto;
+.choice-panel input[type="checkbox"],
+.choice-list input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    padding: 0;
 }
 
 .sticky-actions {
@@ -329,7 +427,6 @@ button:hover, .social:hover { background: var(--primary-dark); }
 .profile-section-title {
     display: grid;
     gap: 4px;
-    margin-top: 12px;
 }
 
 .profile-section-title h3 {
@@ -452,6 +549,127 @@ button:hover, .social:hover { background: var(--primary-dark); }
 
 .messages p { margin: 0; }
 
+.profile-header {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 22px;
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    background: #fff;
+    box-shadow: var(--shadow);
+    padding: 24px;
+}
+
+.profile-header h2 {
+    margin-top: 6px;
+    margin-bottom: 6px;
+    font-size: clamp(32px, 5vw, 56px);
+    line-height: 1;
+}
+
+.profile-header-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.profile-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    align-items: start;
+    gap: 22px;
+    padding: 0;
+}
+
+.profile-account-card {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.profile-saved-card {
+    grid-column: auto;
+    grid-row: auto;
+}
+
+.profile-side-column {
+    grid-column: 2;
+    grid-row: 1;
+    display: grid;
+    align-content: start;
+    gap: 22px;
+}
+
+.profile-preference-card {
+    grid-column: 1 / -1;
+    grid-row: 2;
+}
+
+.profile-card {
+    display: grid;
+    gap: 18px;
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    background: #fff;
+    box-shadow: var(--shadow);
+    padding: 22px;
+}
+
+.profile-card .preference-section {
+    border-radius: 20px;
+    background: #fbfdff;
+}
+
+.profile-card .preference-sections {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+}
+
+.profile-card .preference-section:first-child {
+    grid-column: 1 / -1;
+}
+
+.profile-card .choice-list > div {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 220px));
+}
+
+.profile-card > .field-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr));
+}
+
+.profile-card .field-grid.three {
+    grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr));
+}
+
+.profile-card .input-with-unit {
+    grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.profile-card .input-with-unit input {
+    font-variant-numeric: tabular-nums;
+}
+
+.profile-sticky-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: var(--shadow);
+    padding: 14px;
+    position: static;
+}
+
+.profile-sticky-actions .secondary-action,
+.profile-sticky-actions button {
+    align-items: center;
+    min-height: 44px;
+    white-space: nowrap;
+}
+
 .profile-actions { margin-top: 20px; }
 
 .saved-room-list {
@@ -485,6 +703,9 @@ button:hover, .social:hover { background: var(--primary-dark); }
 
 @media (max-width: 900px) {
     .auth-shell { grid-template-columns: 1fr; padding: 24px 0; }
+    .profile-page .auth-shell { width: min(100% - 16px, var(--profile-width)); padding: 16px 0 32px; }
+    .auth-topbar-shell,
+    .profile-page .auth-topbar-shell { padding: 18px; }
     .auth-copy { min-height: auto; }
     .auth-copy h1 { margin-top: 60px; }
     .login-role-cards { grid-template-columns: 1fr; }
@@ -492,10 +713,66 @@ button:hover, .social:hover { background: var(--primary-dark); }
     .preference-page .auth-copy { position: static; }
     .field-grid,
     .field-grid.three,
+    .profile-form,
+    .profile-card .field-grid.three,
+    .profile-card .preference-sections,
+    .profile-card .preference-sections.compact,
+    .profile-side-column,
     .choice-panel ul,
+    .choice-list > div,
+    .choice-list ul,
     .progress-strip,
-    .sticky-actions {
+    .sticky-actions,
+    .profile-sticky-actions {
         grid-template-columns: 1fr;
     }
-}
 
+    .auth-topbar {
+        align-items: flex-start;
+        padding: 12px 18px;
+    }
+
+    .profile-header {
+        display: grid;
+        padding: 20px;
+        border-radius: 20px;
+    }
+
+    .profile-form {
+        padding: 0;
+        gap: 16px;
+    }
+
+    .profile-card {
+        padding: 16px;
+        border-radius: 20px;
+    }
+
+    .profile-card .preference-section {
+        padding: 14px;
+    }
+
+    .profile-card .preference-section:first-child {
+        grid-column: auto;
+        grid-row: auto;
+    }
+
+    .profile-card .input-with-unit {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .profile-sticky-actions {
+        grid-column: auto;
+        grid-row: auto;
+        position: static;
+        grid-template-columns: 1fr;
+    }
+
+    .profile-account-card,
+    .profile-side-column,
+    .profile-preference-card,
+    .profile-saved-card {
+        grid-column: auto;
+        grid-row: auto;
+    }
+}

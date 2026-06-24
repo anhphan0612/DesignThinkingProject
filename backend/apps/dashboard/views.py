@@ -10,12 +10,14 @@ from apps.interactions.models import ContentReport
 from apps.listings.models import Room, RoomImage
 from apps.listings.services import (
     approve_room,
+    mark_room_available,
     mark_room_rented,
     reject_room,
     require_reapproval_after_edit,
     submit_room_for_review,
 )
-from apps.locations.geocoding import GeocodingError, geocode_room_address
+from apps.locations.geocoding import GeocodingError, geocode_room_address, local_geocode_room_address
+from apps.locations.models import Landmark
 
 from .forms import LandlordRoomImageForm, LandlordRoomImageMetaForm, RejectImageForm, RejectRoomForm, RoomForm
 from .permissions import landlord_required, staff_required
@@ -77,10 +79,44 @@ def _apply_room_geocoding(room):
         room.location_label = candidate.label
         return True
 
+    fallback = _fallback_room_geocoding(room)
+    if fallback:
+        point, label = fallback
+        room.location = point
+        room.location_status = Room.LocationStatus.GEOCODED
+        room.location_query = f"{room.address}, {room.ward}" if room.ward_id else room.address
+        room.location_label = label
+        return True
+
     room.location_status = Room.LocationStatus.FAILED
     room.location_query = f"{room.address}, {room.ward}" if room.ward_id else room.address
     room.location_label = ""
     return False
+
+
+def _fallback_room_geocoding(room):
+    if not room.ward_id:
+        return None
+
+    local_candidates = local_geocode_room_address(address=room.address, ward=room.ward)
+    if local_candidates:
+        candidate = local_candidates[0]
+        return Point(float(candidate.longitude), float(candidate.latitude), srid=4326), candidate.label
+
+    landmarks = Landmark.objects.filter(is_active=True, ward=room.ward)
+    landmark = landmarks.order_by("type", "name").first()
+    if not landmark:
+        landmark = (
+            Landmark.objects.filter(is_active=True, ward__district=room.ward.district)
+            .select_related("ward__district")
+            .order_by("type", "name")
+            .first()
+        )
+    if not landmark:
+        return None
+
+    label = f"Ước lượng theo {room.ward.name}, {room.ward.district.name} gần {landmark.name}"
+    return Point(landmark.location.x, landmark.location.y, srid=4326), label
 
 
 @landlord_required
@@ -224,6 +260,18 @@ def landlord_room_mark_rented(request, pk):
     try:
         mark_room_rented(room=room)
         messages.success(request, "Đã đánh dấu phòng là đã cho thuê.")
+    except Exception as exc:
+        messages.error(request, str(exc))
+    return redirect("landlord-room-detail", pk=room.pk)
+
+
+@landlord_required
+@require_POST
+def landlord_room_mark_available(request, pk):
+    room = get_object_or_404(Room, pk=pk, landlord=request.user.landlord_profile, deleted_at__isnull=True)
+    try:
+        mark_room_available(room=room)
+        messages.success(request, "Đã mở lại phòng để hiển thị cho người tìm trọ.")
     except Exception as exc:
         messages.error(request, str(exc))
     return redirect("landlord-room-detail", pk=room.pk)

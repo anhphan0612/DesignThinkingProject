@@ -11,6 +11,7 @@ from apps.accounts.models import User
 from apps.interactions.models import Favorite
 from apps.listings.models import Room, RoomImage
 from apps.listings.validators import validate_room_image_upload
+from apps.locations.services import nearby_landmarks
 
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")
@@ -117,6 +118,18 @@ class RoomDetailView(DetailView):
         context["approved_images"] = room.images.filter(
             status=RoomImage.ModerationStatus.APPROVED
         ).select_related("uploaded_by")
+        context["nearby_landmarks"] = nearby_landmarks(room.location, limit=6)
+        context["nearby_landmarks_json"] = [
+            {
+                "name": landmark.name,
+                "type": landmark.type,
+                "type_label": landmark.get_type_display(),
+                "latitude": landmark.location.y,
+                "longitude": landmark.location.x,
+                "distance_km": round(landmark.distance.km, 2) if getattr(landmark, "distance", None) else None,
+            }
+            for landmark in context["nearby_landmarks"]
+        ]
         context["is_favorited"] = (
             self.request.user.is_authenticated
             and Favorite.objects.filter(user=self.request.user, room=room).exists()

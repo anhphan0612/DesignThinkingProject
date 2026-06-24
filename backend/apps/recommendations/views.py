@@ -16,7 +16,15 @@ class RecommendationListAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        ranked = recommended_rooms_for_student(request.user)
+        try:
+            limit = min(max(int(request.query_params.get("limit", 10)), 1), 30)
+        except ValueError:
+            limit = 10
+        ranked = recommended_rooms_for_student(
+            request.user,
+            limit=limit,
+            query=request.query_params.get("q", ""),
+        )
         payload = []
         for index, (room, score, detail) in enumerate(ranked, start=1):
             payload.append(

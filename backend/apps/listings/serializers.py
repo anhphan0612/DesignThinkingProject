@@ -6,6 +6,8 @@ from apps.accounts.models import User
 from apps.interactions.models import Favorite
 from apps.locations.geocoding import GeocodingError, geocode_room_address
 from apps.locations.models import Ward
+from apps.locations.serializers import LandmarkSerializer
+from apps.locations.services import nearby_landmarks
 
 from .models import Amenity, Room, RoomImage
 from .services import require_reapproval_after_edit
@@ -77,6 +79,7 @@ class RoomReadSerializer(serializers.ModelSerializer):
     longitude = serializers.SerializerMethodField()
     distance_km = serializers.SerializerMethodField()
     is_favorited = serializers.SerializerMethodField()
+    nearby_landmarks = serializers.SerializerMethodField()
 
     class Meta:
         model = Room
@@ -106,6 +109,7 @@ class RoomReadSerializer(serializers.ModelSerializer):
             "rejection_reason",
             "distance_km",
             "is_favorited",
+            "nearby_landmarks",
             "created_at",
         )
 
@@ -128,6 +132,12 @@ class RoomReadSerializer(serializers.ModelSerializer):
     def get_images(self, obj):
         images = obj.images.filter(status=RoomImage.ModerationStatus.APPROVED).select_related("uploaded_by")
         return RoomImageSerializer(images, many=True, context=self.context).data
+
+    def get_nearby_landmarks(self, obj):
+        landmarks = getattr(obj, "nearby_landmarks_cache", None)
+        if landmarks is None:
+            landmarks = nearby_landmarks(obj.location, limit=5)
+        return LandmarkSerializer(landmarks, many=True).data
 
 
 class RoomWriteSerializer(serializers.ModelSerializer):

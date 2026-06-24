@@ -1,43 +1,54 @@
 # Rentify
 
-Backend Django cho Rentify: ung dung giup sinh vien tim phong tro va tim nguoi o ghep phu hop quanh truong.
+Rentify là ứng dụng hỗ trợ sinh viên tìm phòng trọ và tìm người ở ghép quanh trường đại học. Dự án hiện dùng Django/DRF cho backend, server-rendered templates cho các flow web chính và phần frontend public đặt ở thư mục `frontend/` cùng cấp với `backend/`.
 
-## Cau truc
+## Trạng Thái Hiện Tại
+
+Sản phẩm đang ở mức prototype nâng cao, có đủ flow chính để chạy thử end-to-end trên local:
+
+- Người dùng đăng ký/đăng nhập theo vai trò `student`, `landlord`, `admin`.
+- Sinh viên sau đăng ký có flow nhập nguyện vọng, có thể bỏ qua và đi thẳng tới trang tìm phòng.
+- Trang tìm phòng có bộ lọc, gợi ý cá nhân hóa, lưu phòng yêu thích, thông tin liên hệ và bản đồ tương tác.
+- Chủ trọ có dashboard riêng, tạo/sửa/xem trước/gửi duyệt phòng, upload ảnh local và quản lý ảnh bìa.
+- Admin có dashboard kiểm duyệt phòng, ảnh và báo cáo nội dung.
+- Dữ liệu địa lý dùng GeoDjango/PostGIS: quận, phường, trường đại học, landmark và tọa độ phòng.
+- Recommendation MVP dựa trên hồ sơ sinh viên, ngân sách, trường, khu vực, khoảng cách, tiện ích, landmark và từ khóa tìm kiếm.
+- Tìm người ở ghép có hồ sơ thói quen sống, bài đăng, match cơ bản và API quản lý bài của sinh viên.
+
+Ứng dụng không xử lý xác minh pháp lý, hợp đồng thuê, đặt cọc, thanh toán hoặc pass phòng. Định hướng hiện tại là nền tảng hỗ trợ tìm trọ, tìm người ở ghép và kết nối với chủ trọ.
+
+## Cấu Trúc
 
 ```text
-backend/   Django API, auth, dashboard, database models va server-side views
-frontend/  Template va static asset cua giao dien public
+backend/   Django project, apps, API, templates auth/dashboard, media local
+frontend/  Templates và static assets cho giao diện public
+media/     Dữ liệu media local ở workspace, dùng khi chạy thử
 ```
 
-Backend van render cac template public qua `apps.frontend.views`, nhung file HTML/CSS/JS cua giao dien public duoc dat ngoai thu muc `backend` de de quan ly rieng.
+Backend render các trang public qua `apps.frontend.views`, nhưng template/static public nằm ngoài `backend` để sau này dễ tách hoặc thay frontend framework nếu cần.
 
-## Dinh huong san pham
+## Yêu Cầu
 
-Rentify tap trung vao 2 bai toan:
+- Python 3.12+ hoặc bản Python đang dùng trong virtualenv của dự án.
+- PostgreSQL 15+ có PostGIS.
+- GDAL và GEOS cho GeoDjango. Trên Windows có thể cài qua OSGeo4W rồi cấu hình `GDAL_LIBRARY_PATH` và `GEOS_LIBRARY_PATH` nếu Django không tự nhận.
+- Docker Desktop nếu muốn chạy database local bằng `compose.yaml`.
 
-- Tim phong tro do chu tro dang va duoc kiem duyet.
-- Tim nguoi o ghep phu hop theo truong, ngan sach, khu vuc, gioi tinh va thoi quen song.
+Các thư viện Python chính nằm trong `requirements.txt`:
 
-Rentify khong xu ly bai toan pass phong/chuyen nhuong coc/hop dong thue trong pham vi hien tai. Pass phong co lien quan den thoa thuan 3 ben giua nguoi dang thue, nguoi nhan phong va chu tro, nen se khong dua vao MVP nay.
+```text
+Django 5.2
+Django REST Framework
+django-allauth
+psycopg
+Pillow
+```
 
-## Pham vi hien tai
+Map frontend dùng Leaflet + OpenStreetMap qua CDN. Nếu CDN không tải được, UI có fallback map nội bộ để không vỡ trang.
 
-- Custom user dang nhap bang email, vai tro `student`, `landlord`, `admin`.
-- Ho so sinh vien va chu tro.
-- Du lieu dia ly dung GeoDjango/PostGIS: quan, phuong, truong dai hoc, landmark.
-- Phong tro, tien ich, anh phong va quy trinh duyet bai.
-- API tim kiem cong khai theo gia, dien tich, tien ich, dia ban, van ban va khoang cach den truong.
-- Token authentication cho API.
-- Favorite, event tracking, search log va recommendation MVP cho sinh vien da dang nhap.
-- Domain model, API, trang public va seed demo cho bai dang ghep tro trong app `roommates`.
+## Cài Đặt Local
 
-## Yeu cau
-
-- Python 3.12+
-- PostgreSQL 15+ voi PostGIS, hoac Docker de khoi dong database local
-- GDAL va GEOS native libraries de GeoDjango khoi dong. Tren Windows co the cai qua OSGeo4W va cau hinh `GDAL_LIBRARY_PATH` neu Django khong tu nhan dien duoc.
-
-## Cai dat local
+Chạy trong PowerShell:
 
 ```powershell
 cd backend
@@ -50,106 +61,216 @@ python manage.py migrate
 python manage.py seed_districts
 python manage.py seed_amenities
 python manage.py seed_demo_data
+python manage.py seed_hanoi_demo_data
 python manage.py configure_oauth
 python manage.py createsuperuser
 python manage.py runserver
 ```
 
-Bien moi truong trong `.env` can duoc nap vao terminal hoac cau hinh bang cong cu chay ung dung. Du an doc truc tiep cac bien `DJANGO_*` va `POSTGRES_*`.
-
-## Kiem tra va test
-
-Chay bang virtualenv Python 3.12 cua du an:
-
-```powershell
-.\.venv\Scripts\python.exe manage.py check
-.\.venv\Scripts\python.exe manage.py test
-```
-
-Django can tao database test PostGIS, mac dinh la `test_student_housing` hoac gia tri `POSTGRES_TEST_DB`.
-User PostgreSQL trong `POSTGRES_USER` can co quyen `CREATEDB`, hoac database test can duoc tao san va chay test voi `--keepdb`.
-
-## API ban dau
-
-Prototype frontend co san tai:
+Mở ứng dụng tại:
 
 ```text
 http://127.0.0.1:8000/
+http://127.0.0.1:8000/rooms/
 http://127.0.0.1:8000/roommates/
+http://127.0.0.1:8000/landlord/
 ```
 
-Dashboard web:
+Nếu chỉ muốn chạy thử nhanh sau khi đã setup database:
+
+```powershell
+cd backend
+.\.venv\Scripts\Activate.ps1
+python manage.py migrate
+python manage.py seed_hanoi_demo_data
+python manage.py runserver 127.0.0.1:8000
+```
+
+## Dữ Liệu Demo Hà Nội
+
+Lệnh `seed_hanoi_demo_data` tạo dữ liệu đủ lớn để kiểm thử map, landmark và recommendation:
+
+- 6 quận, 10 phường.
+- 8 trường đại học tại Hà Nội.
+- Landmark trọng tâm: công viên, trường đại học, trạm xe bus, bệnh viện và trung tâm thương mại lớn.
+- 10 phòng trọ demo có tọa độ, tiện ích, giá, diện tích và ảnh.
+- 3 hồ sơ sinh viên demo phục vụ gợi ý cá nhân hóa.
+
+Ảnh phòng demo được lấy tạm từ:
 
 ```text
+C:\Users\demod\Downloads\BGround
+```
+
+Khi chạy seed, ảnh `.jpg` trong thư mục này sẽ được copy vào `backend/media/rooms/demo-hanoi-*.jpg` nếu file đích chưa tồn tại.
+
+Tài khoản demo do seed tạo:
+
+```text
+hanoi.landlord@example.com / demo-password
+hanoi.student.hust@example.com / demo-password
+hanoi.student.vnu@example.com / demo-password
+hanoi.student.hanu@example.com / demo-password
+```
+
+## Flow Chính
+
+### Sinh viên
+
+1. Đăng ký tài khoản sinh viên.
+2. Nhập nguyện vọng tìm phòng hoặc bỏ qua.
+3. Vào trang tìm phòng, dùng bộ lọc và từ khóa.
+4. Xem gợi ý cá nhân hóa, lý do gợi ý, landmark gần phòng và bản đồ.
+5. Lưu phòng yêu thích hoặc xem thông tin liên hệ chủ trọ.
+6. Dùng trang ghép trọ để tìm bài đăng phù hợp theo trường, ngân sách, khu vực và thói quen sống.
+
+### Chủ trọ
+
+1. Đăng ký hoặc đăng nhập bằng vai trò chủ trọ.
+2. Vào dashboard riêng qua logo/topbar.
+3. Tạo phòng với địa chỉ dạng text; hệ thống cố gắng geocode sang tọa độ.
+4. Upload ảnh local, chọn ảnh bìa và xem trước trang công khai.
+5. Gửi phòng cho admin duyệt.
+6. Phòng đang công khai sẽ quay lại trạng thái cần duyệt nếu chủ trọ sửa nội dung quan trọng.
+
+Chủ trọ không thấy các chức năng không cần thiết như tìm phòng hoặc ghép phòng trong topbar khi đã đăng nhập.
+
+### Admin
+
+1. Xem danh sách phòng, ảnh và báo cáo cần xử lý.
+2. Duyệt hoặc từ chối phòng.
+3. Duyệt hoặc từ chối ảnh phòng.
+4. Xử lý báo cáo nội dung.
+
+## Business Rules Đáng Chú Ý
+
+- Phòng chỉ được gửi duyệt khi có vị trí đã map, giá/diện tích/số người hợp lệ và ít nhất một ảnh đã duyệt.
+- Ảnh phòng local chỉ nhận JPG/PNG/WebP, giới hạn bởi `RENTIFY_MAX_ROOM_IMAGE_SIZE_MB` và `RENTIFY_ROOM_IMAGE_LIMIT`.
+- Khi chủ trọ sửa phòng đang active, phòng sẽ cần được duyệt lại.
+- Recommendation không chỉ dựa vào từ khóa. Nếu người dùng nhập từ khóa lạ, hệ thống vẫn dùng hồ sơ, khoảng cách, giá, khu vực và tiện ích để fallback.
+- Vĩ độ/kinh độ không còn là thông tin chính trên UI public; bản đồ và địa chỉ/landmark là bề mặt hiển thị quan trọng hơn.
+
+## Kiểm Tra Và Test
+
+Chạy kiểm tra hệ thống:
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe manage.py check
+.\.venv\Scripts\python.exe manage.py makemigrations --check --dry-run
+.\.venv\Scripts\python.exe manage.py test --keepdb
+```
+
+Nếu chạy test lần đầu, PostgreSQL user trong `.env` cần có quyền tạo test database PostGIS, hoặc cần tạo sẵn database test theo `POSTGRES_TEST_DB`.
+
+Kiểm tra nhanh frontend local:
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8000
+```
+
+Sau đó mở:
+
+```text
+http://127.0.0.1:8000/rooms/
+http://127.0.0.1:8000/roommates/
+http://127.0.0.1:8000/auth/login/
+http://127.0.0.1:8000/auth/profile/
 http://127.0.0.1:8000/dashboard/landlord/
 http://127.0.0.1:8000/dashboard/moderation/
 ```
 
-| Endpoint | Chuc nang |
-|---|---|
-| `POST /api/auth/register/` | Dang ky sinh vien hoac chu tro |
-| `POST /api/auth/login/` | Lay authentication token |
-| `GET /auth/login/` | Trang dang nhap web |
-| `GET /auth/register/` | Trang dang ky web |
-| `GET /auth/profile/` | Ho so web |
-| `GET/POST /auth/password/reset/` | Gui email dat lai mat khau |
-| `GET/POST /auth/password/change/` | Doi mat khau khi da dang nhap |
-| `GET /dashboard/landlord/` | Dashboard chu tro |
-| `GET/POST /dashboard/landlord/verification/` | Chu tro gui ho so xac minh |
-| `GET /dashboard/moderation/` | Dashboard admin kiem duyet |
-| `GET /accounts/google/login/` | OAuth Google qua django-allauth |
-| `GET /accounts/facebook/login/` | OAuth Facebook qua django-allauth |
-| `GET/PATCH /api/auth/me/` | Xem/sua tai khoan dang nhap |
-| `GET/PATCH /api/auth/student-preferences/` | Nhu cau ngan sach/truong cua sinh vien |
-| `GET /api/districts/`, `/api/wards/`, `/api/universities/` | Du lieu tham chieu |
-| `GET /api/rooms/` | Danh sach phong active va bo loc |
-| `POST /api/rooms/{id}/favorite/` | Luu phong yeu thich |
-| `DELETE /api/rooms/{id}/unfavorite/` | Bo luu phong yeu thich |
-| `POST /api/rooms/{id}/contact/` | Ghi nhan click lien he va tra thong tin chu tro |
-| `GET /api/favorites/` | Danh sach phong yeu thich cua user |
-| `POST /api/events/` | Ghi event hanh vi |
-| `POST /api/search-logs/` | Ghi log tim kiem |
-| `GET /api/recommendations/` | Goi y phong MVP cho sinh vien da dang nhap |
-| `GET /api/lifestyle-tags/` | Danh sach thoi quen song dung cho ho so va ghep tro |
-| `GET /api/roommate-posts/` | Danh sach bai ghep tro active va bo loc |
-| `POST /api/roommate-posts/` | Sinh vien tao bai ghep tro active |
-| `GET /api/roommate-posts/mine/` | Sinh vien xem bai ghep tro cua minh |
-| `GET /api/roommate-posts/matches/` | Goi y bai ghep tro theo ho so sinh vien |
-| `POST /api/roommate-posts/{id}/close/` | Dong bai ghep tro cua minh |
-| `POST /api/rooms/` | Chu tro da xac minh tao phong nhap |
-| `GET /api/rooms/mine/` | Chu tro xem cac phong cua minh |
-| `POST /api/rooms/{id}/submit/` | Gui phong cho admin duyet |
-| `POST /api/rooms/{id}/approve/` | Admin phe duyet phong |
-| `POST /api/rooms/{id}/reject/` | Admin tu choi phong |
+Các file JavaScript public có thể kiểm tra syntax bằng Node:
 
-Vi du bo loc:
-
-```text
-GET /api/rooms/?min_price=1500000&max_price=3500000&amenity=1&university=1&max_distance_km=3
+```powershell
+node --check ..\frontend\static\frontend\app.js
+node --check ..\frontend\static\frontend\detail-map.js
+node --check ..\frontend\static\frontend\roommates.js
 ```
 
-Phong dang cong khai se quay lai trang thai cho duyet khi chu tro sua noi dung, gia, toa do hoac tien ich.
+## API Chính
 
-## Cau hinh san pham
+| Endpoint | Chức năng |
+|---|---|
+| `POST /api/auth/register/` | Đăng ký sinh viên hoặc chủ trọ |
+| `POST /api/auth/login/` | Lấy authentication token |
+| `GET/PATCH /api/auth/me/` | Xem/sửa tài khoản đang đăng nhập |
+| `GET/PATCH /api/auth/student-preferences/` | Xem/sửa nguyện vọng sinh viên |
+| `GET /api/districts/` | Danh sách quận |
+| `GET /api/wards/` | Danh sách phường |
+| `GET /api/universities/` | Danh sách trường đại học |
+| `GET /api/landmarks/` | Landmark Hà Nội phục vụ map/recommendation |
+| `GET /api/amenities/` | Tiện ích phòng |
+| `GET /api/rooms/` | Danh sách phòng active và bộ lọc |
+| `POST /api/rooms/` | Chủ trọ tạo phòng |
+| `GET /api/rooms/mine/` | Chủ trọ xem phòng của mình |
+| `POST /api/rooms/{id}/submit/` | Chủ trọ gửi phòng để duyệt |
+| `POST /api/rooms/{id}/approve/` | Admin duyệt phòng |
+| `POST /api/rooms/{id}/reject/` | Admin từ chối phòng |
+| `POST /api/rooms/{id}/favorite/` | Lưu phòng yêu thích |
+| `DELETE /api/rooms/{id}/unfavorite/` | Bỏ lưu phòng yêu thích |
+| `GET /api/favorites/` | Danh sách phòng yêu thích |
+| `POST /api/rooms/{id}/contact/` | Ghi nhận click liên hệ và trả thông tin chủ trọ |
+| `GET /api/recommendations/` | Gợi ý phòng cho sinh viên đã đăng nhập |
+| `GET /api/lifestyle-tags/` | Thói quen sống |
+| `GET /api/roommate-posts/` | Danh sách bài ghép trọ active |
+| `POST /api/roommate-posts/` | Sinh viên tạo bài ghép trọ |
+| `GET /api/roommate-posts/mine/` | Sinh viên xem bài ghép trọ của mình |
+| `GET /api/roommate-posts/matches/` | Gợi ý bài ghép trọ phù hợp |
+| `POST /api/roommate-posts/{id}/close/` | Đóng bài ghép trọ |
+| `POST /api/events/` | Ghi event hành vi |
+| `POST /api/search-logs/` | Ghi log tìm kiếm |
+| `POST /api/reports/` | Báo cáo nội dung |
 
-- Email reset mat khau dung cac bien `DJANGO_EMAIL_*`; local mac dinh in email ra console.
-- API dang ky/dang nhap co throttle qua `DRF_AUTH_REGISTER_THROTTLE_RATE` va `DRF_AUTH_LOGIN_THROTTLE_RATE`.
-- Upload anh phong mac dinh chi nhan JPG/PNG/WebP, toi da `RENTIFY_MAX_ROOM_IMAGE_SIZE_MB` MB va `RENTIFY_ROOM_IMAGE_LIMIT` anh moi phong.
+Ví dụ lọc phòng:
 
-## Buoc tiep theo
+```text
+GET /api/rooms/?min_price=1500000&max_price=3500000&amenity=1&university=1&max_distance_km=3&q=gan bach khoa
+```
 
-- Hoan thien moderation cho bai ghep tro neu can dua vao quy trinh duyet nhu phong tro.
-- Bo sung trang quan ly bai ghep tro cua sinh vien thay vi chi dung API `mine`.
-- Them luong nhan tin/bao cao bai dang khong phu hop giua sinh vien.
-- Tang test coverage cho dashboard, frontend view va cac bo loc nang cao.
+Ví dụ lấy gợi ý có xét từ khóa:
+
+```text
+GET /api/recommendations/?q=yen tinh gan truong&limit=10
+```
+
+## Web Routes Chính
+
+| Route | Chức năng |
+|---|---|
+| `/` | Trang giới thiệu cho guest |
+| `/rooms/` | Tìm phòng |
+| `/rooms/<id>/` | Chi tiết phòng |
+| `/roommates/` | Tìm người ở ghép |
+| `/landlord/` | Trang giới thiệu cho chủ trọ chưa đăng nhập |
+| `/auth/login/` | Đăng nhập |
+| `/auth/register/` | Đăng ký |
+| `/auth/preferences/` | Onboarding nhập nguyện vọng |
+| `/auth/profile/` | Hồ sơ người dùng |
+| `/dashboard/landlord/` | Dashboard chủ trọ |
+| `/dashboard/moderation/` | Dashboard admin |
+
+## Biến Môi Trường
+
+Các biến chính nằm trong `.env.example`.
+
+- `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS`
+- `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_TEST_DB`
+- `GDAL_LIBRARY_PATH`, `GEOS_LIBRARY_PATH` nếu cần trên Windows
+- `DJANGO_EMAIL_*` cho email reset mật khẩu
+- `RENTIFY_MAX_ROOM_IMAGE_SIZE_MB`, `RENTIFY_ROOM_IMAGE_LIMIT`, `RENTIFY_ALLOWED_ROOM_IMAGE_TYPES`
+- `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `FACEBOOK_OAUTH_CLIENT_ID`, `FACEBOOK_OAUTH_CLIENT_SECRET`
+
+Local mặc định dùng email backend console.
 
 ## OAuth Google/Facebook
 
-Dang nhap Google/Facebook dung `django-allauth`. Can tao OAuth app tren Google/Facebook va them `Social application` trong Django admin:
+Đăng nhập Google/Facebook dùng `django-allauth`. Cần tạo OAuth app trên provider và thêm `Social application` trong Django admin:
 
-- Provider: `Google` hoac `Facebook`
-- Client id / Secret key: lay tu provider
-- Sites: chon site local `127.0.0.1:8000` hoac domain production
+- Provider: `Google` hoặc `Facebook`
+- Client id / Secret key: lấy từ provider
+- Sites: chọn site local `127.0.0.1:8000` hoặc domain production
 
 Callback local:
 
@@ -158,7 +279,7 @@ http://127.0.0.1:8000/accounts/google/login/callback/
 http://127.0.0.1:8000/accounts/facebook/login/callback/
 ```
 
-Co the cau hinh bang bien moi truong thay vi nhap tay trong admin:
+Có thể cấu hình bằng biến môi trường rồi chạy:
 
 ```powershell
 $env:GOOGLE_OAUTH_CLIENT_ID = "..."
@@ -167,3 +288,19 @@ $env:FACEBOOK_OAUTH_CLIENT_ID = "..."
 $env:FACEBOOK_OAUTH_CLIENT_SECRET = "..."
 python manage.py configure_oauth
 ```
+
+## Giới Hạn Hiện Tại
+
+- Ảnh phòng đang lưu local, chưa tích hợp cloud storage.
+- Geocoding text sang tọa độ đang phục vụ demo/local, chưa thay bằng provider bản đồ production.
+- Frontend hiện vẫn là template + JavaScript thuần; đủ để prototype nhưng nếu product mở rộng mạnh có thể cân nhắc React/Vue/Svelte hoặc htmx tùy định hướng.
+- Chưa có chat real-time; thông tin liên hệ đang là flow kết nối đơn giản.
+- Chưa có test tự động trực quan bằng browser/screenshot cho toàn bộ UI.
+
+## Sprint Tiếp Theo Gợi Ý
+
+- QA giao diện thực tế trên desktop/mobile bằng browser và screenshot.
+- Hoàn thiện hardening nghiệp vụ cho dashboard chủ trọ, upload ảnh và trạng thái duyệt.
+- Bổ sung cloud storage cho ảnh phòng.
+- Chuẩn hóa map/geocoding production.
+- Mở rộng dữ liệu Hà Nội và đánh giá chất lượng recommendation bằng bộ test thực tế.

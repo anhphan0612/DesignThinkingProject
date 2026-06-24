@@ -14,7 +14,7 @@ from apps.frontend.views import (
 )
 from apps.interactions.views import ContentReportViewSet, FavoriteViewSet, SearchLogViewSet, UserEventViewSet
 from apps.listings.views import AmenityViewSet, RoomImageViewSet, RoomViewSet
-from apps.locations.views import DistrictViewSet, UniversityViewSet, WardViewSet
+from apps.locations.views import DistrictViewSet, LandmarkViewSet, UniversityViewSet, WardViewSet
 from apps.roommates.views import LifestyleTagViewSet, RoommatePostViewSet
 
 
@@ -22,6 +22,7 @@ router = DefaultRouter()
 router.register("districts", DistrictViewSet, basename="district")
 router.register("wards", WardViewSet, basename="ward")
 router.register("universities", UniversityViewSet, basename="university")
+router.register("landmarks", LandmarkViewSet, basename="landmark")
 router.register("amenities", AmenityViewSet, basename="amenity")
 router.register("rooms", RoomViewSet, basename="room")
 router.register("room-images", RoomImageViewSet, basename="room-image")

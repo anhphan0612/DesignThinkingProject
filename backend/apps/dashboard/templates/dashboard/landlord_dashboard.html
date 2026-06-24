@@ -4,73 +4,125 @@
 {% block title %}Chủ trọ{% endblock %}
 
 {% block content %}
-<section class="page-title">
+<section class="page-title landlord-dashboard-title">
     <div>
         <p class="eyebrow">Dashboard chủ trọ</p>
         <h1>Quản lý phòng của bạn</h1>
         <p>{{ profile.business_name|default:"Chủ trọ cá nhân" }}</p>
     </div>
     <div class="actions">
-        <a class="button" href="{% url 'landlord-room-create' %}">Tạo phòng nháp</a>
+        <a class="button" href="{% url 'landlord-room-create' %}">Tạo phòng mới</a>
     </div>
 </section>
 
-<section class="grid-list">
+<section class="room-card-grid" aria-label="Danh sách phòng">
     {% for card in room_cards %}
         {% with room=card.room %}
-            <article class="card room-card">
-                <div class="card-head">
-                    <h2>{{ room.title }}</h2>
-                    <span class="status {{ room.status }}">{{ room.get_status_display }}</span>
+            <article class="card room-card room-card-{{ room.status }}">
+                <div class="room-card-main">
+                    <div class="room-card-head">
+                        <div>
+                            <p class="eyebrow">Phòng #{{ room.id }}</p>
+                            <h2>{{ room.title }}</h2>
+                        </div>
+                        <span class="status {{ room.status }}">{{ room.get_status_display }}</span>
+                    </div>
+
+                    <p class="room-address">{{ room.address }}</p>
+
+                    <div class="room-metrics">
+                        <div>
+                            <span>Giá thuê</span>
+                            <strong>{{ room.price|floatformat:0|intcomma }} VND/tháng</strong>
+                        </div>
+                        <div>
+                            <span>Diện tích</span>
+                            <strong>{{ room.area|floatformat:1 }} m²</strong>
+                        </div>
+                        <div>
+                            <span>Bản đồ</span>
+                            <strong>{% if room.location_status == "geocoded" %}Đã ghim{% else %}Cần kiểm tra{% endif %}</strong>
+                        </div>
+                    </div>
+
+                    {% if room.rejection_reason %}
+                        <p class="danger room-alert">Lý do từ chối: {{ room.rejection_reason }}</p>
+                    {% elif room.location_status == "failed" %}
+                        <p class="danger room-alert">Chưa ghim được vị trí bản đồ. Hãy kiểm tra lại địa chỉ.</p>
+                    {% elif room.status == "pending" %}
+                        <p class="muted room-alert">Phòng đang chờ admin duyệt. Bạn vẫn có thể rà lại nội dung trước khi được công khai.</p>
+                    {% elif room.status == "active" %}
+                        <p class="muted room-alert">Phòng đang hiển thị công khai cho người tìm trọ.</p>
+                    {% elif room.status == "rented" %}
+                        <p class="muted room-alert">Phòng đã được đánh dấu là đã cho thuê.</p>
+                    {% endif %}
                 </div>
-                <p class="muted">{{ room.address }}</p>
-                {% if room.location_status == "failed" %}
-                    <p class="danger">Chưa ghim được vị trí bản đồ. Hãy kiểm tra lại địa chỉ.</p>
-                {% endif %}
-                <p><strong>{{ room.price|floatformat:0|intcomma }} VND/tháng</strong> - {{ room.area|floatformat:1 }} m²</p>
-                {% if room.rejection_reason %}
-                    <p class="danger">Lý do từ chối: {{ room.rejection_reason }}</p>
-                {% endif %}
 
-                {% if room.status == "draft" or room.status == "rejected" %}
-                    <ul class="mini-checklist">
-                        {% for item in card.checklist %}
-                            <li class="{% if item.done %}done{% endif %}">
-                                {% if item.done %}✓{% else %}!{% endif %} {{ item.label }}
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% elif room.status == "pending" %}
-                    <p class="muted">Đang chờ admin duyệt. Có thể xem bản nháp để kiểm tra nội dung.</p>
-                {% elif room.status == "active" %}
-                    <p class="muted">Đang hiển thị công khai cho người tìm trọ.</p>
-                {% endif %}
-
-                <div class="actions">
-                    <a href="{% url 'landlord-room-detail' room.id %}">Quản lý</a>
-                    <a href="{% url 'landlord-room-edit' room.id %}">Sửa</a>
-                    {% if room.status == "active" %}
-                        <a href="{% url 'frontend-room-detail' room.id %}" target="_blank" rel="noopener">Xem trang công khai</a>
-                    {% else %}
-                        <a href="{% url 'landlord-room-preview' room.id %}" target="_blank" rel="noopener">Xem bản nháp</a>
-                    {% endif %}
+                <div class="room-card-side">
                     {% if room.status == "draft" or room.status == "rejected" %}
-                        <form method="post" action="{% url 'landlord-room-submit' room.id %}">
-                            {% csrf_token %}
-                            <button type="submit" {% if not card.can_submit %}disabled{% endif %}>Gửi duyệt</button>
-                        </form>
+                        <div class="room-readiness">
+                            <span>{{ card.checklist|length }} mục cần kiểm tra</span>
+                            <ul class="mini-checklist">
+                                {% for item in card.checklist %}
+                                    <li class="{% if item.done %}done{% endif %}">
+                                        <span>{% if item.done %}✓{% else %}!{% endif %}</span>
+                                        {{ item.label }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% else %}
+                        <div class="room-readiness published">
+                            <span>Trạng thái</span>
+                            <strong>
+                                {% if room.status == "active" %}
+                                    Đang công khai
+                                {% elif room.status == "pending" %}
+                                    Chờ duyệt
+                                {% elif room.status == "rented" %}
+                                    Đã cho thuê
+                                {% else %}
+                                    {{ room.get_status_display }}
+                                {% endif %}
+                            </strong>
+                        </div>
                     {% endif %}
-                    {% if room.status == "active" %}
-                        <form method="post" action="{% url 'landlord-room-mark-rented' room.id %}">
-                            {% csrf_token %}
-                            <button type="submit">Đã cho thuê</button>
-                        </form>
-                    {% endif %}
+
+                    <div class="room-card-actions">
+                        <a class="button secondary" href="{% url 'landlord-room-detail' room.id %}">Quản lý</a>
+                        <a class="button secondary" href="{% url 'landlord-room-edit' room.id %}">Sửa</a>
+                        {% if room.status == "active" %}
+                            <a class="button secondary" href="{% url 'frontend-room-detail' room.id %}" target="_blank" rel="noopener">Xem công khai</a>
+                        {% else %}
+                            <a class="button secondary" href="{% url 'landlord-room-preview' room.id %}" target="_blank" rel="noopener">Xem trước</a>
+                        {% endif %}
+                        {% if room.status == "draft" or room.status == "rejected" %}
+                            <form method="post" action="{% url 'landlord-room-submit' room.id %}">
+                                {% csrf_token %}
+                                <button type="submit" {% if not card.can_submit %}disabled{% endif %}>Gửi duyệt</button>
+                            </form>
+                        {% endif %}
+                        {% if room.status == "active" %}
+                            <form method="post" action="{% url 'landlord-room-mark-rented' room.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="secondary-button">Đã cho thuê</button>
+                            </form>
+                        {% elif room.status == "rented" %}
+                            <form method="post" action="{% url 'landlord-room-mark-available' room.id %}">
+                                {% csrf_token %}
+                                <button type="submit">Mở lại cho thuê</button>
+                            </form>
+                        {% endif %}
+                    </div>
                 </div>
             </article>
         {% endwith %}
     {% empty %}
-        <article class="empty">Bạn chưa có phòng nào. Hãy tạo phòng nháp đầu tiên.</article>
+        <article class="empty dashboard-empty">
+            <strong>Chưa có phòng nào</strong>
+            <span>Tạo phòng đầu tiên để bắt đầu kiểm duyệt và hiển thị cho người tìm trọ.</span>
+            <a class="button" href="{% url 'landlord-room-create' %}">Tạo phòng mới</a>
+        </article>
     {% endfor %}
 </section>
 {% endblock %}

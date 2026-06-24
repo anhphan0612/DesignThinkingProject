@@ -92,14 +92,18 @@ function textNode(tagName, text, className) {
 }
 
 function money(value) {
-    if (!value) {
+    if (value === null || value === undefined || value === "") {
+        return "Chưa cập nhật";
+    }
+    const amount = Number(value);
+    if (!Number.isFinite(amount)) {
         return "Chưa cập nhật";
     }
     return new Intl.NumberFormat("vi-VN", {
         style: "currency",
         currency: "VND",
         maximumFractionDigits: 0,
-    }).format(Number(value));
+    }).format(amount);
 }
 
 function showRoommateStatus(message, isError = false) {
@@ -191,6 +195,10 @@ function renderEmptyRoommates() {
 function roommateCard(post) {
     const card = document.createElement("article");
     card.className = "room-card roommate-card";
+    card.tabIndex = 0;
+    const roomUrl = post.room?.id ? `/rooms/${post.room.id}/` : "";
+    card.setAttribute("role", roomUrl ? "link" : "button");
+    card.setAttribute("aria-label", roomUrl ? `Xem phòng của bài ${post.title}` : `Xem thông tin bài ${post.title}`);
 
     const badge = document.createElement("div");
     badge.className = "thumb roommate-badge";
@@ -202,14 +210,49 @@ function roommateCard(post) {
     meta.className = "meta";
     meta.append(
         textNode("span", post.university_name || "Chưa chọn trường"),
-        textNode("span", post.district_name || post.preferred_districts.map((item) => item.name).join(", ") || "Chưa chọn khu vực"),
+        textNode("span", post.district_name || (post.preferred_districts || []).map((item) => item.name).join(", ") || "Chưa chọn khu vực"),
         textNode("span", `${post.available_slots} chỗ trống`),
         textNode("span", post.status_label),
     );
 
     const tags = document.createElement("div");
     tags.className = "tags";
-    post.lifestyle_tags.slice(0, 4).forEach((tag) => tags.append(textNode("span", tag.name, "tag")));
+    (post.lifestyle_tags || []).slice(0, 4).forEach((tag) => tags.append(textNode("span", tag.name, "tag")));
+
+    const details = document.createElement("div");
+    details.className = "roommate-inline-detail";
+    details.hidden = Boolean(roomUrl);
+    details.append(
+        textNode("strong", post.posted_by_name || "Người đăng"),
+        textNode("span", post.contact_phone ? `Liên hệ: ${post.contact_phone}` : "Người đăng chưa công khai số điện thoại."),
+        textNode("span", post.address || post.ward_name || "Chưa cập nhật địa chỉ cụ thể."),
+    );
+
+    const cardActions = document.createElement("div");
+    cardActions.className = "card-actions-row";
+    if (roomUrl) {
+        const roomLink = document.createElement("a");
+        roomLink.className = "card-link";
+        roomLink.href = roomUrl;
+        roomLink.textContent = "Xem phòng";
+        roomLink.addEventListener("click", (event) => event.stopPropagation());
+        cardActions.append(roomLink);
+    } else {
+        const searchLink = document.createElement("a");
+        searchLink.className = "card-link";
+        searchLink.href = `/rooms/?q=${encodeURIComponent(post.address || post.ward_name || post.title)}`;
+        searchLink.textContent = post.type === "has_room" ? "Tìm phòng liên quan" : "Tìm phòng phù hợp";
+        searchLink.addEventListener("click", (event) => event.stopPropagation());
+        const detailButton = document.createElement("button");
+        detailButton.type = "button";
+        detailButton.className = "secondary";
+        detailButton.textContent = "Ẩn/hiện liên hệ";
+        detailButton.addEventListener("click", (event) => {
+            event.stopPropagation();
+            details.hidden = !details.hidden;
+        });
+        cardActions.append(searchLink, detailButton);
+    }
 
     content.append(
         textNode("h3", post.title),
@@ -217,7 +260,8 @@ function roommateCard(post) {
         meta,
         textNode("p", post.description || post.address || "Người đăng chưa bổ sung mô tả.", "muted"),
         tags,
-        textNode("span", post.contact_phone ? `Liên hệ: ${post.contact_phone}` : "Liên hệ sau khi trao đổi", "card-link"),
+        details,
+        cardActions,
     );
 
     if (roommateState.viewMode === "mine") {
@@ -227,6 +271,23 @@ function roommateCard(post) {
     }
 
     card.append(badge, content);
+    card.addEventListener("click", () => {
+        if (roomUrl) {
+            window.location.href = roomUrl;
+            return;
+        }
+        details.hidden = false;
+    });
+    card.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            if (roomUrl) {
+                window.location.href = roomUrl;
+                return;
+            }
+            details.hidden = false;
+        }
+    });
     return card;
 }
 
@@ -237,7 +298,8 @@ function reportAction(post) {
     report.type = "button";
     report.className = "secondary";
     report.textContent = "Báo cáo";
-    report.addEventListener("click", async () => {
+    report.addEventListener("click", async (event) => {
+        event.stopPropagation();
         report.disabled = true;
         try {
             await roommateSendJson("/api/reports/", "POST", {
@@ -264,7 +326,10 @@ function ownerActions(post) {
     edit.type = "button";
     edit.className = "secondary";
     edit.textContent = "Sửa";
-    edit.addEventListener("click", () => startEdit(post));
+    edit.addEventListener("click", (event) => {
+        event.stopPropagation();
+        startEdit(post);
+    });
     actions.append(edit);
 
     if (post.status === "active") {
@@ -272,7 +337,10 @@ function ownerActions(post) {
         close.type = "button";
         close.className = "secondary";
         close.textContent = "Đóng bài";
-        close.addEventListener("click", () => closePost(post));
+        close.addEventListener("click", (event) => {
+            event.stopPropagation();
+            closePost(post);
+        });
         actions.append(close);
     }
 
@@ -280,7 +348,10 @@ function ownerActions(post) {
     remove.type = "button";
     remove.className = "danger-inline";
     remove.textContent = "Xóa";
-    remove.addEventListener("click", () => deletePost(post));
+    remove.addEventListener("click", (event) => {
+        event.stopPropagation();
+        deletePost(post);
+    });
     actions.append(remove);
     return actions;
 }
@@ -332,7 +403,11 @@ async function loadRoommates() {
         const path = mine ? "/api/roommate-posts/mine/" : "/api/roommate-posts/";
         const data = await roommateFetchJson(path, mine ? {} : currentRoommateFilters());
         roommateState.posts = data.results || [];
-        showRoommateStatus("");
+        if (!mine && data.search_intelligence?.fallback_used) {
+            showRoommateStatus("Không tìm thấy kết quả khớp chính xác với từ khóa, đang hiển thị các bài gần với nhu cầu hơn.");
+        } else {
+            showRoommateStatus("");
+        }
         renderRoommatePosts();
     } catch (error) {
         showRoommateStatus("Không tải được danh sách ghép trọ. Hãy kiểm tra server Django và API.", true);
@@ -426,7 +501,7 @@ function startEdit(post) {
     form.elements.gender_preference.value = post.gender_preference || "any";
     form.elements.contact_phone.value = post.contact_phone || "";
     form.elements.description.value = post.description || "";
-    const selected = new Set(post.lifestyle_tags.map((tag) => String(tag.id)));
+    const selected = new Set((post.lifestyle_tags || []).map((tag) => String(tag.id)));
     form.querySelectorAll("input[name='lifestyle_tags']").forEach((input) => {
         input.checked = selected.has(input.value);
     });

@@ -6,8 +6,8 @@ from apps.listings.validators import validate_room_image_upload
 
 
 DEFAULT_ROOM_POINT = {
-    "latitude": "10.776889",
-    "longitude": "106.700806",
+    "latitude": "21.028511",
+    "longitude": "105.804817",
 }
 
 
@@ -65,7 +65,7 @@ class RoomForm(forms.ModelForm):
             "water_price": "Giá nước (VND/m³)",
         }
         help_texts = {
-            "address": "Nhập địa chỉ dễ hiểu: số nhà, đường, khu vực, phường. Bản đồ sẽ được ghim tự động ở sprint geocoding tiếp theo.",
+            "address": "Nhập số nhà/ngõ, tên đường và khu vực. Khi lưu, hệ thống sẽ thử ghim vị trí theo phường/quận đã chọn.",
             "price": "Ví dụ: 2500000 cho 2.500.000 VND/tháng.",
             "deposit": "Có thể bỏ trống nếu không yêu cầu cọc.",
             "electricity_price": "Có thể bỏ trống nếu đã bao gồm trong giá thuê.",
@@ -79,12 +79,12 @@ class RoomForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         numeric_rules = {
-            "price": {"min": "1", "step": "1000", "placeholder": "2500000"},
-            "deposit": {"min": "0", "step": "1000", "placeholder": "2500000"},
+            "price": {"min": "1", "step": "1", "inputmode": "numeric", "placeholder": "2500000"},
+            "deposit": {"min": "0", "step": "1", "inputmode": "numeric", "placeholder": "2500000"},
             "area": {"min": "1", "step": "0.1", "placeholder": "24"},
             "max_occupants": {"min": "1", "step": "1", "placeholder": "2"},
-            "electricity_price": {"min": "0", "step": "100", "placeholder": "4000"},
-            "water_price": {"min": "0", "step": "1000", "placeholder": "20000"},
+            "electricity_price": {"min": "0", "step": "1", "inputmode": "numeric", "placeholder": "4000"},
+            "water_price": {"min": "0", "step": "1", "inputmode": "numeric", "placeholder": "20000"},
         }
         for field_name, attrs in numeric_rules.items():
             self.fields[field_name].widget.attrs.update(attrs)

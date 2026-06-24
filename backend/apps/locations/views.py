@@ -3,8 +3,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .geocoding import GeocodingError, geocode_room_address
-from .models import District, University, Ward
-from .serializers import DistrictSerializer, UniversitySerializer, WardSerializer
+from .models import District, Landmark, University, Ward
+from .serializers import DistrictSerializer, LandmarkSerializer, UniversitySerializer, WardSerializer
 
 
 class DistrictViewSet(viewsets.ReadOnlyModelViewSet):
@@ -22,7 +22,7 @@ class WardViewSet(viewsets.ReadOnlyModelViewSet):
         district_id = self.request.query_params.get("district")
         if district_id:
             queryset = queryset.filter(district_id=district_id)
-        return queryset
+        return queryset.order_by("district__name", "name", "id")
 
     @action(detail=False, methods=["get"], permission_classes=[permissions.AllowAny])
     def geocode(self, request):
@@ -63,4 +63,22 @@ class UniversityViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.AllowAny]
     queryset = University.objects.filter(is_active=True)
     serializer_class = UniversitySerializer
+
+
+class LandmarkViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = LandmarkSerializer
+
+    def get_queryset(self):
+        queryset = Landmark.objects.filter(is_active=True).select_related("ward__district")
+        landmark_type = self.request.query_params.get("type")
+        district_id = self.request.query_params.get("district")
+        ward_id = self.request.query_params.get("ward")
+        if landmark_type:
+            queryset = queryset.filter(type=landmark_type)
+        if district_id:
+            queryset = queryset.filter(ward__district_id=district_id)
+        if ward_id:
+            queryset = queryset.filter(ward_id=ward_id)
+        return queryset.order_by("type", "name", "id")
 

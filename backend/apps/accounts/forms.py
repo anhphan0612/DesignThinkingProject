@@ -130,4 +130,3 @@ class StudentPreferenceForm(forms.ModelForm):
             "preferred_districts": forms.CheckboxSelectMultiple,
             "lifestyle_tags": forms.CheckboxSelectMultiple,
         }
-
