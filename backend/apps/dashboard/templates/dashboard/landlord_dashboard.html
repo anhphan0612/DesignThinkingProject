@@ -123,6 +123,25 @@
             <span>Tạo phòng đầu tiên để bắt đầu kiểm duyệt và hiển thị cho người tìm trọ.</span>
             <a class="button" href="{% url 'landlord-room-create' %}">Tạo phòng mới</a>
         </article>
-    {% endfor %}
+{% endfor %}
 </section>
+
+<section class="card landlord-chat-panel" aria-labelledby="landlordChatTitle">
+    <div class="card-head">
+        <div>
+            <p class="eyebrow">Tin nhắn</p>
+            <h2 id="landlordChatTitle">Tin nhắn từ người thuê</h2>
+        </div>
+        <span id="landlordChatCount" class="pill">Đang tải...</span>
+    </div>
+    <p class="muted">Các cuộc trò chuyện được tạo khi người thuê bấm nhắn qua app ở trang phòng.</p>
+    <div id="landlordChatStatus" class="landlord-chat-status" hidden></div>
+    <div id="landlordChatThreads" class="landlord-chat-list"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+    {% load static %}
+    <script src="{% static 'frontend/chat.js' %}?v=3"></script>
+    <script src="{% static 'dashboard/landlord-chat.js' %}?v=1"></script>
 {% endblock %}

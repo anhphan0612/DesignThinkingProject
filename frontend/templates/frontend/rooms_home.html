@@ -8,7 +8,7 @@
     <meta name="is-authenticated" content="{% if request.user.is_authenticated %}true{% else %}false{% endif %}">
     <title>Rentify - Tìm phòng trọ</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <link rel="stylesheet" href="{% static 'frontend/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'frontend/styles.css' %}?v=brand-1">
 </head>
 <body>
     <header class="hero">
@@ -117,6 +117,30 @@
         </section>
     </main>
 
+    <section id="compareBar" class="compare-bar" hidden aria-live="polite">
+        <div>
+            <strong id="compareCount">Đã chọn 0/2 phòng</strong>
+            <span id="compareNames">Chọn phòng để xem bảng so sánh.</span>
+        </div>
+        <div class="compare-actions">
+            <button id="openCompare" type="button" disabled>Xem so sánh</button>
+            <button id="clearCompare" type="button" class="secondary">Bỏ chọn</button>
+        </div>
+    </section>
+
+    <section id="compareModal" class="compare-modal" hidden role="dialog" aria-modal="true" aria-labelledby="compareTitle">
+        <div class="compare-dialog">
+            <header class="compare-dialog-head">
+                <div>
+                    <p class="eyebrow">So sánh phòng</p>
+                    <h2 id="compareTitle">Bảng so sánh hai phòng trọ</h2>
+                </div>
+                <button id="closeCompare" type="button" class="compare-close" aria-label="Đóng bảng so sánh">×</button>
+            </header>
+            <div id="compareTable" class="compare-table"></div>
+        </div>
+    </section>
+
     <section id="roommate-scope" class="trust-section">
         <div class="trust-copy">
             <p class="eyebrow">Dành cho sinh viên</p>
@@ -130,6 +154,6 @@
     </section>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="{% static 'frontend/app.js' %}"></script>
+    <script src="{% static 'frontend/app.js' %}?v=compare-1"></script>
 </body>
 </html>

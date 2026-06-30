@@ -8,7 +8,7 @@
     <meta name="is-authenticated" content="{% if request.user.is_authenticated %}true{% else %}false{% endif %}">
     <meta name="is-student" content="{% if is_student %}true{% else %}false{% endif %}">
     <title>Rentify - Tìm người ở ghép</title>
-    <link rel="stylesheet" href="{% static 'frontend/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'frontend/styles.css' %}?v=brand-1">
 </head>
 <body>
     <header class="hero compact-hero">
@@ -130,11 +130,13 @@
                         </label>
                         <label>Trường <select name="university"><option value="">Chưa chọn</option></select></label>
                         <label>Phường/khu vực cụ thể <select name="ward"><option value="">Chưa chọn</option></select></label>
+                        <label>Tên phòng ngoài nền tảng <input name="external_room_name" placeholder="VD: Phòng đang thuê ở ngõ 30 Tạ Quang Bửu"></label>
                         <label>Địa chỉ nếu đã có phòng <input name="address" placeholder="VD: Ngõ 30 Tạ Quang Bửu"></label>
                         <div class="field-row">
-                            <label>Ngân sách từ <input name="budget_min" type="number" min="0" step="100000"></label>
-                            <label>Đến <input name="budget_max" type="number" min="0" step="100000"></label>
+                            <label>Diện tích phòng hiện tại <input name="external_room_area" type="number" min="1" step="0.1" placeholder="24"></label>
+                            <label>Giá thuê tổng <input name="external_room_total_rent" type="number" min="0" step="100000" placeholder="4000000"></label>
                         </div>
+                        <label>Giá thuê <input name="rent_price" type="number" min="0" step="100000" placeholder="2500000"></label>
                         <label>Ngày chuyển vào <input name="move_in_date" type="date"></label>
                         <label>Số chỗ còn trống <input name="available_slots" type="number" min="1" value="1"></label>
                         <label>Số người tối đa <input name="max_roommates" type="number" min="1" value="2"></label>
@@ -147,7 +149,6 @@
                                 <option value="same">Cùng giới</option>
                             </select>
                         </label>
-                        <label>Số điện thoại liên hệ <input name="contact_phone" placeholder="Nếu bỏ trống sẽ trao đổi sau"></label>
                         <fieldset>
                             <legend>Thói quen sống</legend>
                             <div id="roommateFormTags" class="checks"></div>
@@ -160,6 +161,7 @@
         </section>
     </main>
 
-    <script src="{% static 'frontend/roommates.js' %}"></script>
+    <script src="{% static 'frontend/chat.js' %}?v=3"></script>
+    <script src="{% static 'frontend/roommates.js' %}?v=3"></script>
 </body>
 </html>

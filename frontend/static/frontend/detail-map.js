@@ -5,13 +5,13 @@ function detailLandmarks() {
         .filter((landmark) => Number.isFinite(Number(landmark.latitude)) && Number.isFinite(Number(landmark.longitude)));
 }
 
-function detailMarkerIcon(className, label) {
+function detailMarkerIcon(className, label, options = {}) {
     return window.L.divIcon({
         className,
         html: `<span>${label}</span>`,
-        iconSize: [30, 30],
-        iconAnchor: [15, 15],
-        popupAnchor: [0, -14],
+        iconSize: options.iconSize || [30, 30],
+        iconAnchor: options.iconAnchor || [15, 15],
+        popupAnchor: options.popupAnchor || [0, -14],
     });
 }
 
@@ -60,8 +60,9 @@ function renderDetailStaticMap(latitude, longitude) {
     detailMapEl.append(backdrop);
 
     const roomMarker = document.createElement("span");
-    roomMarker.className = "map-marker active detail-map-marker";
-    roomMarker.textContent = "1";
+    roomMarker.className = "detail-map-pin";
+    roomMarker.setAttribute("aria-label", "Vị trí phòng đang xem");
+    roomMarker.title = "Vị trí phòng đang xem";
     Object.assign(roomMarker.style, detailMarkerPosition({ latitude, longitude }, bounds));
     detailMapEl.append(roomMarker);
 
@@ -101,7 +102,11 @@ function renderDetailLeafletMap() {
         attribution: "&copy; OpenStreetMap",
     }).addTo(map);
     window.L.marker([latitude, longitude], {
-        icon: detailMarkerIcon("leaflet-room-marker active", "1"),
+        icon: detailMarkerIcon("leaflet-detail-room-marker", "", {
+            iconSize: [36, 44],
+            iconAnchor: [18, 42],
+            popupAnchor: [0, -38],
+        }),
     }).bindPopup(`<strong>${detailMapEl.dataset.title || "Phòng trọ"}</strong>`).addTo(map);
 
     const landmarks = detailLandmarks();

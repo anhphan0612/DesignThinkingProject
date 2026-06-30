@@ -1,10 +1,19 @@
 from django.utils import timezone
-from rest_framework import mixins, permissions, status, viewsets
+from django.db import models
+from rest_framework import mixins, permissions, serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .models import ContentReport, Favorite, SearchLog, UserEvent
-from .serializers import ContentReportSerializer, FavoriteSerializer, SearchLogSerializer, UserEventSerializer
+from .models import ChatMessage, ChatThread, ContactRequest, ContentReport, Favorite, SearchLog, UserEvent
+from .serializers import (
+    ChatMessageSerializer,
+    ChatThreadSerializer,
+    ContactRequestSerializer,
+    ContentReportSerializer,
+    FavoriteSerializer,
+    SearchLogSerializer,
+    UserEventSerializer,
+)
 from .services import get_session_key
 
 
@@ -51,6 +60,41 @@ class SearchLogViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
             **serializer.validated_data,
         )
         return Response(SearchLogSerializer(search_log).data, status=status.HTTP_201_CREATED)
+
+
+class ContactRequestViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = ContactRequestSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return ContactRequest.objects.filter(
+            models.Q(requester=user) | models.Q(recipient=user)
+        ).select_related("requester", "recipient", "room", "roommate_post")
+
+
+class ChatThreadViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = ChatThreadSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return (
+            ChatThread.objects.filter(models.Q(requester=user) | models.Q(recipient=user))
+            .select_related("requester", "recipient", "room", "roommate_post", "contact_request")
+            .prefetch_related("messages__sender")
+        )
+
+    @action(detail=True, methods=["post"])
+    def messages(self, request, pk=None):
+        thread = self.get_object()
+        body = request.data.get("body", "").strip()
+        if not body:
+            raise serializers.ValidationError({"body": "Message body is required."})
+        message = ChatMessage.objects.create(thread=thread, sender=request.user, body=body)
+        thread.updated_at = timezone.now()
+        thread.save(update_fields=("updated_at",))
+        return Response(ChatMessageSerializer(message, context={"request": request}).data, status=status.HTTP_201_CREATED)
 
 
 class ContentReportViewSet(viewsets.ModelViewSet):

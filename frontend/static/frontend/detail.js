@@ -65,15 +65,22 @@ if (favoriteButton) {
 
 if (contactButton) {
     contactButton.addEventListener("click", async () => {
+        const roomId = contactButton.dataset.roomId;
+        if (!isAuthenticated()) {
+            window.location.href = `/auth/login/?next=/rooms/${roomId}/`;
+            return;
+        }
         contactButton.disabled = true;
         const originalText = contactButton.textContent;
-        contactButton.textContent = "Đang lấy thông tin...";
+        contactButton.textContent = "Đang mở chat...";
         try {
-            const roomId = contactButton.dataset.roomId;
-            const data = await requestJson(`/api/rooms/${roomId}/contact/`);
-            showContactMessage(`${data.landlord_name}: ${data.phone || "Chưa có số điện thoại"}`);
+            const data = await requestJson(`/api/rooms/${roomId}/contact/`, "POST");
+            showContactMessage(data.message || "Đã mở cuộc trò chuyện trong app.");
+            if (data.thread_id && window.RentifyChat) {
+                await window.RentifyChat.open(data.thread_id, `Chat với ${data.landlord_name}`);
+            }
         } catch (error) {
-            showContactMessage("Không lấy được thông tin liên hệ.");
+            showContactMessage("Không mở được chat. Hãy thử lại.");
         } finally {
             contactButton.disabled = false;
             contactButton.textContent = originalText;

@@ -33,6 +33,13 @@ class Room(models.Model):
         GEOCODED = "geocoded", "Đã ghim bản đồ"
         FAILED = "failed", "Không tìm thấy vị trí"
 
+    class VerificationLevel(models.TextChoices):
+        UNVERIFIED = "unverified", "Chưa xác minh"
+        POSTER_VERIFIED = "poster_verified", "Đã xác minh người đăng"
+        ROOM_DOCUMENTS = "room_documents", "Đã xác minh thông tin phòng"
+        LANDLORD_CONFIRMED = "landlord_confirmed", "Chủ trọ xác nhận"
+        PLATFORM_INSPECTED = "platform_inspected", "Nền tảng kiểm duyệt"
+
     landlord = models.ForeignKey(
         "accounts.LandlordProfile",
         on_delete=models.PROTECT,
@@ -62,6 +69,12 @@ class Room(models.Model):
     electricity_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     water_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     amenities = models.ManyToManyField(Amenity, blank=True, related_name="rooms")
+    verification_level = models.CharField(
+        max_length=30,
+        choices=VerificationLevel.choices,
+        default=VerificationLevel.UNVERIFIED,
+    )
+    verification_note = models.TextField(blank=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
     rejection_reason = models.TextField(blank=True)
     approved_by = models.ForeignKey(

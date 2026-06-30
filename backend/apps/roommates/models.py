@@ -34,6 +34,13 @@ class RoommatePost(models.Model):
         FEMALE = "female", "Nữ"
         SAME = "same", "Cùng giới"
 
+    class RoomVerificationLevel(models.TextChoices):
+        UNVERIFIED = "unverified", "Chưa xác minh"
+        POSTER_VERIFIED = "poster_verified", "Đã xác minh người đăng"
+        ROOM_DOCUMENTS = "room_documents", "Đã xác minh thông tin phòng"
+        LANDLORD_CONFIRMED = "landlord_confirmed", "Chủ trọ xác nhận"
+        PLATFORM_INSPECTED = "platform_inspected", "Nền tảng kiểm duyệt"
+
     posted_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -71,7 +78,16 @@ class RoommatePost(models.Model):
         related_name="roommate_posts",
         help_text="Optional room when the poster already has a room and needs roommates.",
     )
+    external_room_name = models.CharField(max_length=255, blank=True)
     address = models.TextField(blank=True)
+    external_room_area = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    external_room_total_rent = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    room_verification_level = models.CharField(
+        max_length=30,
+        choices=RoomVerificationLevel.choices,
+        default=RoomVerificationLevel.UNVERIFIED,
+    )
+    room_verification_note = models.TextField(blank=True)
 
     budget_min = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     budget_max = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
@@ -121,6 +137,14 @@ class RoommatePost(models.Model):
                 condition=Q(available_slots__gt=0),
                 name="roommate_available_slots_positive",
             ),
+            models.CheckConstraint(
+                condition=Q(external_room_area__isnull=True) | Q(external_room_area__gt=0),
+                name="roommate_external_area_positive",
+            ),
+            models.CheckConstraint(
+                condition=Q(external_room_total_rent__isnull=True) | Q(external_room_total_rent__gte=0),
+                name="roommate_external_rent_non_negative",
+            ),
         ]
         indexes = [
             models.Index(fields=("status", "type", "-created_at"), name="roommate_status_type_idx"),
@@ -134,8 +158,9 @@ class RoommatePost(models.Model):
         errors = {}
         if self.posted_by_id and getattr(self.posted_by, "role", None) != "student":
             errors["posted_by"] = "Only student accounts can create roommate posts."
-        if self.type == self.Type.HAS_ROOM and not self.room_id and not self.address.strip():
-            errors["address"] = "Provide a room or an address when the post already has a room."
+        has_external_room = self.address.strip() or self.external_room_name.strip()
+        if self.type == self.Type.HAS_ROOM and not self.room_id and not has_external_room:
+            errors["address"] = "Provide a platform room, external room name, or address when the post already has a room."
         if self.current_occupants > self.max_roommates:
             errors["current_occupants"] = "Current occupants cannot exceed maximum roommates."
         if errors:

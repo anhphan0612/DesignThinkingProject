@@ -12,7 +12,14 @@ from apps.frontend.views import (
     RoommateHomeView,
     upload_room_image,
 )
-from apps.interactions.views import ContentReportViewSet, FavoriteViewSet, SearchLogViewSet, UserEventViewSet
+from apps.interactions.views import (
+    ChatThreadViewSet,
+    ContactRequestViewSet,
+    ContentReportViewSet,
+    FavoriteViewSet,
+    SearchLogViewSet,
+    UserEventViewSet,
+)
 from apps.listings.views import AmenityViewSet, RoomImageViewSet, RoomViewSet
 from apps.locations.views import DistrictViewSet, LandmarkViewSet, UniversityViewSet, WardViewSet
 from apps.roommates.views import LifestyleTagViewSet, RoommatePostViewSet
@@ -31,6 +38,8 @@ router.register("roommate-posts", RoommatePostViewSet, basename="roommate-post")
 router.register("favorites", FavoriteViewSet, basename="favorite")
 router.register("events", UserEventViewSet, basename="event")
 router.register("search-logs", SearchLogViewSet, basename="search-log")
+router.register("contact-requests", ContactRequestViewSet, basename="contact-request")
+router.register("chat-threads", ChatThreadViewSet, basename="chat-thread")
 router.register("reports", ContentReportViewSet, basename="report")
 
 urlpatterns = [

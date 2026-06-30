@@ -6,6 +6,7 @@ const state = {
     leafletMap: null,
     roomLayer: null,
     landmarkLayer: null,
+    compareRoomIds: [],
     isAuthenticated: document.querySelector("meta[name='is-authenticated']").content === "true",
 };
 
@@ -32,6 +33,14 @@ const els = {
     mapTitle: document.querySelector("#mapTitle"),
     mapCount: document.querySelector("#mapCount"),
     mapHint: document.querySelector("#mapHint"),
+    compareBar: document.querySelector("#compareBar"),
+    compareCount: document.querySelector("#compareCount"),
+    compareNames: document.querySelector("#compareNames"),
+    openCompare: document.querySelector("#openCompare"),
+    clearCompare: document.querySelector("#clearCompare"),
+    compareModal: document.querySelector("#compareModal"),
+    closeCompare: document.querySelector("#closeCompare"),
+    compareTable: document.querySelector("#compareTable"),
 };
 
 function formatCurrency(value) {
@@ -103,6 +112,120 @@ function textElement(tagName, text, className) {
 
 function tagElement(text) {
     return textElement("span", text, "tag");
+}
+
+function valueOrFallback(value, fallback = "Chưa cập nhật") {
+    if (value === null || value === undefined || value === "") {
+        return fallback;
+    }
+    return value;
+}
+
+function roomById(roomId) {
+    return state.rooms.find((room) => room.id === roomId);
+}
+
+function selectedCompareRooms() {
+    return state.compareRoomIds.map(roomById).filter(Boolean);
+}
+
+function amenityNames(room) {
+    const names = (room.amenities || []).map((amenity) => amenity.name);
+    return names.length ? names.join(", ") : "Chưa cập nhật";
+}
+
+function verificationLabel(room) {
+    return room.verification_level_label || room.verification_level || "Chưa xác minh";
+}
+
+function updateCompareControls() {
+    const selectedRooms = selectedCompareRooms();
+    els.compareBar.hidden = selectedRooms.length === 0;
+    els.compareCount.textContent = `Đã chọn ${selectedRooms.length}/2 phòng`;
+    els.compareNames.textContent = selectedRooms.length
+        ? selectedRooms.map((room) => room.title).join(" và ")
+        : "Chọn phòng để xem bảng so sánh.";
+    els.openCompare.disabled = selectedRooms.length !== 2;
+    document.querySelectorAll(".compare-button").forEach((button) => {
+        const isSelected = state.compareRoomIds.includes(Number(button.dataset.roomId));
+        button.classList.toggle("active", isSelected);
+        button.setAttribute("aria-pressed", isSelected ? "true" : "false");
+        button.textContent = isSelected ? "Đã chọn so sánh" : "So sánh";
+    });
+}
+
+function toggleCompare(room) {
+    const exists = state.compareRoomIds.includes(room.id);
+    if (exists) {
+        state.compareRoomIds = state.compareRoomIds.filter((id) => id !== room.id);
+        updateCompareControls();
+        return;
+    }
+    if (state.compareRoomIds.length >= 2) {
+        showStatus("Chỉ có thể so sánh tối đa 2 phòng cùng lúc. Hãy bỏ chọn một phòng trước.", true);
+        return;
+    }
+    state.compareRoomIds.push(room.id);
+    showStatus("");
+    updateCompareControls();
+}
+
+function compareValue(label, first, second) {
+    const row = document.createElement("div");
+    row.className = "compare-row";
+    row.append(
+        textElement("div", label, "compare-label"),
+        textElement("div", first, "compare-cell"),
+        textElement("div", second, "compare-cell"),
+    );
+    return row;
+}
+
+function renderCompareTable() {
+    const [first, second] = selectedCompareRooms();
+    if (!first || !second) {
+        return;
+    }
+    els.compareTable.replaceChildren();
+    const header = document.createElement("div");
+    header.className = "compare-row compare-row-head";
+    header.append(
+        textElement("div", "Tiêu chí", "compare-label"),
+        textElement("div", first.title, "compare-cell"),
+        textElement("div", second.title, "compare-cell"),
+    );
+    const rows = [
+        compareValue("Giá thuê", `${formatCurrency(first.price)}/tháng`, `${formatCurrency(second.price)}/tháng`),
+        compareValue("Tiền cọc", first.deposit ? formatCurrency(first.deposit) : "Chưa cập nhật", second.deposit ? formatCurrency(second.deposit) : "Chưa cập nhật"),
+        compareValue("Diện tích", formatNumber(first.area, " m²"), formatNumber(second.area, " m²")),
+        compareValue("Số người tối đa", `${first.max_occupants} người`, `${second.max_occupants} người`),
+        compareValue("Khu vực", `${first.ward_name}, ${first.district_name}`, `${second.ward_name}, ${second.district_name}`),
+        compareValue("Địa chỉ", first.address, second.address),
+        compareValue("Khoảng cách", valueOrFallback(first.distance_km ? formatNumber(first.distance_km, " km") : ""), valueOrFallback(second.distance_km ? formatNumber(second.distance_km, " km") : "")),
+        compareValue("Điện", first.electricity_price ? `${formatCurrency(first.electricity_price)}/kWh` : "Chưa cập nhật", second.electricity_price ? `${formatCurrency(second.electricity_price)}/kWh` : "Chưa cập nhật"),
+        compareValue("Nước", first.water_price ? `${formatCurrency(first.water_price)}/m³` : "Chưa cập nhật", second.water_price ? `${formatCurrency(second.water_price)}/m³` : "Chưa cập nhật"),
+        compareValue("Tiện ích", amenityNames(first), amenityNames(second)),
+        compareValue("Xác minh", verificationLabel(first), verificationLabel(second)),
+    ];
+    els.compareTable.append(header, ...rows);
+}
+
+function openCompareModal() {
+    if (selectedCompareRooms().length !== 2) {
+        return;
+    }
+    renderCompareTable();
+    els.compareModal.hidden = false;
+}
+
+function closeCompareModal() {
+    els.compareModal.hidden = true;
+}
+
+function clearCompare() {
+    state.compareRoomIds = [];
+    closeCompareModal();
+    updateCompareControls();
 }
 
 function landmarkSummary(room) {
@@ -366,11 +489,14 @@ function renderRooms() {
     }
     if (!state.rooms.length) {
         els.mapPanel.hidden = true;
+        clearCompare();
         renderEmptyRooms();
         return;
     }
+    state.compareRoomIds = state.compareRoomIds.filter((id) => state.rooms.some((room) => room.id === id));
     state.rooms.forEach((room) => els.roomList.append(roomCard(room)));
     updateMap();
+    updateCompareControls();
 }
 
 function renderRecommendations(items) {
@@ -485,7 +611,17 @@ function roomCard(room) {
             favoriteButton.disabled = false;
         }
     });
-    cardActions.append(detailLink, favoriteButton);
+    const compareButton = document.createElement("button");
+    compareButton.type = "button";
+    compareButton.className = "secondary compare-button";
+    compareButton.dataset.roomId = room.id;
+    compareButton.setAttribute("aria-pressed", state.compareRoomIds.includes(room.id) ? "true" : "false");
+    compareButton.textContent = state.compareRoomIds.includes(room.id) ? "Đã chọn so sánh" : "So sánh";
+    compareButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        toggleCompare(room);
+    });
+    cardActions.append(detailLink, favoriteButton, compareButton);
     content.append(
         textElement("h3", room.title),
         textElement("div", `${formatCurrency(room.price)}/tháng`, "price"),
@@ -578,6 +714,19 @@ els.reset.addEventListener("click", () => {
 els.query.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
         loadRooms();
+    }
+});
+els.openCompare.addEventListener("click", openCompareModal);
+els.clearCompare.addEventListener("click", clearCompare);
+els.closeCompare.addEventListener("click", closeCompareModal);
+els.compareModal.addEventListener("click", (event) => {
+    if (event.target === els.compareModal) {
+        closeCompareModal();
+    }
+});
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !els.compareModal.hidden) {
+        closeCompareModal();
     }
 });
 

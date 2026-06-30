@@ -9,7 +9,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from apps.interactions.models import UserEvent
-from apps.interactions.services import add_favorite, log_event, log_search, remove_favorite
+from apps.interactions.services import add_favorite, log_event, log_search, remove_favorite, start_contact_thread
 from apps.locations.models import University
 from apps.recommendations.keywords import apply_room_keyword_search
 
@@ -245,15 +245,23 @@ class RoomViewSet(viewsets.ModelViewSet):
         removed = remove_favorite(user=request.user, room=room, request=request)
         return Response({"removed": removed})
 
-    @action(detail=True, methods=["post"], permission_classes=[permissions.AllowAny])
+    @action(detail=True, methods=["post"], permission_classes=[permissions.IsAuthenticated])
     def contact(self, request, pk=None):
         room = self.get_object()
         log_event(request=request, type=UserEvent.Type.CLICK_CONTACT, room=room)
+        message = request.data.get("message", "").strip()
+        contact_request, thread = start_contact_thread(
+            requester=request.user,
+            recipient=room.landlord.user,
+            room=room,
+            message=message,
+        )
         return Response(
             {
+                "contact_request_id": contact_request.id,
+                "thread_id": thread.id,
                 "landlord_name": room.landlord.user.full_name,
-                "phone": room.landlord.user.phone,
-                "message": "Thông tin liên hệ đã được ghi nhận.",
+                "message": "Đã mở cuộc trò chuyện. Hãy nhập tin nhắn trong box chat.",
             }
         )
 

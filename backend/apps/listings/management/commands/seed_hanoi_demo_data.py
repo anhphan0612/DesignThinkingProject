@@ -99,14 +99,26 @@ ROOMS = (
 def ensure_demo_images():
     media_rooms = Path("media") / "rooms"
     media_rooms.mkdir(parents=True, exist_ok=True)
-    source_dir = Path.home() / "Downloads" / "BGround"
+
+    # Xóa ảnh seed cũ (kể cả demo-hanoi-11, demo-hanoi-12 thừa)
+    for old_image in media_rooms.glob("demo-hanoi-*.jpg"):
+        old_image.unlink()
+
+    source_dir = Path.home() / "Downloads" / "Nigga"
     if not source_dir.exists():
         return
-    images = sorted(source_dir.glob("*.jpg"))[: len(ROOMS)]
-    for index, image in enumerate(images, start=1):
+    images = sorted(
+        image
+        for image in source_dir.iterdir()
+        if image.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"}
+        and " - Copy" not in image.stem  # bỏ bản Copy trùng lặp
+    )
+    if not images:
+        return
+    for index in range(1, len(ROOMS) + 1):
+        image = images[(index - 1) % len(images)]
         target = media_rooms / f"demo-hanoi-{index}.jpg"
-        if not target.exists():
-            shutil.copyfile(image, target)
+        shutil.copyfile(image, target)
 
 
 class Command(BaseCommand):
@@ -218,13 +230,13 @@ class Command(BaseCommand):
             room.amenities.set(amenity_map[code] for code in amenities)
             RoomImage.objects.update_or_create(
                 room=room,
-                caption="Ảnh minh họa phòng demo",
+                is_cover=True,
                 defaults={
+                    "caption": "Ảnh minh họa phòng demo",
                     "image": f"rooms/demo-hanoi-{index}.jpg",
                     "uploaded_by": landlord_user,
                     "source": RoomImage.Source.LANDLORD,
                     "status": RoomImage.ModerationStatus.APPROVED,
-                    "is_cover": True,
                 },
             )
 

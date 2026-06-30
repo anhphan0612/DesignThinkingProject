@@ -6,6 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from apps.accounts.models import User
+from apps.interactions.services import start_contact_thread
 from apps.recommendations.keywords import apply_roommate_keyword_search
 
 from .models import LifestyleTag, RoommatePost
@@ -162,3 +163,24 @@ class RoommatePostViewSet(viewsets.ModelViewSet):
         post = self.get_object()
         post.close()
         return Response(RoommatePostReadSerializer(post, context={"request": request}).data)
+
+    @action(detail=True, methods=["post"], permission_classes=[permissions.IsAuthenticated])
+    def contact(self, request, pk=None):
+        post = self.get_object()
+        if post.posted_by_id == request.user.id:
+            raise serializers.ValidationError("You cannot contact your own roommate post.")
+        message = request.data.get("message", "").strip()
+        contact_request, thread = start_contact_thread(
+            requester=request.user,
+            recipient=post.posted_by,
+            roommate_post=post,
+            message=message,
+        )
+        return Response(
+            {
+                "contact_request_id": contact_request.id,
+                "thread_id": thread.id,
+                "recipient_name": post.posted_by.full_name,
+                "message": "Đã mở cuộc trò chuyện. Hãy nhập tin nhắn trong box chat.",
+            }
+        )

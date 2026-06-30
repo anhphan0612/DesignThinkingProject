@@ -26,6 +26,8 @@ class RoommatePostReadSerializer(serializers.ModelSerializer):
     type_label = serializers.CharField(source="get_type_display", read_only=True)
     status_label = serializers.CharField(source="get_status_display", read_only=True)
     gender_preference_label = serializers.CharField(source="get_gender_preference_display", read_only=True)
+    room_verification_level_label = serializers.CharField(source="get_room_verification_level_display", read_only=True)
+    contact_phone = serializers.SerializerMethodField()
     match = serializers.SerializerMethodField()
 
     class Meta:
@@ -46,7 +48,13 @@ class RoommatePostReadSerializer(serializers.ModelSerializer):
             "ward_name",
             "district_name",
             "room",
+            "external_room_name",
             "address",
+            "external_room_area",
+            "external_room_total_rent",
+            "room_verification_level",
+            "room_verification_level_label",
+            "room_verification_note",
             "budget_min",
             "budget_max",
             "move_in_date",
@@ -64,6 +72,14 @@ class RoommatePostReadSerializer(serializers.ModelSerializer):
 
     def get_match(self, obj):
         return getattr(obj, "match", None)
+
+    def get_contact_phone(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return ""
+        if request.user.is_staff or obj.posted_by_id == request.user.id:
+            return obj.contact_phone
+        return ""
 
 
 class RoommatePostWriteSerializer(serializers.ModelSerializer):
@@ -99,7 +115,10 @@ class RoommatePostWriteSerializer(serializers.ModelSerializer):
             "preferred_districts",
             "ward",
             "room",
+            "external_room_name",
             "address",
+            "external_room_area",
+            "external_room_total_rent",
             "budget_min",
             "budget_max",
             "move_in_date",

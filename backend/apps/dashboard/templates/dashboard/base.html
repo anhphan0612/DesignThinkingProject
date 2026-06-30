@@ -4,9 +4,10 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token }}">
     <title>{% block title %}Dashboard{% endblock %} - Rentify</title>
-    <link rel="stylesheet" href="{% static 'frontend/styles.css' %}?v=topbar-unified-2">
-    <link rel="stylesheet" href="{% static 'dashboard/dashboard.css' %}?v=landlord-dashboard-3">
+    <link rel="stylesheet" href="{% static 'frontend/styles.css' %}?v=brand-1">
+    <link rel="stylesheet" href="{% static 'dashboard/dashboard.css' %}?v=landlord-dashboard-4">
 </head>
 <body>
     <header class="site-topbar-shell dash-header">
@@ -20,5 +21,6 @@
         {% endif %}
         {% block content %}{% endblock %}
     </main>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

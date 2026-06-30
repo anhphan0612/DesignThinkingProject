@@ -6,6 +6,7 @@ from django.test import TestCase
 from rest_framework.test import APIClient
 
 from apps.accounts.models import LandlordProfile, StudentProfile, User
+from apps.interactions.models import ChatMessage, ContactRequest
 from apps.locations.models import District, University, Ward
 from apps.roommates.models import LifestyleTag, RoommatePost
 
@@ -84,7 +85,10 @@ class RoommatePostApiTests(TestCase):
             {
                 "type": RoommatePost.Type.HAS_ROOM,
                 "title": "Can tim 1 ban o ghep",
+                "external_room_name": "Phong dang thue ngo 30",
                 "address": "Ngo 30 Ta Quang Buu",
+                "external_room_area": "24",
+                "external_room_total_rent": "4000000",
                 "university": self.university.id,
                 "ward": self.ward.id,
                 "budget_min": "1500000",
@@ -101,6 +105,32 @@ class RoommatePostApiTests(TestCase):
         post = RoommatePost.objects.get(id=response.data["id"])
         self.assertEqual(post.posted_by, self.student)
         self.assertEqual(post.status, RoommatePost.Status.ACTIVE)
+        self.assertEqual(post.external_room_name, "Phong dang thue ngo 30")
+        self.assertEqual(post.room_verification_level, RoommatePost.RoomVerificationLevel.UNVERIFIED)
+
+    def test_public_list_hides_roommate_contact_phone(self):
+        post = self.create_post(contact_phone="0900000000")
+
+        response = self.client.get("/api/roommate-posts/")
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.data["results"][0]
+        self.assertEqual(payload["id"], post.id)
+        self.assertEqual(payload["contact_phone"], "")
+
+    def test_student_can_contact_roommate_post_in_app(self):
+        post = self.create_post(contact_phone="0900000000")
+        self.client.force_authenticate(self.student)
+
+        response = self.client.post(
+            f"/api/roommate-posts/{post.id}/contact/",
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("contact_phone", response.data)
+        self.assertEqual(ContactRequest.objects.count(), 1)
+        self.assertEqual(ChatMessage.objects.count(), 0)
 
     def test_landlord_cannot_create_roommate_post(self):
         landlord = User.objects.create_user(

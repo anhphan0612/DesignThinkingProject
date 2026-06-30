@@ -1,4 +1,6 @@
-from .models import Favorite, SearchLog, UserEvent
+from django.utils import timezone
+
+from .models import ChatMessage, ChatThread, ContactRequest, Favorite, SearchLog, UserEvent
 
 
 def get_session_key(request):
@@ -46,4 +48,28 @@ def log_search(*, request, query_text="", filters=None, result_ids=None):
         result_ids=result_ids,
         result_count=len(result_ids),
     )
+
+
+def start_contact_thread(*, requester, recipient, message="", room=None, roommate_post=None):
+    contact_request = ContactRequest.objects.create(
+        requester=requester,
+        recipient=recipient,
+        room=room,
+        roommate_post=roommate_post,
+        message=message,
+    )
+    thread, _ = ChatThread.objects.get_or_create(
+        requester=requester,
+        recipient=recipient,
+        room=room,
+        roommate_post=roommate_post,
+        defaults={"contact_request": contact_request},
+    )
+    if not thread.contact_request_id:
+        thread.contact_request = contact_request
+    thread.updated_at = timezone.now()
+    thread.save(update_fields=("contact_request", "updated_at"))
+    if message.strip():
+        ChatMessage.objects.create(thread=thread, sender=requester, body=message.strip())
+    return contact_request, thread
 

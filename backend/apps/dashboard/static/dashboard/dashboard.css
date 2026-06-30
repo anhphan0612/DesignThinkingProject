@@ -459,6 +459,104 @@ figcaption { display: grid; gap: 4px; padding: 10px; color: var(--muted); font-w
     justify-items: start;
 }
 
+.landlord-chat-panel {
+    display: grid;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.landlord-chat-panel .card-head {
+    align-items: center;
+}
+
+.landlord-chat-panel h2 {
+    margin: 4px 0 0;
+}
+
+.landlord-chat-status {
+    border-radius: 14px;
+    background: #eff6ff;
+    color: #075985;
+    font-size: 13px;
+    font-weight: 850;
+    padding: 10px 12px;
+}
+
+.landlord-chat-status[hidden] {
+    display: none;
+}
+
+.landlord-chat-status.error {
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+.landlord-chat-list {
+    display: grid;
+    gap: 10px;
+}
+
+.landlord-chat-thread {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: #fff;
+    color: var(--ink);
+    padding: 12px 14px;
+    text-align: left;
+}
+
+.landlord-chat-thread:hover {
+    border-color: rgba(23, 105, 224, .36);
+    background: #f8fbff;
+}
+
+.landlord-chat-main {
+    display: grid;
+    min-width: 0;
+    gap: 3px;
+}
+
+.landlord-chat-main strong,
+.landlord-chat-main span,
+.landlord-chat-main small {
+    overflow-wrap: anywhere;
+}
+
+.landlord-chat-main strong {
+    color: var(--ink);
+    font-size: 15px;
+}
+
+.landlord-chat-main span {
+    color: var(--primary-dark);
+    font-size: 13px;
+    font-weight: 850;
+}
+
+.landlord-chat-main small,
+.landlord-chat-meta {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.landlord-chat-meta {
+    white-space: nowrap;
+}
+
+.landlord-chat-empty {
+    margin: 0;
+    border: 1px dashed var(--line);
+    border-radius: 16px;
+    background: #f8fafc;
+    padding: 14px;
+}
+
 @media (max-width: 860px) {
     .page-title, .dash-header { display: grid; }
     .grid-list, .grid-list.compact, .two-col, .room-media, .form-grid, .room-form, .room-card, .room-metrics, .image-grid, .detail-list, .compact-images, .image-actions { grid-template-columns: 1fr; }
@@ -466,5 +564,6 @@ figcaption { display: grid; gap: 4px; padding: 10px; color: var(--muted); font-w
     .room-form .form-section:nth-of-type(1),
     .room-form .form-section:nth-of-type(4),
     .room-form .form-section:nth-of-type(5) { grid-column: auto; }
+    .landlord-chat-thread { grid-template-columns: 1fr; }
+    .landlord-chat-meta { white-space: normal; }
 }
-

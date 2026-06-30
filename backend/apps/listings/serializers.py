@@ -80,6 +80,7 @@ class RoomReadSerializer(serializers.ModelSerializer):
     distance_km = serializers.SerializerMethodField()
     is_favorited = serializers.SerializerMethodField()
     nearby_landmarks = serializers.SerializerMethodField()
+    verification_level_label = serializers.CharField(source="get_verification_level_display", read_only=True)
 
     class Meta:
         model = Room
@@ -104,6 +105,9 @@ class RoomReadSerializer(serializers.ModelSerializer):
             "electricity_price",
             "water_price",
             "amenities",
+            "verification_level",
+            "verification_level_label",
+            "verification_note",
             "images",
             "status",
             "rejection_reason",
@@ -167,9 +171,11 @@ class RoomWriteSerializer(serializers.ModelSerializer):
             "electricity_price",
             "water_price",
             "amenities",
+            "verification_level",
+            "verification_note",
             "status",
         )
-        read_only_fields = ("id", "status")
+        read_only_fields = ("id", "status", "verification_level", "verification_note")
 
     def validate(self, attrs):
         user = self.context["request"].user

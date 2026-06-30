@@ -106,6 +106,13 @@ function money(value) {
     }).format(amount);
 }
 
+function postPriceLabel(post) {
+    if (post.budget_min && post.budget_max && post.budget_min !== post.budget_max) {
+        return `${money(post.budget_min)} - ${money(post.budget_max)}`;
+    }
+    return money(post.budget_max || post.budget_min);
+}
+
 function showRoommateStatus(message, isError = false) {
     roommateEls.status.hidden = !message;
     roommateEls.status.textContent = message || "";
@@ -192,6 +199,28 @@ function renderEmptyRoommates() {
     roommateEls.list.replaceChildren(empty);
 }
 
+async function contactRoommatePost(post, button) {
+    if (!roommateState.isAuthenticated) {
+        window.location.href = `/auth/login/?next=/roommates/`;
+        return;
+    }
+    button.disabled = true;
+    const originalText = button.textContent;
+    button.textContent = "Đang mở chat...";
+    try {
+        const data = await roommateSendJson(`/api/roommate-posts/${post.id}/contact/`, "POST");
+        showRoommateStatus(data.message || "Đã mở cuộc trò chuyện trong app.");
+        if (data.thread_id && window.RentifyChat) {
+            await window.RentifyChat.open(data.thread_id, `Chat với ${data.recipient_name || post.posted_by_name}`);
+        }
+    } catch (error) {
+        showRoommateStatus("Không mở được chat. Hãy thử lại.", true);
+    } finally {
+        button.disabled = false;
+        button.textContent = originalText;
+    }
+}
+
 function roommateCard(post) {
     const card = document.createElement("article");
     card.className = "room-card roommate-card";
@@ -205,7 +234,7 @@ function roommateCard(post) {
     badge.append(textNode("span", post.type === "has_room" ? "CÓ PHÒNG" : "TÌM CÙNG"));
 
     const content = document.createElement("div");
-    const budget = `${money(post.budget_min)} - ${money(post.budget_max)}`;
+    const budget = postPriceLabel(post);
     const meta = document.createElement("div");
     meta.className = "meta";
     meta.append(
@@ -222,10 +251,16 @@ function roommateCard(post) {
     const details = document.createElement("div");
     details.className = "roommate-inline-detail";
     details.hidden = Boolean(roomUrl);
+    const externalRoomSummary = [
+        post.external_room_name,
+        post.external_room_area ? `${Number(post.external_room_area).toLocaleString("vi-VN")} m²` : "",
+        post.external_room_total_rent ? `Tổng thuê ${money(post.external_room_total_rent)}` : "",
+    ].filter(Boolean).join(" · ");
     details.append(
         textNode("strong", post.posted_by_name || "Người đăng"),
-        textNode("span", post.contact_phone ? `Liên hệ: ${post.contact_phone}` : "Người đăng chưa công khai số điện thoại."),
-        textNode("span", post.address || post.ward_name || "Chưa cập nhật địa chỉ cụ thể."),
+        textNode("span", post.room ? "Phòng đã có trên nền tảng." : "Phòng do người đang thuê tự khai báo, chưa phải listing chính thức."),
+        textNode("span", post.room_verification_level_label || "Chưa xác minh"),
+        textNode("span", externalRoomSummary || post.address || post.ward_name || "Chưa cập nhật địa chỉ cụ thể."),
     );
 
     const cardActions = document.createElement("div");
@@ -252,6 +287,17 @@ function roommateCard(post) {
             details.hidden = !details.hidden;
         });
         cardActions.append(searchLink, detailButton);
+    }
+    if (roommateState.viewMode !== "mine") {
+        const contact = document.createElement("button");
+        contact.type = "button";
+        contact.className = "secondary";
+        contact.textContent = "Nhắn qua app";
+        contact.addEventListener("click", (event) => {
+            event.stopPropagation();
+            contactRoommatePost(post, contact);
+        });
+        cardActions.append(contact);
     }
 
     content.append(
@@ -432,9 +478,14 @@ function formPayload(form) {
     const data = new FormData(form);
     const payload = {};
     for (const [key, value] of data.entries()) {
-        if (!["lifestyle_tags", "post_id"].includes(key) && value !== "") {
+        if (!["lifestyle_tags", "post_id", "rent_price"].includes(key) && value !== "") {
             payload[key] = value;
         }
+    }
+    const rentPrice = data.get("rent_price");
+    if (rentPrice !== "") {
+        payload.budget_min = rentPrice;
+        payload.budget_max = rentPrice;
     }
     payload.lifestyle_tags = data.getAll("lifestyle_tags");
     return payload;
@@ -491,15 +542,16 @@ function startEdit(post) {
     form.elements.type.value = post.type || "looking_together";
     form.elements.university.value = post.university || "";
     form.elements.ward.value = post.ward || "";
+    form.elements.external_room_name.value = post.external_room_name || "";
     form.elements.address.value = post.address || "";
-    form.elements.budget_min.value = post.budget_min || "";
-    form.elements.budget_max.value = post.budget_max || "";
+    form.elements.external_room_area.value = post.external_room_area || "";
+    form.elements.external_room_total_rent.value = post.external_room_total_rent || "";
+    form.elements.rent_price.value = post.budget_max || post.budget_min || "";
     form.elements.move_in_date.value = post.move_in_date || "";
     form.elements.available_slots.value = post.available_slots || 1;
     form.elements.max_roommates.value = post.max_roommates || 2;
     form.elements.current_occupants.value = post.current_occupants || 0;
     form.elements.gender_preference.value = post.gender_preference || "any";
-    form.elements.contact_phone.value = post.contact_phone || "";
     form.elements.description.value = post.description || "";
     const selected = new Set((post.lifestyle_tags || []).map((tag) => String(tag.id)));
     form.querySelectorAll("input[name='lifestyle_tags']").forEach((input) => {

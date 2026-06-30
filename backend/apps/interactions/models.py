@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
 
 
 class Favorite(models.Model):
@@ -52,6 +53,121 @@ class UserEvent(models.Model):
             models.Index(fields=("room", "type"), name="event_room_type_idx"),
             models.Index(fields=("session_key",), name="event_session_idx"),
         ]
+
+
+class ContactRequest(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "pending", "Chờ phản hồi"
+        CHAT_ONLY = "chat_only", "Chỉ chat trong app"
+        SHARED_CONTACT = "shared_contact", "Đã đồng ý chia sẻ liên hệ"
+        DECLINED = "declined", "Đã từ chối"
+
+    requester = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="sent_contact_requests",
+    )
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="received_contact_requests",
+    )
+    room = models.ForeignKey(
+        "listings.Room",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="contact_requests",
+    )
+    roommate_post = models.ForeignKey(
+        "roommates.RoommatePost",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="contact_requests",
+    )
+    message = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        indexes = [
+            models.Index(fields=("recipient", "status", "-created_at"), name="contact_recipient_status_idx"),
+            models.Index(fields=("requester", "-created_at"), name="contact_requester_created_idx"),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    Q(room__isnull=False, roommate_post__isnull=True)
+                    | Q(room__isnull=True, roommate_post__isnull=False)
+                ),
+                name="contact_request_one_target",
+            )
+        ]
+
+
+class ChatThread(models.Model):
+    requester = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="started_chat_threads",
+    )
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="received_chat_threads",
+    )
+    room = models.ForeignKey(
+        "listings.Room",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="chat_threads",
+    )
+    roommate_post = models.ForeignKey(
+        "roommates.RoommatePost",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="chat_threads",
+    )
+    contact_request = models.OneToOneField(
+        ContactRequest,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="chat_thread",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-updated_at",)
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    Q(room__isnull=False, roommate_post__isnull=True)
+                    | Q(room__isnull=True, roommate_post__isnull=False)
+                ),
+                name="chat_thread_one_target",
+            )
+        ]
+
+
+class ChatMessage(models.Model):
+    thread = models.ForeignKey(ChatThread, on_delete=models.CASCADE, related_name="messages")
+    sender = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="chat_messages",
+    )
+    body = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("created_at",)
 
 
 class SearchLog(models.Model):
@@ -150,4 +266,3 @@ class ContentReport(models.Model):
         if self.roommate_post_id:
             return self.roommate_post.title
         return ""
-
